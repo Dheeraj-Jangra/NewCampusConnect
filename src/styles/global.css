@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:is(.dark *));
+
 @theme {
   /* Brand Colors from DESIGN.md */
   --color-primary: #f54e00;
@@ -148,6 +150,34 @@
     0% { transform: translateX(0%); }
     100% { transform: translateX(-50%); }
   }
+}
+
+/* ── Dark Mode Token Overrides ── */
+.dark {
+  --color-primary: #f54e00;
+  --color-primary-active: #ff6a2a;
+  --color-ink: #f0efe8;
+  --color-body: #b8b7b0;
+  --color-body-strong: #f0efe8;
+  --color-muted: #8a8980;
+  --color-muted-soft: #6a6960;
+  --color-hairline: #3a3933;
+  --color-hairline-soft: #2a2923;
+  --color-hairline-strong: #4a4943;
+  --color-canvas: #1a1915;
+  --color-canvas-soft: #222119;
+  --color-surface-card: #2a2923;
+  --color-surface-strong: #3a3933;
+  --color-on-primary: #ffffff;
+
+  --color-timeline-thinking: #e8936e;
+  --color-timeline-grep: #7db882;
+  --color-timeline-read: #7da8d4;
+  --color-timeline-edit: #b490d8;
+  --color-timeline-done: #d49a3e;
+
+  --color-semantic-success: #34c78a;
+  --color-semantic-error: #e84066;
 }
 
 /* Custom Base layer styling */

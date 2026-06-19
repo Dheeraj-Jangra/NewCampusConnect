@@ -28,6 +28,12 @@
 
   <!-- Animated User Badge -->
   <div class="flex items-center gap-3">
+    <!-- Dark Mode Toggle -->
+    <button id="theme-toggle" class="w-9 h-9 rounded-md bg-surface-card border border-hairline flex items-center justify-center text-muted hover:text-ink hover:border-hairline-strong transition-all duration-300 cursor-none" aria-label="Toggle dark mode">
+      <svg id="icon-sun" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+      <svg id="icon-moon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+    </button>
+
     <div id="user-badge" class="hidden sm:flex items-center gap-2 px-3 py-1 bg-surface-card border border-hairline rounded-pill transition-all duration-500 transform hover:scale-105">
       <span class="relative flex h-2 w-2">
         <span class="animate-ping-slow absolute inline-flex h-full w-full rounded-full bg-semantic-success opacity-75"></span>
@@ -39,6 +45,35 @@
 </header>
 
 <script>
+  // ── Dark Mode Toggle ──
+  const themeToggle = document.getElementById('theme-toggle');
+  const iconSun = document.getElementById('icon-sun');
+  const iconMoon = document.getElementById('icon-moon');
+  const html = document.documentElement;
+
+  const applyTheme = (dark: boolean) => {
+    if (dark) {
+      html.classList.add('dark');
+      iconSun?.classList.remove('hidden');
+      iconMoon?.classList.add('hidden');
+    } else {
+      html.classList.remove('dark');
+      iconSun?.classList.add('hidden');
+      iconMoon?.classList.remove('hidden');
+    }
+  };
+
+  // Load saved preference (default: light)
+  const savedTheme = localStorage.getItem('cc-theme');
+  applyTheme(savedTheme === 'dark');
+
+  themeToggle?.addEventListener('click', () => {
+    const isDark = html.classList.toggle('dark');
+    localStorage.setItem('cc-theme', isDark ? 'dark' : 'light');
+    applyTheme(isDark);
+  });
+
+  // ── Role Selector ──
   const btnStudent = document.getElementById('nav-btn-student');
   const btnProfessor = document.getElementById('nav-btn-professor');
   const indicator = document.getElementById('nav-indicator');

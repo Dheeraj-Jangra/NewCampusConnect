@@ -341,7 +341,7 @@
         submitBtn.innerHTML = `<span>Scheduled!</span> <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5 text-semantic-success"><path d="M20 6 9 17l-5-5"/></svg>`;
         submitBtn.classList.remove('btn-primary');
         submitBtn.style.backgroundColor = 'var(--color-semantic-success)';
-        submitBtn.style.color = '#ffffff';
+        submitBtn.style.color = 'var(--color-on-primary)';
 
         setTimeout(() => {
           submitBtn.innerHTML = origHtml;
