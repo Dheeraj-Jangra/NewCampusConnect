@@ -16,7 +16,7 @@
   <!-- Role Selector Capsule -->
   <div class="relative flex items-center bg-canvas-soft border border-hairline p-1 rounded-pill h-10 w-60" id="role-selector-pill">
     <!-- Active sliding background bubble -->
-    <div id="nav-indicator" class="absolute top-[3px] left-[3px] bottom-[3px] bg-ink rounded-pill transition-all duration-300 ease-out" style="width: calc(50% - 3px); transform: translateX(0);"></div>
+    <div id="nav-indicator" class="absolute top-1 bottom-1 left-0 bg-ink rounded-pill transition-all duration-300 ease-out"></div>
     
     <button id="nav-btn-student" class="relative z-10 w-1/2 text-center text-[11px] font-semibold uppercase tracking-wider text-canvas py-1.5 transition-colors duration-300 focus:outline-none cursor-none">
       Student
@@ -82,13 +82,18 @@
   const brand = document.getElementById('nav-brand');
 
   if (btnStudent && btnProfessor && indicator && userName) {
+    // Set initial indicator position
+    indicator.style.width = `${btnStudent.offsetWidth}px`;
+    indicator.style.transform = `translateX(${btnStudent.offsetLeft}px)`;
+
     const setRole = (role: 'student' | 'professor', publishEvent = true) => {
       // Save to localStorage
       localStorage.setItem('cc-active-role', role);
       
       // Update UI classes
       if (role === 'student') {
-        indicator.style.transform = 'translateX(0)';
+        indicator.style.width = `${btnStudent.offsetWidth}px`;
+        indicator.style.transform = `translateX(${btnStudent.offsetLeft}px)`;
         btnStudent.classList.remove('text-muted');
         btnStudent.classList.add('text-canvas');
         btnProfessor.classList.remove('text-canvas');
@@ -105,9 +110,8 @@
           }, 200);
         }
       } else {
-        // Calculate translateX dynamically to avoid hardcoded pixel widths
-        const width = btnStudent.offsetWidth;
-        indicator.style.transform = `translateX(${width}px)`;
+        indicator.style.width = `${btnProfessor.offsetWidth}px`;
+        indicator.style.transform = `translateX(${btnProfessor.offsetLeft}px)`;
         
         btnProfessor.classList.remove('text-muted');
         btnProfessor.classList.add('text-canvas');

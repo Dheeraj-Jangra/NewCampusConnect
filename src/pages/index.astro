@@ -80,20 +80,20 @@ import CommunityChat from '../components/CommunityChat.astro';
       <div class="max-w-6xl w-full mx-auto px-6 py-8 md:py-12 flex-1 flex flex-col">
         
         <!-- Editorial Navigation Tabs wrapper -->
-        <div class="relative flex border border-hairline p-1 bg-surface-card rounded-md max-w-xl w-full mx-auto mb-10" id="dash-tabs-container">
+        <div class="relative flex border border-hairline p-1.5 bg-surface-card rounded-lg max-w-2xl w-full mx-auto mb-10" id="dash-tabs-container">
           <!-- Active sliding bubble indicator -->
-          <div id="tab-indicator" class="absolute top-[3px] left-[3px] bottom-[3px] bg-primary rounded-md transition-all duration-300 ease-out" style="width: calc(25% - 3px); transform: translateX(0);"></div>
+          <div id="tab-indicator" class="absolute top-1.5 bottom-1.5 left-0 bg-primary rounded-md transition-all duration-300 ease-out"></div>
           
-          <button data-tab="notices" class="tab-trigger relative z-10 w-1/4 text-center py-2 text-[10px] font-bold uppercase tracking-wider text-on-primary cursor-none focus:outline-none transition-colors duration-200">
+          <button data-tab="notices" class="tab-trigger relative z-10 w-1/4 text-center py-2.5 text-xs font-bold uppercase tracking-wider text-on-primary cursor-none focus:outline-none transition-colors duration-200">
             Notices
           </button>
-          <button data-tab="classes" class="tab-trigger relative z-10 w-1/4 text-center py-2 text-[10px] font-bold uppercase tracking-wider text-ink cursor-none focus:outline-none transition-colors duration-200">
+          <button data-tab="classes" class="tab-trigger relative z-10 w-1/4 text-center py-2.5 text-xs font-bold uppercase tracking-wider text-ink cursor-none focus:outline-none transition-colors duration-200">
             Classes
           </button>
-          <button data-tab="materials" class="tab-trigger relative z-10 w-1/4 text-center py-2 text-[10px] font-bold uppercase tracking-wider text-ink cursor-none focus:outline-none transition-colors duration-200">
+          <button data-tab="materials" class="tab-trigger relative z-10 w-1/4 text-center py-2.5 text-xs font-bold uppercase tracking-wider text-ink cursor-none focus:outline-none transition-colors duration-200">
             Resources
           </button>
-          <button data-tab="chat" class="tab-trigger relative z-10 w-1/4 text-center py-2 text-[10px] font-bold uppercase tracking-wider text-ink cursor-none focus:outline-none transition-colors duration-200">
+          <button data-tab="chat" class="tab-trigger relative z-10 w-1/4 text-center py-2.5 text-xs font-bold uppercase tracking-wider text-ink cursor-none focus:outline-none transition-colors duration-200">
             Chat
           </button>
         </div>
@@ -203,12 +203,9 @@ import CommunityChat from '../components/CommunityChat.astro';
     const switchTab = (activeTrigger: any, animate = true) => {
       const targetTab = activeTrigger.getAttribute('data-tab');
       
-      // Update sliding pill indicators
-      const triggersArray = Array.from(tabTriggers);
-      const activeIndex = triggersArray.indexOf(activeTrigger);
-      const percentShift = activeIndex * 100;
-      
-      tabIndicator.style.transform = `translateX(${percentShift}%)`;
+      // Position indicator using actual button offset
+      tabIndicator.style.width = `${activeTrigger.offsetWidth}px`;
+      tabIndicator.style.transform = `translateX(${activeTrigger.offsetLeft}px)`;
 
       // Update button colors
       tabTriggers.forEach((tr: any) => {
@@ -236,6 +233,13 @@ import CommunityChat from '../components/CommunityChat.astro';
     tabTriggers.forEach((trigger: any) => {
       trigger.addEventListener('click', () => switchTab(trigger));
     });
+
+    // Set initial indicator position
+    const firstTab = tabTriggers[0] as HTMLElement;
+    if (firstTab) {
+      tabIndicator.style.width = `${firstTab.offsetWidth}px`;
+      tabIndicator.style.transform = `translateX(${firstTab.offsetLeft}px)`;
+    }
   }
 
   // Global Alert / Toast Notifications Listener
