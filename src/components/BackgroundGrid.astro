@@ -1,0 +1,16 @@
+---
+// Background Grid and Floating Gradients Component
+---
+
+<div class="fixed inset-0 pointer-events-none overflow-hidden z-0 bg-canvas">
+  <!-- Dynamic Glow Blobs -->
+  <div class="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-timeline-thinking/10 blur-3xl animate-float-slow"></div>
+  <div class="absolute top-1/2 -right-40 w-120 h-120 rounded-full bg-timeline-read/10 blur-3xl animate-float-slow" style="animation-delay: -5s; animation-duration: 20s;"></div>
+  <div class="absolute -bottom-40 left-1/3 w-80 h-80 rounded-full bg-timeline-edit/15 blur-3xl animate-float-slow" style="animation-delay: -10s; animation-duration: 25s;"></div>
+  
+  <!-- Subtle Grid Pattern -->
+  <div class="absolute inset-0 opacity-[0.03]" style="background-image: radial-gradient(var(--color-ink) 1px, transparent 1px); background-size: 24px 24px;"></div>
+  
+  <!-- Sleek Radial Gradient Fade -->
+  <div class="absolute inset-0 bg-radial from-transparent via-transparent to-canvas/80"></div>
+</div>

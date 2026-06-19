@@ -1,11 +1,257 @@
 ---
-import Welcome from '../components/Welcome.astro';
 import Layout from '../layouts/Layout.astro';
-
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+import Navbar from '../components/Navbar.astro';
+import NoticeBoard from '../components/NoticeBoard.astro';
+import ClassScheduler from '../components/ClassScheduler.astro';
+import StudyMaterials from '../components/StudyMaterials.astro';
+import CommunityChat from '../components/CommunityChat.astro';
 ---
 
-<Layout>
-	<Welcome />
+<Layout title="CampusConnect | University Communication Hub">
+  <main class="w-full flex-1 flex flex-col relative z-10">
+    
+    <!-- Toast Notification Overlay -->
+    <div id="toast-alert" class="fixed top-6 left-1/2 -translate-x-1/2 z-9999 px-4 py-3 bg-ink border border-primary/30 text-canvas text-xs font-semibold rounded-md shadow-lg flex items-center gap-2 max-w-md hidden">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-primary w-4 h-4"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      <span id="toast-message">Action completed successfully.</span>
+    </div>
+
+    <!-- 1. Landing Splash Screen: Role Selector Gate -->
+    <section id="splash-gate" class="flex-1 flex flex-col items-center justify-center px-6 py-12 md:py-24 text-center select-none max-w-5xl mx-auto">
+      
+      <!-- Timeline decoration pills -->
+      <div class="flex gap-2 mb-6 animate-pulse-slow">
+        <span class="px-2.5 py-0.5 text-[9px] font-bold tracking-wider rounded-pill bg-timeline-thinking/10 text-timeline-thinking border border-timeline-thinking/20 uppercase">Thinking</span>
+        <span class="px-2.5 py-0.5 text-[9px] font-bold tracking-wider rounded-pill bg-timeline-grep/10 text-timeline-grep border border-timeline-grep/20 uppercase">Reading</span>
+        <span class="px-2.5 py-0.5 text-[9px] font-bold tracking-wider rounded-pill bg-timeline-edit/10 text-timeline-edit border border-timeline-edit/20 uppercase">Editing</span>
+        <span class="px-2.5 py-0.5 text-[9px] font-bold tracking-wider rounded-pill bg-timeline-done/10 text-timeline-done border border-timeline-done/20 uppercase">Done</span>
+      </div>
+
+      <!-- Hero Header -->
+      <h1 class="display-mega text-ink mb-4 animated-mount">
+        Campus<span class="text-primary">Connect</span>
+      </h1>
+      <p class="body-md text-muted max-w-xl mx-auto mb-12 leading-relaxed animated-mount" style="animation-delay: 200ms;">
+        The quietly confident developer brand interface, customized for student-faculty interactions, notices, and community resources.
+      </p>
+
+      <!-- Portals Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-3xl mt-2 select-none">
+        
+        <!-- Student Entry Portal Card -->
+        <div id="portal-student" class="card-editorial flex flex-col items-start gap-4 p-8 hover-interactive group">
+          <div class="w-10 h-10 rounded-full bg-timeline-read/10 border border-timeline-read/30 text-timeline-read flex items-center justify-center group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
+          </div>
+          <div class="text-left">
+            <h3 class="title-md text-ink group-hover:text-primary transition-colors">Student Portal</h3>
+            <p class="body-sm text-body mt-2 leading-relaxed">Access exam dates, live lectures countdown, retrieve notes, and join peer discussions in community chat channels.</p>
+          </div>
+          <button class="btn-secondary w-full cursor-none mt-4 justify-between group-hover:border-primary group-hover:bg-primary group-hover:text-on-primary">
+            <span>Enter Dashboard</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5 transition-transform group-hover:translate-x-1"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </button>
+        </div>
+
+        <!-- Professor Entry Portal Card -->
+        <div id="portal-professor" class="card-editorial flex flex-col items-start gap-4 p-8 hover-interactive group">
+          <div class="w-10 h-10 rounded-full bg-timeline-thinking/10 border border-timeline-thinking/30 text-timeline-thinking flex items-center justify-center group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/></svg>
+          </div>
+          <div class="text-left">
+            <h3 class="title-md text-ink group-hover:text-primary transition-colors">Professor Portal</h3>
+            <p class="body-sm text-body mt-2 leading-relaxed">Publish formal administrative notices, schedule live classroom meetings, share research documents, and answer student Q&As.</p>
+          </div>
+          <button class="btn-secondary w-full cursor-none mt-4 justify-between group-hover:border-primary group-hover:bg-primary group-hover:text-on-primary">
+            <span>Faculty Management</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5 transition-transform group-hover:translate-x-1"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 2. Dashboard Container Screen (Hidden on startup until gate chosen) -->
+    <section id="dashboard-hub" class="flex-1 flex flex-col w-full hidden opacity-0 transition-all duration-500">
+      <!-- Shared Header -->
+      <Navbar />
+
+      <!-- Main Container wrapper -->
+      <div class="max-w-6xl w-full mx-auto px-6 py-8 md:py-12 flex-1 flex flex-col">
+        
+        <!-- Editorial Navigation Tabs wrapper -->
+        <div class="relative flex border border-hairline p-1 bg-surface-card rounded-md max-w-xl w-full mx-auto mb-10" id="dash-tabs-container">
+          <!-- Active sliding bubble indicator -->
+          <div id="tab-indicator" class="absolute top-[3px] left-[3px] bottom-[3px] bg-primary rounded-md transition-all duration-300 ease-out" style="width: calc(25% - 3px); transform: translateX(0);"></div>
+          
+          <button data-tab="notices" class="tab-trigger relative z-10 w-1/4 text-center py-2 text-[10px] font-bold uppercase tracking-wider text-on-primary cursor-none focus:outline-none transition-colors duration-200">
+            Notices
+          </button>
+          <button data-tab="classes" class="tab-trigger relative z-10 w-1/4 text-center py-2 text-[10px] font-bold uppercase tracking-wider text-ink cursor-none focus:outline-none transition-colors duration-200">
+            Classes
+          </button>
+          <button data-tab="materials" class="tab-trigger relative z-10 w-1/4 text-center py-2 text-[10px] font-bold uppercase tracking-wider text-ink cursor-none focus:outline-none transition-colors duration-200">
+            Resources
+          </button>
+          <button data-tab="chat" class="tab-trigger relative z-10 w-1/4 text-center py-2 text-[10px] font-bold uppercase tracking-wider text-ink cursor-none focus:outline-none transition-colors duration-200">
+            Chat
+          </button>
+        </div>
+
+        <!-- Dashboard Content Panels -->
+        <div class="flex-1 flex flex-col">
+          
+          <!-- Panel A: Notices -->
+          <div id="panel-notices" class="tab-panel w-full flex-1 flex flex-col">
+            <NoticeBoard />
+          </div>
+
+          <!-- Panel B: Classes -->
+          <div id="panel-classes" class="tab-panel w-full flex-1 flex flex-col hidden">
+            <ClassScheduler />
+          </div>
+
+          <!-- Panel C: Materials -->
+          <div id="panel-materials" class="tab-panel w-full flex-1 flex flex-col hidden">
+            <StudyMaterials />
+          </div>
+
+          <!-- Panel D: Chat -->
+          <div id="panel-chat" class="tab-panel w-full flex-1 flex flex-col hidden">
+            <CommunityChat />
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+  </main>
 </Layout>
+
+<script>
+  // Page controllers and State management
+  const gate = document.getElementById('splash-gate');
+  const hub = document.getElementById('dashboard-hub');
+  const portalStudent = document.getElementById('portal-student');
+  const portalProfessor = document.getElementById('portal-professor');
+  const toastAlert = document.getElementById('toast-alert');
+  const toastMessage = document.getElementById('toast-message');
+
+  // Load state and roles
+  if (gate && hub && portalStudent && portalProfessor) {
+    const launchDashboard = (role: 'student' | 'professor') => {
+      // Set values
+      localStorage.setItem('cc-active-role', role);
+      
+      // Animate gate collapse
+      gate.style.opacity = '0';
+      gate.style.transform = 'scale(0.95)';
+      
+      setTimeout(() => {
+        gate.classList.add('hidden');
+        hub.classList.remove('hidden');
+        
+        // Trigger initialization event in Navbar and Subcomponents
+        window.dispatchEvent(new CustomEvent('cc-role-selected-init', { detail: { role } }));
+        window.dispatchEvent(new CustomEvent('cc-role-changed', { detail: { role } }));
+        
+        // Fade in hub
+        setTimeout(() => {
+          hub.style.opacity = '1';
+          
+          // Trigger first tab render
+          window.dispatchEvent(new CustomEvent('cc-tab-active-notices'));
+        }, 50);
+      }, 300);
+    };
+
+    // Event listener portals
+    portalStudent.addEventListener('click', () => launchDashboard('student'));
+    portalProfessor.addEventListener('click', () => launchDashboard('professor'));
+
+    // Listen to Home logo click in Navbar to reset views
+    window.addEventListener('cc-go-home', () => {
+      hub.style.opacity = '0';
+      setTimeout(() => {
+        hub.classList.add('hidden');
+        gate.classList.remove('hidden');
+        gate.style.opacity = '1';
+        gate.style.transform = 'scale(1)';
+        localStorage.removeItem('cc-active-role');
+      }, 300);
+    });
+
+    // Check on startup if role is already stored
+    window.addEventListener('load', () => {
+      const storedRole = localStorage.getItem('cc-active-role') as 'student' | 'professor';
+      if (storedRole) {
+        gate.classList.add('hidden');
+        hub.classList.remove('hidden');
+        hub.style.opacity = '1';
+        window.dispatchEvent(new CustomEvent('cc-role-selected-init', { detail: { role: storedRole } }));
+      }
+    });
+  }
+
+  // Dashboard Sub-navigation Tab switcher controller
+  const tabTriggers = document.querySelectorAll('.tab-trigger');
+  const tabIndicator = document.getElementById('tab-indicator');
+  const panels = document.querySelectorAll('.tab-panel');
+
+  if (tabTriggers.length > 0 && tabIndicator) {
+    const switchTab = (activeTrigger: any, animate = true) => {
+      const targetTab = activeTrigger.getAttribute('data-tab');
+      
+      // Update sliding pill indicators
+      const triggersArray = Array.from(tabTriggers);
+      const activeIndex = triggersArray.indexOf(activeTrigger);
+      const percentShift = activeIndex * 100;
+      
+      tabIndicator.style.transform = `translateX(${percentShift}%)`;
+
+      // Update button colors
+      tabTriggers.forEach((tr: any) => {
+        tr.classList.remove('text-on-primary');
+        tr.classList.add('text-ink');
+      });
+      activeTrigger.classList.remove('text-ink');
+      activeTrigger.classList.add('text-on-primary');
+
+      // Hide all panels and show selected with transition
+      panels.forEach((panel: any) => {
+        panel.classList.add('hidden');
+      });
+
+      const activePanel = document.getElementById(`panel-${targetTab}`);
+      if (activePanel) {
+        activePanel.classList.remove('hidden');
+        
+        // Trigger specific sub-component load event
+        window.dispatchEvent(new CustomEvent(`cc-tab-active-${targetTab}`));
+      }
+    };
+
+    // Attach click events
+    tabTriggers.forEach((trigger: any) => {
+      trigger.addEventListener('click', () => switchTab(trigger));
+    });
+  }
+
+  // Global Alert / Toast Notifications Listener
+  if (toastAlert && toastMessage) {
+    window.addEventListener('cc-toast-alert', (e: any) => {
+      if (e.detail && e.detail.message) {
+        toastMessage.textContent = e.detail.message;
+        toastAlert.classList.remove('hidden');
+        toastAlert.classList.add('animate-slide-down');
+        
+        // Automatic hide after 3 seconds
+        setTimeout(() => {
+          toastAlert.classList.add('hidden');
+          toastAlert.classList.remove('animate-slide-down');
+        }, 3000);
+      }
+    });
+  }
+</script>

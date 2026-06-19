@@ -1,0 +1,123 @@
+---
+// Navbar Component for CampusConnect
+---
+
+<header class="sticky top-0 z-50 w-full h-16 bg-canvas/80 backdrop-blur-md border-b border-hairline px-6 md:px-12 flex items-center justify-between select-none">
+  <!-- Brand logo -->
+  <div class="flex items-center gap-2 cursor-none" id="nav-brand">
+    <div class="w-8 h-8 rounded-md bg-primary flex items-center justify-center text-on-primary font-bold text-lg shadow-sm transform hover:rotate-12 transition-transform duration-300">
+      C
+    </div>
+    <span class="font-sans font-semibold tracking-tight text-lg text-ink">
+      Campus<span class="text-primary">Connect</span>
+    </span>
+  </div>
+
+  <!-- Role Selector Capsule -->
+  <div class="relative flex items-center bg-canvas-soft border border-hairline p-1 rounded-pill h-10 w-60" id="role-selector-pill">
+    <!-- Active sliding background bubble -->
+    <div id="nav-indicator" class="absolute top-[3px] left-[3px] bottom-[3px] bg-ink rounded-pill transition-all duration-300 ease-out" style="width: calc(50% - 3px); transform: translateX(0);"></div>
+    
+    <button id="nav-btn-student" class="relative z-10 w-1/2 text-center text-[11px] font-semibold uppercase tracking-wider text-canvas py-1.5 transition-colors duration-300 focus:outline-none cursor-none">
+      Student
+    </button>
+    <button id="nav-btn-professor" class="relative z-10 w-1/2 text-center text-[11px] font-semibold uppercase tracking-wider text-muted py-1.5 transition-colors duration-300 focus:outline-none cursor-none">
+      Professor
+    </button>
+  </div>
+
+  <!-- Animated User Badge -->
+  <div class="flex items-center gap-3">
+    <div id="user-badge" class="hidden sm:flex items-center gap-2 px-3 py-1 bg-surface-card border border-hairline rounded-pill transition-all duration-500 transform hover:scale-105">
+      <span class="relative flex h-2 w-2">
+        <span class="animate-ping-slow absolute inline-flex h-full w-full rounded-full bg-semantic-success opacity-75"></span>
+        <span class="relative inline-flex rounded-full h-2 w-2 bg-semantic-success"></span>
+      </span>
+      <span id="user-name" class="font-sans text-xs font-medium text-body-strong">Alex Mercer (Student)</span>
+    </div>
+  </div>
+</header>
+
+<script>
+  const btnStudent = document.getElementById('nav-btn-student');
+  const btnProfessor = document.getElementById('nav-btn-professor');
+  const indicator = document.getElementById('nav-indicator');
+  const userName = document.getElementById('user-name');
+  const userBadge = document.getElementById('user-badge');
+  const brand = document.getElementById('nav-brand');
+
+  if (btnStudent && btnProfessor && indicator && userName) {
+    const setRole = (role: 'student' | 'professor', publishEvent = true) => {
+      // Save to localStorage
+      localStorage.setItem('cc-active-role', role);
+      
+      // Update UI classes
+      if (role === 'student') {
+        indicator.style.transform = 'translateX(0)';
+        btnStudent.classList.remove('text-muted');
+        btnStudent.classList.add('text-canvas');
+        btnProfessor.classList.remove('text-canvas');
+        btnProfessor.classList.add('text-muted');
+        
+        // Dynamic text swap with slide transition
+        if (userBadge) {
+          userBadge.style.transform = 'scale(0.9) translateY(5px)';
+          userBadge.style.opacity = '0';
+          setTimeout(() => {
+            userName.textContent = 'Alex Mercer (Student)';
+            userBadge.style.transform = 'scale(1) translateY(0)';
+            userBadge.style.opacity = '1';
+          }, 200);
+        }
+      } else {
+        // Calculate translateX dynamically to avoid hardcoded pixel widths
+        const width = btnStudent.offsetWidth;
+        indicator.style.transform = `translateX(${width}px)`;
+        
+        btnProfessor.classList.remove('text-muted');
+        btnProfessor.classList.add('text-canvas');
+        btnStudent.classList.remove('text-canvas');
+        btnStudent.classList.add('text-muted');
+        
+        if (userBadge) {
+          userBadge.style.transform = 'scale(0.9) translateY(5px)';
+          userBadge.style.opacity = '0';
+          setTimeout(() => {
+            userName.textContent = 'Prof. Evelyn Vance';
+            userBadge.style.transform = 'scale(1) translateY(0)';
+            userBadge.style.opacity = '1';
+          }, 200);
+        }
+      }
+
+      if (publishEvent) {
+        // Dispatch global custom event
+        window.dispatchEvent(new CustomEvent('cc-role-changed', { detail: { role } }));
+      }
+    };
+
+    // Click events
+    btnStudent.addEventListener('click', () => setRole('student'));
+    btnProfessor.addEventListener('click', () => setRole('professor'));
+    
+    // Logo resets role to student / triggers redirect to welcome splash if we want
+    brand?.addEventListener('click', () => {
+      window.dispatchEvent(new CustomEvent('cc-go-home'));
+    });
+
+    // Check localStorage on load
+    window.addEventListener('load', () => {
+      const storedRole = localStorage.getItem('cc-active-role') as 'student' | 'professor';
+      if (storedRole) {
+        setRole(storedRole, false);
+      }
+    });
+
+    // Support listener if updated elsewhere (e.g. from splash screen cards)
+    window.addEventListener('cc-role-selected-init', (e: any) => {
+      if (e.detail && e.detail.role) {
+        setRole(e.detail.role, false);
+      }
+    });
+  }
+</script>

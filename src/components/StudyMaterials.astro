@@ -1,0 +1,479 @@
+---
+// Study Materials Component
+---
+
+<div id="study-materials-root" class="w-full flex-1 flex flex-col gap-6 select-none opacity-0 translate-y-4 transition-all duration-500">
+  
+  <!-- Subheader & Search Bar -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-hairline pb-6">
+    <div>
+      <h2 class="display-md text-ink">Study Materials Library</h2>
+      <p class="body-sm text-muted">Lecture notes, syllabus copies, and recommended readings.</p>
+    </div>
+
+    <!-- Search Input -->
+    <div class="relative w-full md:w-80">
+      <input type="text" id="materials-search" placeholder="Search materials by name or course..." class="w-full px-4 py-2 pl-10 bg-surface-card border border-hairline rounded-md text-sm text-ink focus:outline-none focus:border-primary transition-all duration-200 cursor-none" />
+      <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content Split -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+    
+    <!-- Professor Panel: Drag & Drop Upload Simulator -->
+    <div id="materials-professor-panel" class="lg:col-span-4 bg-surface-card border border-hairline rounded-lg p-6 flex flex-col gap-4 hidden animated-mount">
+      <div class="flex items-center justify-between border-b border-hairline pb-3">
+        <h3 class="title-md text-ink">Upload Resource</h3>
+        <span class="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-timeline-done bg-timeline-done/10 border border-timeline-done/20 rounded-pill">Professor Mode</span>
+      </div>
+
+      <form id="upload-form" class="flex flex-col gap-4">
+        <!-- Title -->
+        <div class="flex flex-col gap-1.5">
+          <label for="material-title" class="text-xs font-semibold text-body-strong">Material Title</label>
+          <input type="text" id="material-title" placeholder="e.g. Lecture 12: Neural Nets Intro" required class="w-full px-3 py-2 bg-canvas-soft border border-hairline rounded-md text-sm text-ink focus:outline-none focus:border-primary transition-all duration-200" />
+        </div>
+
+        <!-- Subject Course Tag -->
+        <div class="flex flex-col gap-1.5">
+          <label for="material-course" class="text-xs font-semibold text-body-strong">Course Code</label>
+          <select id="material-course" required class="w-full px-3 py-2 bg-canvas-soft border border-hairline rounded-md text-sm text-ink focus:outline-none focus:border-primary transition-all duration-200">
+            <option value="CS-101">CS-101 (Intro to CS)</option>
+            <option value="CS-402">CS-402 (Advanced UI Design)</option>
+            <option value="MATH-202">MATH-202 (Discrete Algebra)</option>
+            <option value="ELEC-301">ELEC-301 (Embedded Systems)</option>
+          </select>
+        </div>
+
+        <!-- Drag and Drop Box Simulator -->
+        <div id="drop-zone" class="border-2 border-dashed border-hairline-strong rounded-lg p-6 text-center hover:border-primary/50 transition-colors duration-300 cursor-none flex flex-col items-center justify-center gap-2 bg-canvas-soft/40 relative overflow-hidden">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-muted w-8 h-8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+          <div>
+            <span class="text-xs font-semibold text-ink block">Click or Drop PDF / ZIP here</span>
+            <span class="text-[10px] text-muted block mt-0.5">Maximum size: 50MB</span>
+          </div>
+          <!-- Hidden real file input -->
+          <input type="file" id="material-file" class="absolute inset-0 opacity-0 cursor-none" />
+          
+          <!-- File selection overlay -->
+          <div id="selected-file-overlay" class="absolute inset-0 bg-surface-card flex flex-col items-center justify-center p-4 hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-timeline-grep w-8 h-8"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span id="selected-file-name" class="text-xs font-semibold text-ink mt-2 truncate w-full max-w-[180px]">filename.pdf</span>
+            <button type="button" id="remove-file-btn" class="text-[10px] text-semantic-error font-semibold hover:underline mt-1 focus:outline-none cursor-none">Remove</button>
+          </div>
+        </div>
+
+        <!-- Progress Bar Indicator -->
+        <div id="upload-progress-container" class="flex flex-col gap-1 hidden">
+          <div class="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-muted">
+            <span id="upload-progress-label">Uploading...</span>
+            <span id="upload-progress-percent">0%</span>
+          </div>
+          <div class="w-full h-1.5 bg-canvas-soft rounded-full overflow-hidden border border-hairline">
+            <div id="upload-progress-bar" class="w-0 h-full bg-timeline-grep transition-all duration-300 ease-out"></div>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" id="upload-submit-btn" class="btn-primary w-full cursor-none mt-2 flex items-center justify-center gap-2">
+          <span>Upload File</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </button>
+      </form>
+    </div>
+
+    <!-- Materials Browser List -->
+    <div id="materials-browser" class="lg:col-span-12 flex flex-col gap-4">
+      <div id="no-materials-alert" class="hidden text-center py-12 border border-dashed border-hairline rounded-lg bg-surface-card/50">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mx-auto text-muted w-8 h-8 mb-2 animate-bounce"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span class="text-sm font-semibold text-ink">No materials found</span>
+        <p class="text-xs text-muted mt-1">Refine your search or upload documents.</p>
+      </div>
+
+      <div id="materials-list-container" class="flex flex-col gap-3">
+        <!-- Rendered client-side -->
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Mock Default Materials
+  const defaultMaterials = [
+    {
+      id: "m1",
+      title: "Lecture Notes 06: SVG & Fluid Canvas Motion",
+      course: "CS-402",
+      type: "pdf",
+      size: "2.4 MB",
+      author: "Prof. Evelyn Vance",
+      timestamp: Date.now() - 1000 * 60 * 60 * 6 // 6 hours ago
+    },
+    {
+      id: "m2",
+      title: "Math Induction & Set Theory Cheatsheet",
+      course: "MATH-202",
+      type: "pdf",
+      size: "820 KB",
+      author: "Dr. Arthur Pendelton",
+      timestamp: Date.now() - 1000 * 60 * 60 * 24 // 1 day ago
+    },
+    {
+      id: "m3",
+      title: "Embedded Hardware Schematics & Pin Configurations",
+      course: "ELEC-301",
+      type: "zip",
+      size: "14.2 MB",
+      author: "Office of Elec-Sciences",
+      timestamp: Date.now() - 1000 * 60 * 60 * 30 // ~1.2 days ago
+    },
+    {
+      id: "m4",
+      title: "Introductory Python Notebooks & Sandbox Exercises",
+      course: "CS-101",
+      type: "ipynb",
+      size: "4.5 MB",
+      author: "T.A. Marcus Aurel",
+      timestamp: Date.now() - 1000 * 60 * 60 * 72 // 3 days ago
+    }
+  ];
+
+  let searchQuery = '';
+
+  const getMaterials = () => {
+    const data = localStorage.getItem('cc-materials');
+    if (!data) {
+      localStorage.setItem('cc-materials', JSON.stringify(defaultMaterials));
+      return defaultMaterials;
+    }
+    try {
+      const parsed = JSON.parse(data);
+      // Self-healing check: if stale data from previous builds lacks new keys, reset localStorage
+      if (parsed.length > 0 && (parsed[0].course === undefined || parsed[0].size === undefined)) {
+        localStorage.setItem('cc-materials', JSON.stringify(defaultMaterials));
+        return defaultMaterials;
+      }
+      return parsed;
+    } catch {
+      return defaultMaterials;
+    }
+  };
+
+  const saveMaterials = (materials: any[]) => {
+    localStorage.setItem('cc-materials', JSON.stringify(materials));
+  };
+
+  // Render materials list
+  const renderMaterials = () => {
+    const listContainer = document.getElementById('materials-list-container');
+    const noMaterialsAlert = document.getElementById('no-materials-alert');
+    if (!listContainer || !noMaterialsAlert) return;
+
+    const materials = getMaterials().sort((a: any, b: any) => b.timestamp - a.timestamp);
+    
+    // Filter by search query
+    const filtered = materials.filter((m: any) => {
+      const q = searchQuery.toLowerCase();
+      return m.title.toLowerCase().includes(q) || m.course.toLowerCase().includes(q);
+    });
+
+    if (filtered.length === 0) {
+      noMaterialsAlert.classList.remove('hidden');
+      listContainer.innerHTML = '';
+      return;
+    } else {
+      noMaterialsAlert.classList.add('hidden');
+    }
+
+    listContainer.innerHTML = filtered.map((m: any) => {
+      // Icon selection based on file extension
+      let icon = '';
+      if (m.type === 'pdf') {
+        icon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-semantic-error w-5 h-5"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+      } else if (m.type === 'zip' || m.type === 'rar') {
+        icon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-timeline-done w-5 h-5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10h10"/><path d="M12 10v4"/><path d="M12 2v4"/></svg>`;
+      } else {
+        // generic file
+        icon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-timeline-read w-5 h-5"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>`;
+      }
+
+      return `
+        <div class="material-row bg-surface-card border border-hairline rounded-lg p-4 flex items-center justify-between gap-4 hover-interactive cursor-none hover:border-hairline-strong transition-all duration-300">
+          <div class="flex items-center gap-3.5 min-w-0">
+            <div class="p-2.5 bg-canvas-soft border border-hairline-soft rounded-md">
+              ${icon}
+            </div>
+            <div class="min-w-0">
+              <h4 class="text-sm font-semibold text-ink line-clamp-1">${m.title}</h4>
+              <div class="flex items-center gap-2 flex-wrap text-xs text-muted mt-0.5">
+                <span class="px-2 py-0.2 bg-surface-strong/50 border border-hairline text-ink rounded-md text-[10px] font-bold">${m.course}</span>
+                <span>•</span>
+                <span>Size: ${m.size}</span>
+                <span>•</span>
+                <span>Uploaded by: ${m.author}</span>
+              </div>
+            </div>
+          </div>
+          
+          <button data-id="${m.id}" class="download-btn btn-secondary cursor-none flex items-center gap-1.5 text-xs py-1.5 h-8">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+            <span>Download</span>
+          </button>
+        </div>
+      `;
+    }).join('');
+
+    // Attach animated download triggers
+    const downloadBtns = listContainer.querySelectorAll('.download-btn');
+    downloadBtns.forEach((btn: any) => {
+      btn.addEventListener('click', () => {
+        const span = btn.querySelector('span');
+        const icon = btn.querySelector('svg');
+        if (!span || !icon) return;
+
+        btn.disabled = true;
+        span.textContent = 'Preparing...';
+        
+        let progress = 0;
+        const interval = setInterval(() => {
+          progress += 25;
+          span.textContent = `Downloading ${progress}%`;
+          
+          if (progress >= 100) {
+            clearInterval(interval);
+            span.textContent = 'Downloaded';
+            btn.style.backgroundColor = 'var(--color-semantic-success)';
+            btn.style.color = '#ffffff';
+            btn.style.borderColor = 'var(--color-semantic-success)';
+            btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5 text-white"><path d="M20 6 9 17l-5-5"/></svg> <span>Downloaded</span>`;
+            
+            // Dispatch a visual success toast
+            window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
+              detail: { message: 'Download finished successfully!', type: 'success' } 
+            }));
+
+            setTimeout(() => {
+              btn.disabled = false;
+              btn.style.backgroundColor = '';
+              btn.style.color = '';
+              btn.style.borderColor = '';
+              btn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                <span>Download</span>
+              `;
+            }, 2000);
+          }
+        }, 300);
+      });
+    });
+  };
+
+  // Setup simulated file upload events
+  const setupUploadForm = () => {
+    const form = document.getElementById('upload-form') as HTMLFormElement;
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('material-file') as HTMLInputElement;
+    const overlay = document.getElementById('selected-file-overlay');
+    const overlayName = document.getElementById('selected-file-name');
+    const removeBtn = document.getElementById('remove-file-btn');
+    const submitBtn = document.getElementById('upload-submit-btn') as HTMLButtonElement;
+    
+    // Progress refs
+    const progressContainer = document.getElementById('upload-progress-container');
+    const progressBar = document.getElementById('upload-progress-bar');
+    const progressPercent = document.getElementById('upload-progress-percent');
+    
+    if (!form || !dropZone || !fileInput || !overlay || !overlayName || !removeBtn || !submitBtn || !progressContainer || !progressBar || !progressPercent) return;
+
+    let selectedFile: File | null = null;
+
+    const handleFileSelected = (file: File) => {
+      selectedFile = file;
+      overlayName.textContent = file.name;
+      overlay.classList.remove('hidden');
+    };
+
+    // File input changes
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files && fileInput.files.length > 0) {
+        handleFileSelected(fileInput.files[0]);
+      }
+    });
+
+    // Remove file selection
+    removeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      selectedFile = null;
+      fileInput.value = '';
+      overlay.classList.add('hidden');
+    });
+
+    // Drag-over styling
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('border-primary');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('border-primary');
+    });
+
+    dropZone.addEventListener('drop', (e: DragEvent) => {
+      e.preventDefault();
+      dropZone.classList.remove('border-primary');
+      if (e.dataTransfer && e.dataTransfer.files.length > 0) {
+        handleFileSelected(e.dataTransfer.files[0]);
+      }
+    });
+
+    // Form submit upload simulation
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const titleInput = document.getElementById('material-title') as HTMLInputElement;
+      const courseSelect = document.getElementById('material-course') as HTMLSelectElement;
+
+      if (!titleInput || !courseSelect) return;
+
+      const title = titleInput.value.trim();
+      const course = courseSelect.value;
+
+      if (!title) return;
+
+      // Simulated Upload Progress Animation
+      submitBtn.disabled = true;
+      progressContainer.classList.remove('hidden');
+      
+      let progress = 0;
+      progressBar.style.width = '0%';
+      progressPercent.textContent = '0%';
+
+      const interval = setInterval(() => {
+        progress += Math.floor(Math.random() * 15) + 5;
+        if (progress > 100) progress = 100;
+        
+        progressBar.style.width = `${progress}%`;
+        progressPercent.textContent = `${progress}%`;
+
+        if (progress >= 100) {
+          clearInterval(interval);
+          
+          // Complete upload logic
+          const mockSize = selectedFile 
+            ? `${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB`
+            : `${(Math.random() * 4 + 1).toFixed(1)} MB`;
+
+          const mockType = selectedFile 
+            ? selectedFile.name.split('.').pop() || 'pdf'
+            : 'pdf';
+
+          const newMaterial = {
+            id: Math.random().toString(36).substr(2, 9),
+            title,
+            course,
+            type: mockType,
+            size: mockSize,
+            author: "Prof. Evelyn Vance",
+            timestamp: Date.now()
+          };
+
+          const materials = getMaterials();
+          materials.push(newMaterial);
+          saveMaterials(materials);
+
+          // Reset everything
+          form.reset();
+          selectedFile = null;
+          fileInput.value = '';
+          overlay.classList.add('hidden');
+          
+          // Reset button and hide progress
+          setTimeout(() => {
+            progressContainer.classList.add('hidden');
+            progressBar.style.width = '0%';
+            submitBtn.disabled = false;
+            
+            // Visual notify
+            window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
+              detail: { message: 'Document published successfully!', type: 'success' } 
+            }));
+            
+            renderMaterials();
+            window.dispatchEvent(new CustomEvent('cc-materials-changed'));
+          }, 400);
+        }
+      }, 150);
+    });
+  };
+
+  // Search logic bindings
+  const setupSearch = () => {
+    const searchInput = document.getElementById('materials-search') as HTMLInputElement;
+    if (!searchInput) return;
+
+    // Bind to multiple events to capture programmatic inputs from browser tests
+    ['input', 'keyup', 'change'].forEach((evt) => {
+      searchInput.addEventListener(evt, () => {
+        searchQuery = searchInput.value;
+        renderMaterials();
+      });
+    });
+  };
+
+  // Toggle layout based on active role
+  const handleRoleView = (role: 'student' | 'professor') => {
+    const profPanel = document.getElementById('materials-professor-panel');
+    const browser = document.getElementById('materials-browser');
+    if (!profPanel || !browser) return;
+
+    if (role === 'professor') {
+      profPanel.classList.remove('hidden');
+      browser.classList.remove('lg:col-span-12');
+      browser.classList.add('lg:col-span-8');
+    } else {
+      profPanel.classList.add('hidden');
+      browser.classList.remove('lg:col-span-8');
+      browser.classList.add('lg:col-span-12');
+    }
+
+    renderMaterials();
+  };
+
+  // Initialize
+  const initMaterials = () => {
+    const root = document.getElementById('study-materials-root');
+    if (!root) return;
+
+    renderMaterials();
+    setupUploadForm();
+    setupSearch();
+
+    const currentRole = (localStorage.getItem('cc-active-role') || 'student') as 'student' | 'professor';
+    handleRoleView(currentRole);
+
+    setTimeout(() => {
+      root.style.opacity = '1';
+      root.style.transform = 'translateY(0)';
+    }, 100);
+  };
+
+  // Listeners
+  window.addEventListener('cc-role-changed', (e: any) => {
+    if (e.detail && e.detail.role) {
+      handleRoleView(e.detail.role);
+    }
+  });
+
+  window.addEventListener('cc-materials-changed', () => {
+    renderMaterials();
+  });
+
+  window.addEventListener('load', initMaterials);
+  
+  // Custom SPA mount trigger
+  window.addEventListener('cc-tab-active-materials', initMaterials);
+</script>

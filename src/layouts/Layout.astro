@@ -1,23 +1,48 @@
+---
+import '../styles/global.css';
+import CustomCursor from '../components/CustomCursor.astro';
+import BackgroundGrid from '../components/BackgroundGrid.astro';
+
+interface Props {
+	title?: string;
+	description?: string;
+}
+
+const { 
+	title = "CampusConnect | University Hub", 
+	description = "A premium heavily-animated portal for communications, classes, resources, and chat between students and professors." 
+} = Astro.props;
+---
+
 <!doctype html>
-<html lang="en">
+<html lang="en" class="h-full scroll-smooth">
 	<head>
 		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		
+		<!-- SEO Meta Tags -->
+		<title>{title}</title>
+		<meta name="description" content={description} />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="icon" href="/favicon.ico" />
 		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
+		
+		<!-- Fonts -->
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 	</head>
-	<body>
-		<slot />
+	<body class="min-h-full flex flex-col relative z-0 selection:bg-primary/20 selection:text-ink">
+		<!-- Dynamic Backdrops -->
+		<BackgroundGrid />
+		
+		<!-- Custom Interactive Cursor -->
+		<CustomCursor />
+		
+		<!-- Page Content Slot -->
+		<div class="relative z-10 flex-1 flex flex-col">
+			<slot />
+		</div>
 	</body>
 </html>
 
-<style>
-	html,
-	body {
-		margin: 0;
-		width: 100%;
-		height: 100%;
-	}
-</style>

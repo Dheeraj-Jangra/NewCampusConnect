@@ -1,0 +1,414 @@
+---
+// Class Scheduler Component
+---
+
+<div id="class-scheduler-root" class="w-full flex-1 flex flex-col gap-6 select-none opacity-0 translate-y-4 transition-all duration-500">
+  
+  <!-- Subheader & Live Countdown Banner -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-hairline pb-6">
+    <div>
+      <h2 class="display-md text-ink">Class Scheduler & Timetable</h2>
+      <p class="body-sm text-muted">Track lectures, live links, and office hours.</p>
+    </div>
+    
+    <!-- Dynamic Ticking Countdown Box -->
+    <div id="next-class-countdown-container" class="flex items-center gap-4 bg-surface-card border border-hairline p-4 rounded-lg shadow-sm max-w-sm hidden animated-mount">
+      <div class="flex items-center justify-center w-10 h-10 rounded-full bg-timeline-thinking/10 border border-timeline-thinking/20 text-timeline-thinking">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="animate-spin-slow"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+      <div>
+        <div class="text-[10px] font-bold uppercase tracking-wider text-muted">Next Lecture Starts In</div>
+        <div id="next-class-countdown" class="font-mono text-lg font-semibold text-ink leading-tight">--:--:--</div>
+        <div id="next-class-title" class="text-xs font-semibold text-primary truncate max-w-[180px]">Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content Grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+    
+    <!-- Professor Panel: Add Class Form -->
+    <div id="scheduler-professor-panel" class="lg:col-span-4 bg-surface-card border border-hairline rounded-lg p-6 flex flex-col gap-4 hidden animated-mount">
+      <div class="flex items-center justify-between border-b border-hairline pb-3">
+        <h3 class="title-md text-ink">Schedule Lecture</h3>
+        <span class="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-timeline-done bg-timeline-done/10 border border-timeline-done/20 rounded-pill">Professor Mode</span>
+      </div>
+
+      <form id="scheduler-form" class="flex flex-col gap-4">
+        <!-- Subject Input -->
+        <div class="flex flex-col gap-1.5">
+          <label for="class-subject" class="text-xs font-semibold text-body-strong">Subject Title</label>
+          <input type="text" id="class-subject" placeholder="e.g. Advanced Operating Systems" required class="w-full px-3 py-2 bg-canvas-soft border border-hairline rounded-md text-sm text-ink focus:outline-none focus:border-primary transition-all duration-200" />
+        </div>
+
+        <!-- Room / Link Input -->
+        <div class="flex flex-col gap-1.5">
+          <label for="class-room" class="text-xs font-semibold text-body-strong">Lecture Room / Link</label>
+          <input type="text" id="class-room" placeholder="e.g. Hall-C or meet.google.com/abc" required class="w-full px-3 py-2 bg-canvas-soft border border-hairline rounded-md text-sm text-ink focus:outline-none focus:border-primary transition-all duration-200" />
+        </div>
+
+        <!-- Time Settings Grid -->
+        <div class="grid grid-cols-2 gap-3">
+          <div class="flex flex-col gap-1.5">
+            <label for="class-time" class="text-xs font-semibold text-body-strong">Start Time</label>
+            <input type="time" id="class-time" required class="w-full px-3 py-2 bg-canvas-soft border border-hairline rounded-md text-sm text-ink focus:outline-none focus:border-primary transition-all duration-200" />
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label for="class-duration" class="text-xs font-semibold text-body-strong">Duration</label>
+            <select id="class-duration" required class="w-full px-3 py-2 bg-canvas-soft border border-hairline rounded-md text-sm text-ink focus:outline-none focus:border-primary transition-all duration-200">
+              <option value="45">45 Mins</option>
+              <option value="60" selected>1 Hour</option>
+              <option value="90">1.5 Hours</option>
+              <option value="120">2 Hours</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" id="scheduler-submit-btn" class="btn-primary w-full cursor-none mt-2 flex items-center justify-center gap-2">
+          <span>Schedule Class</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+        </button>
+      </form>
+    </div>
+
+    <!-- Timetable Feed List -->
+    <div id="timetable-feed" class="lg:col-span-12 flex flex-col gap-4">
+      <div id="no-classes-alert" class="hidden text-center py-12 border border-dashed border-hairline rounded-lg bg-surface-card/50">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mx-auto text-muted w-8 h-8 mb-2 animate-bounce"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+        <span class="text-sm font-semibold text-ink">No lectures scheduled today</span>
+        <p class="text-xs text-muted mt-1">Check back later or schedule a class as a professor.</p>
+      </div>
+
+      <div id="timetable-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Rendered client-side -->
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Setup Mock Classes
+  // We want to ensure at least one class starts shortly so the countdown is lively!
+  const getUpcomingClassMockTime = (offsetMins: number) => {
+    const d = new Date();
+    d.setMinutes(d.getMinutes() + offsetMins);
+    const hrs = String(d.getHours()).padStart(2, '0');
+    const mins = String(d.getMinutes()).padStart(2, '0');
+    return `${hrs}:${mins}`;
+  };
+
+  const defaultClasses = [
+    {
+      id: "c1",
+      subject: "Interactive UI & Web Aesthetics",
+      professor: "Prof. Evelyn Vance",
+      time: getUpcomingClassMockTime(12), // Starts in 12 minutes!
+      duration: "90", // 1.5 hours
+      room: "Aero-Lab 402 / Meet",
+      link: "https://meet.google.com/vui-aest-hub",
+      timestamp: Date.now()
+    },
+    {
+      id: "c2",
+      subject: "Discrete Mathematics & Graph Structures",
+      professor: "Dr. Arthur Pendelton",
+      time: getUpcomingClassMockTime(95), // Starts in ~1.5 hours
+      duration: "60",
+      room: "Seminar Block B",
+      link: "",
+      timestamp: Date.now()
+    },
+    {
+      id: "c3",
+      subject: "Introductory Machine Learning & NLP",
+      professor: "Dr. Evelyn Vance",
+      time: getUpcomingClassMockTime(-50), // Started 50 minutes ago (Live now!)
+      duration: "60", // Finishes in 10 minutes
+      room: "CSE Lab 3",
+      link: "https://meet.google.com/ml-nlp-lecture",
+      timestamp: Date.now()
+    }
+  ];
+
+  const getClasses = () => {
+    const data = localStorage.getItem('cc-classes');
+    if (!data) {
+      localStorage.setItem('cc-classes', JSON.stringify(defaultClasses));
+      return defaultClasses;
+    }
+    try {
+      return JSON.parse(data);
+    } catch {
+      return defaultClasses;
+    }
+  };
+
+  const saveClasses = (classes: any[]) => {
+    localStorage.setItem('cc-classes', JSON.stringify(classes));
+  };
+
+  // Convert time "HH:MM" to absolute Date object for today
+  const timeToDate = (timeStr: string) => {
+    const [hrs, mins] = timeStr.split(':').map(Number);
+    const d = new Date();
+    d.setHours(hrs, mins, 0, 0);
+    return d;
+  };
+
+  // Live Timer Tracker
+  let timerInterval: any = null;
+
+  const startLiveCountdown = () => {
+    if (timerInterval) clearInterval(timerInterval);
+
+    const tick = () => {
+      const countdownBox = document.getElementById('next-class-countdown-container');
+      const countdownText = document.getElementById('next-class-countdown');
+      const countdownTitle = document.getElementById('next-class-title');
+      if (!countdownText || !countdownTitle || !countdownBox) return;
+
+      const classes = getClasses();
+      const now = new Date();
+
+      // Find classes that are starting in the future today
+      const upcoming = classes
+        .map((c: any) => ({ ...c, startDate: timeToDate(c.time) }))
+        .filter((c: any) => c.startDate > now)
+        .sort((a: any, b: any) => a.startDate.getTime() - b.startDate.getTime());
+
+      if (upcoming.length === 0) {
+        countdownBox.classList.add('hidden');
+        return;
+      }
+
+      countdownBox.classList.remove('hidden');
+      const nextClass = upcoming[0];
+      const diffMs = nextClass.startDate.getTime() - now.getTime();
+
+      // Convert diff to HH:MM:SS
+      const hours = Math.floor(diffMs / (1000 * 60 * 60));
+      const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+      const secs = Math.floor((diffMs % (1000 * 60)) / 1000);
+
+      const formatTime = (h: number, m: number, s: number) => {
+        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      };
+
+      countdownText.textContent = formatTime(hours, mins, secs);
+      countdownTitle.textContent = nextClass.subject;
+    };
+
+    tick();
+    timerInterval = setInterval(tick, 1000);
+  };
+
+  // Render Classes List
+  const renderClasses = () => {
+    const listContainer = document.getElementById('timetable-list-container');
+    const noClassesAlert = document.getElementById('no-classes-alert');
+    if (!listContainer || !noClassesAlert) return;
+
+    const classes = getClasses().sort((a: any, b: any) => {
+      // Sort chronologically by start time
+      const aTime = a.time.split(':').map(Number);
+      const bTime = b.time.split(':').map(Number);
+      return (aTime[0] * 60 + aTime[1]) - (bTime[0] * 60 + bTime[1]);
+    });
+
+    if (classes.length === 0) {
+      noClassesAlert.classList.remove('hidden');
+      listContainer.innerHTML = '';
+      return;
+    } else {
+      noClassesAlert.classList.add('hidden');
+    }
+
+    const now = new Date();
+
+    listContainer.innerHTML = classes.map((c: any) => {
+      const start = timeToDate(c.time);
+      const end = new Date(start.getTime() + Number(c.duration) * 60 * 1000);
+      const isLive = now >= start && now <= end;
+      const isPast = now > end;
+
+      // Status markers
+      let statusBadge = '';
+      let cardBorder = 'border-hairline';
+      let accentLight = '';
+      
+      if (isLive) {
+        statusBadge = `
+          <span class="flex items-center gap-1.5 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-semantic-error bg-semantic-error/10 border border-semantic-error/30 rounded-pill animate-pulse">
+            <span class="h-1.5 w-1.5 rounded-full bg-semantic-error"></span> Live Now
+          </span>
+        `;
+        cardBorder = 'border-semantic-error/60 shadow-sm';
+        accentLight = 'bg-semantic-error/5';
+      } else if (isPast) {
+        statusBadge = `<span class="px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-muted bg-surface-strong/40 border border-hairline rounded-pill">Completed</span>`;
+        cardBorder = 'border-hairline opacity-60';
+        accentLight = 'bg-canvas-soft';
+      } else {
+        statusBadge = `<span class="px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-timeline-read bg-timeline-read/10 border border-timeline-read/30 rounded-pill">Upcoming</span>`;
+        accentLight = 'bg-canvas-soft/40';
+      }
+
+      const joinBtn = (isLive && c.link) 
+        ? `
+          <a href="${c.link}" target="_blank" class="btn-primary w-full text-xs font-semibold py-1.5 cursor-none flex items-center justify-center gap-1.5 mt-2 bg-semantic-error hover:bg-semantic-error/90 animate-bounce">
+            <span>Join Live Lecture</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+          </a>
+        `
+        : '';
+
+      return `
+        <div class="class-card bg-surface-card border ${cardBorder} rounded-lg p-5 flex flex-col gap-4 hover-interactive cursor-none transition-all duration-300 ${isLive ? 'animate-pulse-glow' : 'hover:-translate-y-1 hover:border-hairline-strong'}" style="transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s;">
+          <div class="flex items-center justify-between border-b border-hairline pb-2.5">
+            <span class="font-mono text-sm font-semibold text-ink">${c.time} <span class="text-xs text-muted font-normal">(${c.duration} mins)</span></span>
+            ${statusBadge}
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <h4 class="title-sm text-ink line-clamp-1">${c.subject}</h4>
+            <span class="text-xs text-body">${c.professor}</span>
+          </div>
+
+          <div class="flex items-center justify-between mt-auto gap-2 bg-canvas-soft border border-hairline-soft px-3 py-2 rounded-md ${accentLight}">
+            <div class="flex items-center gap-1.5 text-xs text-muted min-w-0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3.5 h-3.5 flex-shrink-0 text-muted"><path d="m2 22 1-1h3l9-9"/><path d="M19 17v4h2v-4h-2z"/><path d="M8 8H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/><path d="M16 11h3a2 2 0 0 1 2 2v5h-5V11z"/><path d="M12 2a3 3 0 0 0-3 3v2h6V5a3 3 0 0 0-3-3z"/></svg>
+              <span class="truncate">${c.room || 'Remote'}</span>
+            </div>
+            ${c.link ? '<span class="text-[10px] font-bold uppercase text-primary tracking-wider">Meet Link</span>' : ''}
+          </div>
+          ${joinBtn}
+        </div>
+      `;
+    }).join('');
+  };
+
+  // Schedule New Class Action
+  const setupSchedulerForm = () => {
+    const form = document.getElementById('scheduler-form') as HTMLFormElement;
+    if (!form) return;
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const subjectInput = document.getElementById('class-subject') as HTMLInputElement;
+      const roomInput = document.getElementById('class-room') as HTMLInputElement;
+      const timeInput = document.getElementById('class-time') as HTMLInputElement;
+      const durationSelect = document.getElementById('class-duration') as HTMLSelectElement;
+      const submitBtn = document.getElementById('scheduler-submit-btn');
+
+      if (!subjectInput || !roomInput || !timeInput || !durationSelect) return;
+
+      const subject = subjectInput.value.trim();
+      const room = roomInput.value.trim();
+      const time = timeInput.value;
+      const duration = durationSelect.value;
+
+      if (!subject || !room || !time) return;
+
+      // Class Link detection if link-like format is input
+      let link = '';
+      if (room.includes('meet.google.com') || room.includes('http://') || room.includes('https://') || room.includes('zoom.us')) {
+        link = room.startsWith('http') ? room : `https://${room}`;
+      }
+
+      const newClass = {
+        id: Math.random().toString(36).substr(2, 9),
+        subject,
+        professor: "Prof. Evelyn Vance",
+        time,
+        duration,
+        room: link ? 'Virtual / Link' : room,
+        link,
+        timestamp: Date.now()
+      };
+
+      const classes = getClasses();
+      classes.push(newClass);
+      saveClasses(classes);
+
+      form.reset();
+
+      // Success feedback
+      if (submitBtn) {
+        const origHtml = submitBtn.innerHTML;
+        submitBtn.innerHTML = `<span>Scheduled!</span> <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5 text-semantic-success"><path d="M20 6 9 17l-5-5"/></svg>`;
+        submitBtn.classList.remove('btn-primary');
+        submitBtn.style.backgroundColor = 'var(--color-semantic-success)';
+        submitBtn.style.color = '#ffffff';
+
+        setTimeout(() => {
+          submitBtn.innerHTML = origHtml;
+          submitBtn.style.backgroundColor = '';
+          submitBtn.style.color = '';
+          submitBtn.classList.add('btn-primary');
+        }, 1500);
+      }
+
+      renderClasses();
+      startLiveCountdown();
+
+      window.dispatchEvent(new CustomEvent('cc-classes-changed'));
+    });
+  };
+
+  // Toggle layout based on active role
+  const handleRoleView = (role: 'student' | 'professor') => {
+    const profPanel = document.getElementById('scheduler-professor-panel');
+    const feed = document.getElementById('timetable-feed');
+    if (!profPanel || !feed) return;
+
+    if (role === 'professor') {
+      profPanel.classList.remove('hidden');
+      feed.classList.remove('lg:col-span-12');
+      feed.classList.add('lg:col-span-8');
+    } else {
+      profPanel.classList.add('hidden');
+      feed.classList.remove('lg:col-span-8');
+      feed.classList.add('lg:col-span-12');
+    }
+
+    renderClasses();
+  };
+
+  // Initialize
+  const initScheduler = () => {
+    const root = document.getElementById('class-scheduler-root');
+    if (!root) return;
+
+    renderClasses();
+    setupSchedulerForm();
+    startLiveCountdown();
+
+    const currentRole = (localStorage.getItem('cc-active-role') || 'student') as 'student' | 'professor';
+    handleRoleView(currentRole);
+
+    setTimeout(() => {
+      root.style.opacity = '1';
+      root.style.transform = 'translateY(0)';
+    }, 100);
+  };
+
+  // Listeners
+  window.addEventListener('cc-role-changed', (e: any) => {
+    if (e.detail && e.detail.role) {
+      handleRoleView(e.detail.role);
+    }
+  });
+
+  window.addEventListener('cc-classes-changed', () => {
+    renderClasses();
+    startLiveCountdown();
+  });
+
+  window.addEventListener('load', initScheduler);
+  
+  // Custom SPA mount trigger
+  window.addEventListener('cc-tab-active-classes', initScheduler);
+</script>

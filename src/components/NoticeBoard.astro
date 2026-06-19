@@ -1,0 +1,392 @@
+---
+// Notice Board Component
+---
+
+<div id="notice-board-root" class="w-full flex-1 flex flex-col gap-6 select-none opacity-0 translate-y-4 transition-all duration-500">
+  
+  <!-- Subheader -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-hairline pb-6">
+    <div>
+      <h2 class="display-md text-ink">University Notice Board</h2>
+      <p class="body-sm text-muted">Official announcements, event schedules, and academic alerts.</p>
+    </div>
+    
+    <!-- Category Filter Controls (Student View / Global view) -->
+    <div class="flex flex-wrap gap-2 items-center" id="notice-filters">
+      <button data-filter="all" class="px-3.5 py-1.5 text-xs font-semibold rounded-pill bg-ink text-canvas border border-ink hover-interactive cursor-none transition-all duration-300">All</button>
+      <button data-filter="exam" class="px-3.5 py-1.5 text-xs font-semibold rounded-pill bg-surface-card text-ink border border-hairline hover-interactive cursor-none hover:border-timeline-thinking transition-all duration-300">Exams</button>
+      <button data-filter="announcement" class="px-3.5 py-1.5 text-xs font-semibold rounded-pill bg-surface-card text-ink border border-hairline hover-interactive cursor-none hover:border-timeline-grep transition-all duration-300">Announcements</button>
+      <button data-filter="event" class="px-3.5 py-1.5 text-xs font-semibold rounded-pill bg-surface-card text-ink border border-hairline hover-interactive cursor-none hover:border-timeline-edit transition-all duration-300">Events</button>
+      <button data-filter="academic" class="px-3.5 py-1.5 text-xs font-semibold rounded-pill bg-surface-card text-ink border border-hairline hover-interactive cursor-none hover:border-timeline-read transition-all duration-300">Academics</button>
+    </div>
+  </div>
+
+  <!-- Content Split: Creation form + Board (Professors) or Board Only (Students) -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+    
+    <!-- Professor Input panel (Occupies 4 cols on lg screens when visible) -->
+    <div id="notice-professor-panel" class="lg:col-span-4 bg-surface-card border border-hairline rounded-lg p-6 flex flex-col gap-4 hidden animated-mount">
+      <div class="flex items-center justify-between border-b border-hairline pb-3">
+        <h3 class="title-md text-ink">Publish Notice</h3>
+        <span class="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-timeline-done bg-timeline-done/10 border border-timeline-done/20 rounded-pill">Authorized</span>
+      </div>
+      
+      <form id="notice-form" class="flex flex-col gap-4">
+        <!-- Title Input -->
+        <div class="flex flex-col gap-1.5">
+          <label for="notice-title" class="text-xs font-semibold text-body-strong">Notice Title</label>
+          <input type="text" id="notice-title" placeholder="e.g. Midterm Exams Schedule" required class="w-full px-3 py-2 bg-canvas-soft border border-hairline rounded-md text-sm text-ink focus:outline-none focus:border-primary transition-all duration-200" />
+        </div>
+        
+        <!-- Category Selector -->
+        <div class="flex flex-col gap-1.5">
+          <label for="notice-category" class="text-xs font-semibold text-body-strong">Category</label>
+          <select id="notice-category" required class="w-full px-3 py-2 bg-canvas-soft border border-hairline rounded-md text-sm text-ink focus:outline-none focus:border-primary transition-all duration-200">
+            <option value="exam">🎓 Exams</option>
+            <option value="announcement">📢 Announcements</option>
+            <option value="event">🎉 Events</option>
+            <option value="academic">📚 Academics</option>
+          </select>
+        </div>
+
+        <!-- Content Area -->
+        <div class="flex flex-col gap-1.5">
+          <label for="notice-content" class="text-xs font-semibold text-body-strong">Content Description</label>
+          <textarea id="notice-content" rows="4" placeholder="Type notice description here..." required class="w-full px-3 py-2 bg-canvas-soft border border-hairline rounded-md text-sm text-ink focus:outline-none focus:border-primary transition-all duration-200 resize-none"></textarea>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" id="notice-submit-btn" class="btn-primary w-full cursor-none mt-2 flex items-center justify-center gap-2">
+          <span>Publish Notice</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><path d="m5 12 17-7-7 17-4-6-6-4Z"/></svg>
+        </button>
+      </form>
+    </div>
+
+    <!-- Notices Feed List (Occupies remaining columns) -->
+    <div id="notice-board-feed" class="lg:col-span-12 flex flex-col gap-4">
+      <div id="no-notices-alert" class="hidden text-center py-12 border border-dashed border-hairline rounded-lg bg-surface-card/50">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mx-auto text-muted w-8 h-8 mb-2 animate-bounce"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        <span class="text-sm font-semibold text-ink">No notices found</span>
+        <p class="text-xs text-muted mt-1">Select another filter category or publish a notice to start.</p>
+      </div>
+
+      <div id="notice-list-container" class="flex flex-col gap-4">
+        <!-- Rendered client-side -->
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Mock Default Notices
+  const defaultNotices = [
+    {
+      id: "1",
+      title: "End-Semester Examinations Schedule - Fall 2026",
+      category: "exam",
+      author: "Prof. Evelyn Vance",
+      date: "June 19, 2026",
+      content: "The end-semester exam schedule has been updated. Examinations will begin on July 5, 2026. Please check your student portal for your personalized exam seating arrangement and hall tickets. Ensure that you clear all library dues by next Friday.",
+      timestamp: Date.now() - 1000 * 60 * 60 * 4 // 4 hours ago
+    },
+    {
+      id: "2",
+      title: "Annual Hackathon 'CodeShift 2026' Registrations Open",
+      category: "event",
+      author: "Dept. of Computer Science",
+      date: "June 18, 2026",
+      content: "Get ready to solve real-world problems! CodeShift 2026 registrations are open until June 25. Prize pools exceed $10,000, and internships are up for grabs. Teams must consist of 3-4 students. The opening ceremony takes place in the Seminar Hall.",
+      timestamp: Date.now() - 1000 * 60 * 60 * 24 // 1 day ago
+    },
+    {
+      id: "3",
+      title: "Mandatory Academic Advisory Meetings",
+      category: "academic",
+      author: "Office of the Dean",
+      date: "June 17, 2026",
+      content: "All sophomore and junior students must schedule an academic advising session with their respective supervisors before selecting elective modules for the upcoming Spring semester. Slots can be booked on the department notice board.",
+      timestamp: Date.now() - 1000 * 60 * 60 * 48 // 2 days ago
+    },
+    {
+      id: "4",
+      title: "Campus Library Timing Extensions",
+      category: "announcement",
+      author: "Chief Librarian",
+      date: "June 16, 2026",
+      content: "To support students preparing for upcoming examinations, the Central Library will remain open 24/7 starting Monday, June 22. Silent zones will be strictly enforced, and coffee stations will be operational between 10 PM and 6 AM.",
+      timestamp: Date.now() - 1000 * 60 * 60 * 72 // 3 days ago
+    }
+  ];
+
+  // Colors & badges helper mapping
+  const categoryMeta: Record<string, { label: string, colorClass: string, bgClass: string, borderClass: string }> = {
+    exam: { label: 'Exam', colorClass: 'text-timeline-thinking', bgClass: 'bg-timeline-thinking/10', borderClass: 'border-timeline-thinking/30' },
+    announcement: { label: 'Announcement', colorClass: 'text-timeline-grep', bgClass: 'bg-timeline-grep/10', borderClass: 'border-timeline-grep/30' },
+    event: { label: 'Event', colorClass: 'text-timeline-edit', bgClass: 'bg-timeline-edit/10', borderClass: 'border-timeline-edit/30' },
+    academic: { label: 'Academic', colorClass: 'text-timeline-read', bgClass: 'bg-timeline-read/10', borderClass: 'border-timeline-read/30' }
+  };
+
+  let activeFilter = 'all';
+
+  // Load from local storage or set defaults
+  const getNotices = () => {
+    const data = localStorage.getItem('cc-notices');
+    if (!data) {
+      localStorage.setItem('cc-notices', JSON.stringify(defaultNotices));
+      return defaultNotices;
+    }
+    try {
+      return JSON.parse(data);
+    } catch {
+      return defaultNotices;
+    }
+  };
+
+  const saveNotices = (notices: any[]) => {
+    localStorage.setItem('cc-notices', JSON.stringify(notices));
+  };
+
+  // Render Notices List
+  const renderNotices = () => {
+    const listContainer = document.getElementById('notice-list-container');
+    const noNoticesAlert = document.getElementById('no-notices-alert');
+    if (!listContainer || !noNoticesAlert) return;
+
+    const notices = getNotices().sort((a: any, b: any) => b.timestamp - a.timestamp);
+    const filtered = notices.filter((n: any) => activeFilter === 'all' || n.category === activeFilter);
+
+    if (filtered.length === 0) {
+      noNoticesAlert.classList.remove('hidden');
+      listContainer.innerHTML = '';
+      return;
+    } else {
+      noNoticesAlert.classList.add('hidden');
+    }
+
+    listContainer.innerHTML = filtered.map((notice: any) => {
+      const meta = categoryMeta[notice.category] || { label: 'Notice', colorClass: 'text-muted', bgClass: 'bg-surface-strong/30', borderClass: 'border-hairline' };
+      
+      return `
+        <div class="notice-card bg-surface-card border border-hairline rounded-lg p-5 flex flex-col gap-3 transition-all duration-300 hover:border-hairline-strong hover:-translate-y-1 hover:shadow-md cursor-none overflow-hidden" data-category="${notice.category}" data-id="${notice.id}">
+          <div class="flex items-center justify-between flex-wrap gap-2 pointer-events-none">
+            <!-- Badge & Info -->
+            <div class="flex items-center gap-2">
+              <span class="px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${meta.colorClass} ${meta.bgClass} border ${meta.borderClass} rounded-pill">
+                ${meta.label}
+              </span>
+              <span class="text-xs text-muted">${notice.date}</span>
+            </div>
+            <!-- Author -->
+            <span class="text-xs font-semibold text-body-strong">${notice.author}</span>
+          </div>
+
+          <!-- Title -->
+          <div class="flex items-center justify-between pointer-events-none">
+            <h4 class="title-sm text-ink pr-6 transition-colors duration-200 notice-title-text">${notice.title}</h4>
+            <!-- Expand Arrow Icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-muted flex-shrink-0 transform transition-transform duration-300 notice-arrow"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+
+          <!-- Collapsible Content -->
+          <div class="notice-body-wrapper max-h-0 opacity-0 pointer-events-none transition-all duration-300 ease-in-out border-t border-transparent pt-0 mt-0">
+            <p class="body-sm text-body py-2 leading-relaxed whitespace-pre-line">${notice.content}</p>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Attach click triggers for expansion
+    const cards = listContainer.querySelectorAll('.notice-card');
+    cards.forEach((card: any) => {
+      card.addEventListener('click', (e: MouseEvent) => {
+        const bodyWrapper = card.querySelector('.notice-body-wrapper');
+        const arrow = card.querySelector('.notice-arrow');
+        const titleText = card.querySelector('.notice-title-text');
+        
+        if (bodyWrapper && arrow) {
+          const isCollapsed = bodyWrapper.classList.contains('pointer-events-none');
+          
+          if (isCollapsed) {
+            // Expand
+            bodyWrapper.classList.remove('pointer-events-none', 'opacity-0');
+            bodyWrapper.classList.add('opacity-100', 'border-hairline', 'pt-3', 'mt-1');
+            bodyWrapper.style.maxHeight = '300px';
+            arrow.style.transform = 'rotate(180deg)';
+            titleText.classList.add('text-primary');
+          } else {
+            // Collapse
+            bodyWrapper.classList.add('pointer-events-none', 'opacity-0');
+            bodyWrapper.classList.remove('opacity-100', 'border-hairline', 'pt-3', 'mt-1');
+            bodyWrapper.style.maxHeight = '0px';
+            arrow.style.transform = 'rotate(0deg)';
+            titleText.classList.remove('text-primary');
+          }
+        }
+      });
+    });
+  };
+
+  // Setup Form Handler for publishing
+  const setupForm = () => {
+    const form = document.getElementById('notice-form') as HTMLFormElement;
+    if (!form) return;
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const titleInput = document.getElementById('notice-title') as HTMLInputElement;
+      const categorySelect = document.getElementById('notice-category') as HTMLSelectElement;
+      const contentText = document.getElementById('notice-content') as HTMLTextAreaElement;
+      const submitBtn = document.getElementById('notice-submit-btn');
+
+      if (!titleInput || !categorySelect || !contentText) return;
+
+      const title = titleInput.value.trim();
+      const category = categorySelect.value;
+      const content = contentText.value.trim();
+
+      if (!title || !content) return;
+
+      // Add to list
+      const notices = getNotices();
+      const dateOptions: Intl.DateTimeFormatOptions = { month: 'long', day: 'numeric', year: 'numeric' };
+      const formattedDate = new Date().toLocaleDateString('en-US', dateOptions);
+
+      const newNotice = {
+        id: Math.random().toString(36).substr(2, 9),
+        title,
+        category,
+        author: "Prof. Evelyn Vance",
+        date: formattedDate,
+        content,
+        timestamp: Date.now()
+      };
+
+      notices.push(newNotice);
+      saveNotices(notices);
+
+      // Reset form
+      form.reset();
+
+      // Show success animation on button
+      if (submitBtn) {
+        const origHtml = submitBtn.innerHTML;
+        submitBtn.innerHTML = `<span>Published!</span> <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5 text-semantic-success"><path d="M20 6 9 17l-5-5"/></svg>`;
+        submitBtn.classList.remove('btn-primary');
+        submitBtn.style.backgroundColor = 'var(--color-semantic-success)';
+        submitBtn.style.color = '#ffffff';
+        
+        setTimeout(() => {
+          submitBtn.innerHTML = origHtml;
+          submitBtn.style.backgroundColor = '';
+          submitBtn.style.color = '';
+          submitBtn.classList.add('btn-primary');
+        }, 1500);
+      }
+
+      // Re-render
+      renderNotices();
+
+      // Dispatch global custom event so other components (Student feeds) are notified
+      window.dispatchEvent(new CustomEvent('cc-notices-changed'));
+    });
+  };
+
+  // Setup filters click triggers
+  const setupFilters = () => {
+    const filtersContainer = document.getElementById('notice-filters');
+    if (!filtersContainer) return;
+
+    const filterBtns = filtersContainer.querySelectorAll('button');
+    filterBtns.forEach((btn: any) => {
+      btn.addEventListener('click', () => {
+        const filterVal = btn.getAttribute('data-filter');
+        if (!filterVal) return;
+
+        activeFilter = filterVal;
+        
+        // Update button visual styles
+        filterBtns.forEach((b: any) => {
+          b.classList.remove('bg-ink', 'text-canvas', 'border-ink');
+          b.classList.add('bg-surface-card', 'text-ink', 'border-hairline');
+        });
+
+        btn.classList.remove('bg-surface-card', 'text-ink', 'border-hairline');
+        btn.classList.add('bg-ink', 'text-canvas', 'border-ink');
+
+        // Re-render with fade transition
+        const feed = document.getElementById('notice-list-container');
+        if (feed) {
+          feed.style.opacity = '0';
+          feed.style.transform = 'translateY(10px)';
+          setTimeout(() => {
+            renderNotices();
+            feed.style.opacity = '1';
+            feed.style.transform = 'translateY(0)';
+          }, 200);
+        }
+      });
+    });
+  };
+
+  // Toggle Visibility between Student / Professor dashboards
+  const handleRoleView = (role: 'student' | 'professor') => {
+    const profPanel = document.getElementById('notice-professor-panel');
+    const feed = document.getElementById('notice-board-feed');
+    const root = document.getElementById('notice-board-root');
+
+    if (!profPanel || !feed || !root) return;
+
+    if (role === 'professor') {
+      profPanel.classList.remove('hidden');
+      feed.classList.remove('lg:col-span-12');
+      feed.classList.add('lg:col-span-8');
+    } else {
+      profPanel.classList.add('hidden');
+      feed.classList.remove('lg:col-span-8');
+      feed.classList.add('lg:col-span-12');
+    }
+
+    // Refresh list layout
+    renderNotices();
+  };
+
+  // Initialize
+  const initNoticeBoard = () => {
+    const root = document.getElementById('notice-board-root');
+    if (!root) return;
+
+    renderNotices();
+    setupForm();
+    setupFilters();
+
+    // Check current active role
+    const currentRole = (localStorage.getItem('cc-active-role') || 'student') as 'student' | 'professor';
+    handleRoleView(currentRole);
+
+    // Fade in board root
+    setTimeout(() => {
+      root.style.opacity = '1';
+      root.style.transform = 'translateY(0)';
+    }, 100);
+  };
+
+  // Listeners
+  window.addEventListener('cc-role-changed', (e: any) => {
+    if (e.detail && e.detail.role) {
+      handleRoleView(e.detail.role);
+    }
+  });
+
+  window.addEventListener('cc-notices-changed', () => {
+    renderNotices();
+  });
+
+  // Watch for module mount triggers (if SPA)
+  window.addEventListener('load', initNoticeBoard);
+  
+  // Custom SPA mount trigger
+  window.addEventListener('cc-tab-active-notices', initNoticeBoard);
+</script>
