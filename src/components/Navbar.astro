@@ -4,7 +4,7 @@
 
 <header class="sticky top-0 z-50 w-full h-16 bg-canvas/80 backdrop-blur-md border-b border-hairline px-6 md:px-12 flex items-center justify-between select-none">
   <!-- Brand logo -->
-  <div class="flex items-center gap-2 cursor-none" id="nav-brand">
+  <div class="flex items-center gap-2" id="nav-brand">
     <div class="w-8 h-8 rounded-md bg-primary flex items-center justify-center text-on-primary font-bold text-lg shadow-sm transform hover:rotate-12 transition-transform duration-300">
       C
     </div>
@@ -18,10 +18,10 @@
     <!-- Active sliding background bubble -->
     <div id="nav-indicator" class="absolute top-1 bottom-1 left-0 bg-ink rounded-pill transition-all duration-300 ease-out"></div>
     
-    <button id="nav-btn-student" class="relative z-10 w-1/2 text-center text-[11px] font-semibold uppercase tracking-wider text-canvas py-1.5 transition-colors duration-300 focus:outline-none cursor-none">
+    <button id="nav-btn-student" class="relative z-10 w-1/2 text-center text-[11px] font-semibold uppercase tracking-wider text-canvas py-1.5 transition-colors duration-300 focus:outline-none">
       Student
     </button>
-    <button id="nav-btn-professor" class="relative z-10 w-1/2 text-center text-[11px] font-semibold uppercase tracking-wider text-muted py-1.5 transition-colors duration-300 focus:outline-none cursor-none">
+    <button id="nav-btn-professor" class="relative z-10 w-1/2 text-center text-[11px] font-semibold uppercase tracking-wider text-muted py-1.5 transition-colors duration-300 focus:outline-none">
       Professor
     </button>
   </div>
@@ -29,7 +29,7 @@
   <!-- Animated User Badge -->
   <div class="flex items-center gap-3">
     <!-- Dark Mode Toggle -->
-    <button id="theme-toggle" class="w-9 h-9 rounded-md bg-surface-card border border-hairline flex items-center justify-center text-muted hover:text-ink hover:border-hairline-strong transition-all duration-300 cursor-none" aria-label="Toggle dark mode">
+    <button id="theme-toggle" class="w-9 h-9 rounded-md bg-surface-card border border-hairline flex items-center justify-center text-muted hover:text-ink hover:border-hairline-strong transition-all duration-300" aria-label="Toggle dark mode">
       <svg id="icon-sun" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
       <svg id="icon-moon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
     </button>

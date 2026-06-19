@@ -195,13 +195,11 @@
     font-family: var(--font-sans);
     margin: 0;
     overflow-x: hidden;
-    cursor: none; /* Hide default cursor to enable custom animated cursor */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   input, select, textarea {
-    cursor: none; /* Keep custom cursor on forms */
   }
 
   /* Custom Scrollbar to fit editorial theme */
@@ -369,22 +367,8 @@
   box-shadow: 0 10px 30px -10px rgba(38, 37, 30, 0.06);
 }
 
-/* Custom 3D Tilt Card effect */
 .tilt-card-container {
   perspective: 1000px;
-}
-
-/* Custom classes for the magnetic pointer tracking */
-.cursor-hover-active {
-  transform: scale(2.2);
-  background-color: rgba(245, 78, 0, 0.08) !important;
-  border-color: var(--color-primary) !important;
-}
-
-.cursor-click-active {
-  transform: scale(1.6);
-  background-color: var(--color-primary-active) !important;
-  border-color: var(--color-primary-active) !important;
 }
 
 /* CSS-first Starting Style for smooth mounting animations (Tailwind v4 supported) */

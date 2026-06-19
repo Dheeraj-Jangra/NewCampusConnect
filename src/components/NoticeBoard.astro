@@ -13,11 +13,11 @@
     
     <!-- Category Filter Controls (Student View / Global view) -->
     <div class="flex flex-wrap gap-2 items-center" id="notice-filters">
-      <button data-filter="all" class="px-3.5 py-1.5 text-xs font-semibold rounded-pill bg-ink text-canvas border border-ink hover-interactive cursor-none transition-all duration-300">All</button>
-      <button data-filter="exam" class="px-3.5 py-1.5 text-xs font-semibold rounded-pill bg-surface-card text-ink border border-hairline hover-interactive cursor-none hover:border-timeline-thinking transition-all duration-300">Exams</button>
-      <button data-filter="announcement" class="px-3.5 py-1.5 text-xs font-semibold rounded-pill bg-surface-card text-ink border border-hairline hover-interactive cursor-none hover:border-timeline-grep transition-all duration-300">Announcements</button>
-      <button data-filter="event" class="px-3.5 py-1.5 text-xs font-semibold rounded-pill bg-surface-card text-ink border border-hairline hover-interactive cursor-none hover:border-timeline-edit transition-all duration-300">Events</button>
-      <button data-filter="academic" class="px-3.5 py-1.5 text-xs font-semibold rounded-pill bg-surface-card text-ink border border-hairline hover-interactive cursor-none hover:border-timeline-read transition-all duration-300">Academics</button>
+      <button data-filter="all" class="px-3.5 py-1.5 text-xs font-semibold rounded-pill bg-ink text-canvas border border-ink transition-all duration-300">All</button>
+      <button data-filter="exam" class="px-3.5 py-1.5 text-xs font-semibold rounded-pill bg-surface-card text-ink border border-hairline hover:border-timeline-thinking transition-all duration-300">Exams</button>
+      <button data-filter="announcement" class="px-3.5 py-1.5 text-xs font-semibold rounded-pill bg-surface-card text-ink border border-hairline hover:border-timeline-grep transition-all duration-300">Announcements</button>
+      <button data-filter="event" class="px-3.5 py-1.5 text-xs font-semibold rounded-pill bg-surface-card text-ink border border-hairline hover:border-timeline-edit transition-all duration-300">Events</button>
+      <button data-filter="academic" class="px-3.5 py-1.5 text-xs font-semibold rounded-pill bg-surface-card text-ink border border-hairline hover:border-timeline-read transition-all duration-300">Academics</button>
     </div>
   </div>
 
@@ -56,7 +56,7 @@
         </div>
 
         <!-- Submit Button -->
-        <button type="submit" id="notice-submit-btn" class="btn-primary w-full cursor-none mt-2 flex items-center justify-center gap-2">
+        <button type="submit" id="notice-submit-btn" class="btn-primary w-full mt-2 flex items-center justify-center gap-2">
           <span>Publish Notice</span>
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><path d="m5 12 17-7-7 17-4-6-6-4Z"/></svg>
         </button>
@@ -169,7 +169,7 @@
       const meta = categoryMeta[notice.category] || { label: 'Notice', colorClass: 'text-muted', bgClass: 'bg-surface-strong/30', borderClass: 'border-hairline' };
       
       return `
-        <div class="notice-card bg-surface-card border border-hairline rounded-lg p-5 flex flex-col gap-3 transition-all duration-300 hover:border-hairline-strong hover:-translate-y-1 hover:shadow-md cursor-none overflow-hidden" data-category="${notice.category}" data-id="${notice.id}">
+        <div class="notice-card bg-surface-card border border-hairline rounded-lg p-5 flex flex-col gap-3 transition-all duration-300 hover:border-hairline-strong hover:-translate-y-1 hover:shadow-md overflow-hidden" data-category="${notice.category}" data-id="${notice.id}">
           <div class="flex items-center justify-between flex-wrap gap-2 pointer-events-none">
             <!-- Badge & Info -->
             <div class="flex items-center gap-2">

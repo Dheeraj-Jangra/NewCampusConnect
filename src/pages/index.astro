@@ -39,7 +39,7 @@ import CommunityChat from '../components/CommunityChat.astro';
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-3xl mt-2 select-none">
         
         <!-- Student Entry Portal Card -->
-        <div id="portal-student" class="card-editorial flex flex-col items-start gap-4 p-8 hover-interactive group">
+        <div id="portal-student" class="card-editorial flex flex-col items-start gap-4 p-8 group">
           <div class="w-10 h-10 rounded-full bg-timeline-read/10 border border-timeline-read/30 text-timeline-read flex items-center justify-center group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
           </div>
@@ -47,14 +47,14 @@ import CommunityChat from '../components/CommunityChat.astro';
             <h3 class="title-md text-ink group-hover:text-primary transition-colors">Student Portal</h3>
             <p class="body-sm text-body mt-2 leading-relaxed">Access exam dates, live lectures countdown, retrieve notes, and join peer discussions in community chat channels.</p>
           </div>
-          <button class="btn-secondary w-full cursor-none mt-4 justify-between group-hover:border-primary group-hover:bg-primary group-hover:text-on-primary">
+          <button class="btn-secondary w-full mt-4 justify-between group-hover:border-primary group-hover:bg-primary group-hover:text-on-primary">
             <span>Enter Dashboard</span>
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5 transition-transform group-hover:translate-x-1"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
           </button>
         </div>
 
         <!-- Professor Entry Portal Card -->
-        <div id="portal-professor" class="card-editorial flex flex-col items-start gap-4 p-8 hover-interactive group">
+        <div id="portal-professor" class="card-editorial flex flex-col items-start gap-4 p-8 group">
           <div class="w-10 h-10 rounded-full bg-timeline-thinking/10 border border-timeline-thinking/30 text-timeline-thinking flex items-center justify-center group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/></svg>
           </div>
@@ -62,7 +62,7 @@ import CommunityChat from '../components/CommunityChat.astro';
             <h3 class="title-md text-ink group-hover:text-primary transition-colors">Professor Portal</h3>
             <p class="body-sm text-body mt-2 leading-relaxed">Publish formal administrative notices, schedule live classroom meetings, share research documents, and answer student Q&As.</p>
           </div>
-          <button class="btn-secondary w-full cursor-none mt-4 justify-between group-hover:border-primary group-hover:bg-primary group-hover:text-on-primary">
+          <button class="btn-secondary w-full mt-4 justify-between group-hover:border-primary group-hover:bg-primary group-hover:text-on-primary">
             <span>Faculty Management</span>
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5 transition-transform group-hover:translate-x-1"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
           </button>
@@ -84,16 +84,16 @@ import CommunityChat from '../components/CommunityChat.astro';
           <!-- Active sliding bubble indicator -->
           <div id="tab-indicator" class="absolute top-1.5 bottom-1.5 left-0 bg-primary rounded-md transition-all duration-300 ease-out"></div>
           
-          <button data-tab="notices" class="tab-trigger relative z-10 w-1/4 text-center py-2.5 text-xs font-bold uppercase tracking-wider text-on-primary cursor-none focus:outline-none transition-colors duration-200">
+          <button data-tab="notices" class="tab-trigger relative z-10 w-1/4 text-center py-2.5 text-xs font-bold uppercase tracking-wider text-on-primary focus:outline-none transition-colors duration-200">
             Notices
           </button>
-          <button data-tab="classes" class="tab-trigger relative z-10 w-1/4 text-center py-2.5 text-xs font-bold uppercase tracking-wider text-ink cursor-none focus:outline-none transition-colors duration-200">
+          <button data-tab="classes" class="tab-trigger relative z-10 w-1/4 text-center py-2.5 text-xs font-bold uppercase tracking-wider text-ink focus:outline-none transition-colors duration-200">
             Classes
           </button>
-          <button data-tab="materials" class="tab-trigger relative z-10 w-1/4 text-center py-2.5 text-xs font-bold uppercase tracking-wider text-ink cursor-none focus:outline-none transition-colors duration-200">
+          <button data-tab="materials" class="tab-trigger relative z-10 w-1/4 text-center py-2.5 text-xs font-bold uppercase tracking-wider text-ink focus:outline-none transition-colors duration-200">
             Resources
           </button>
-          <button data-tab="chat" class="tab-trigger relative z-10 w-1/4 text-center py-2.5 text-xs font-bold uppercase tracking-wider text-ink cursor-none focus:outline-none transition-colors duration-200">
+          <button data-tab="chat" class="tab-trigger relative z-10 w-1/4 text-center py-2.5 text-xs font-bold uppercase tracking-wider text-ink focus:outline-none transition-colors duration-200">
             Chat
           </button>
         </div>

@@ -1,6 +1,5 @@
 ---
 import '../styles/global.css';
-import CustomCursor from '../components/CustomCursor.astro';
 import BackgroundGrid from '../components/BackgroundGrid.astro';
 
 interface Props {
@@ -35,9 +34,6 @@ const {
 	<body class="min-h-full flex flex-col relative z-0 selection:bg-primary/20 selection:text-ink">
 		<!-- Dynamic Backdrops -->
 		<BackgroundGrid />
-		
-		<!-- Custom Interactive Cursor -->
-		<CustomCursor />
 		
 		<!-- Page Content Slot -->
 		<div class="relative z-10 flex-1 flex flex-col">
