@@ -14,6 +14,7 @@ import materialsRouter from './routes/materials.js';
 import chatRouter from './routes/chat.js';
 import authRouter from './routes/auth.js';
 import adminRouter from './routes/admin.js';
+import searchRouter from './routes/search.js';
 import prisma from './lib/prisma.js';
 
 dotenv.config();
@@ -42,6 +43,7 @@ app.use('/api/notices', noticesRouter);
 app.use('/api/classes', classesRouter);
 app.use('/api/materials', materialsRouter);
 app.use('/api/chat', chatRouter);
+app.use('/api/search', searchRouter);
 
 // Basic health check
 app.get('/api/health', (req, res) => {
@@ -214,19 +216,7 @@ async function seedDatabaseIfEmpty() {
       });
     }
 
-    const msgCount = await prisma.chatMessage.count();
-    if (msgCount === 0) {
-      console.log('Seeding default chat messages...');
-      await prisma.chatMessage.createMany({
-        data: [
-          { channel: "general", sender: "Alex Mercer", role: "student", avatarBg: "bg-timeline-read", content: "Hey everyone! Has anyone checked the exam schedule posted on the notice board?", time: "2:10 PM" },
-          { channel: "general", sender: "Sarah Jenkins", role: "student", avatarBg: "bg-timeline-thinking", content: "Yes! Library timing extension starting next week is an absolute life-saver.", time: "2:12 PM" },
-          { channel: "general", sender: "Prof. Evelyn Vance", role: "faculty", avatarBg: "bg-timeline-edit", content: "Make sure you clear your dues first, Sarah. Good luck with exam preparations!", time: "2:15 PM" },
-          { channel: "q-and-a", sender: "Nikhil Sharma", role: "student", avatarBg: "bg-timeline-grep", content: "Hello Prof. Vance, will the Machine Learning final include the backpropagation derivation question?", time: "11:05 AM" },
-          { channel: "q-and-a", sender: "Prof. Evelyn Vance", role: "faculty", avatarBg: "bg-timeline-edit", content: "Yes Nikhil, understanding the math behind backpropagation is crucial. Expect at least one theoretical derivation.", time: "11:20 AM" }
-        ]
-      });
-    }
+    // Chat messages are not seeded — they are created live by users through the chat UI.
   } catch (err) {
     console.error('Error seeding database:', err);
   }

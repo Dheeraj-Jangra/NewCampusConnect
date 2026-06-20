@@ -1,8 +1,12 @@
 ---
-// Community Chat Component
+import { channels } from '../config/channels';
 ---
 
-<div id="community-chat-root" class="w-full flex-1 flex flex-col md:flex-row bg-surface-card border border-hairline rounded-lg h-[550px] overflow-hidden opacity-0 translate-y-4 transition-all duration-500">
+<div
+  id="community-chat-root"
+  class="w-full flex-1 flex flex-col md:flex-row bg-surface-card border border-hairline rounded-lg h-[550px] overflow-hidden opacity-0 translate-y-4 transition-all duration-500"
+  data-channels={JSON.stringify(channels)}
+>
   
   <!-- Sidebar: Channel Selector -->
   <div class="w-full md:w-60 border-r border-hairline bg-canvas-soft/50 flex flex-col h-1/3 md:h-full flex-shrink-0">
@@ -15,18 +19,14 @@
     </div>
     
     <div class="flex-1 overflow-y-auto p-2 flex flex-row md:flex-col gap-1.5 scrollbar-thin" id="channel-list">
-      <button data-channel="general" class="channel-btn active w-full px-3 py-2 text-left text-xs font-semibold rounded-md flex items-center gap-2 transition-all duration-200 hover:translate-x-1">
-        <span class="text-muted">#</span> general-chat
-      </button>
-      <button data-channel="q-and-a" class="channel-btn w-full px-3 py-2 text-left text-xs font-semibold rounded-md flex items-center gap-2 transition-all duration-200 hover:translate-x-1">
-        <span class="text-muted">#</span> faculty-q-a
-      </button>
-      <button data-channel="aesthetics" class="channel-btn w-full px-3 py-2 text-left text-xs font-semibold rounded-md flex items-center gap-2 transition-all duration-200 hover:translate-x-1">
-        <span class="text-muted">#</span> ui-aesthetics
-      </button>
-      <button data-channel="study" class="channel-btn w-full px-3 py-2 text-left text-xs font-semibold rounded-md flex items-center gap-2 transition-all duration-200 hover:translate-x-1">
-        <span class="text-muted">#</span> exam-prep-group
-      </button>
+      {channels.map((ch, i) => (
+        <button
+          data-channel={ch.id}
+          class={`channel-btn ${i === 0 ? 'active' : ''} w-full px-3 py-2 text-left text-xs font-semibold rounded-md flex items-center gap-2 transition-all duration-200 hover:translate-x-1`}
+        >
+          <span class="text-muted">#</span> {ch.label}
+        </button>
+      ))}
     </div>
   </div>
 
@@ -35,15 +35,13 @@
     <!-- Chat Header -->
     <div class="px-5 py-3 border-b border-hairline flex items-center justify-between">
       <div>
-        <h4 id="active-channel-name" class="text-sm font-semibold text-ink"># general-chat</h4>
-        <p id="active-channel-desc" class="text-[11px] text-muted mt-0.5">Global discussion space for all students and professors.</p>
+        <h4 id="active-channel-name" class="text-sm font-semibold text-ink"># {channels[0].label}</h4>
+        <p id="active-channel-desc" class="text-[11px] text-muted mt-0.5">{channels[0].description}</p>
       </div>
-      <span id="chat-member-count" class="text-[10px] font-bold text-muted bg-canvas-soft border border-hairline px-2 py-0.5 rounded-md hover:scale-105 transition-transform duration-200">84 online</span>
     </div>
 
     <!-- Messages View -->
     <div id="messages-container" class="flex-1 overflow-y-auto p-5 flex flex-col gap-4 scroll-smooth transition-all duration-300">
-      <!-- Rendered client-side -->
     </div>
 
     <!-- Live typing dots indicator -->
@@ -59,7 +57,7 @@
     <!-- Input Form -->
     <div class="p-4 border-t border-hairline bg-canvas-soft/30">
       <form id="chat-input-form" class="flex items-center gap-2">
-        <input type="text" id="chat-msg-input" placeholder="Message #general-chat..." required autocomplete="off" class="flex-1 px-4 py-2 border border-hairline rounded-md text-sm text-ink bg-surface-card focus:outline-none focus:border-primary input-focus-glow transition-all duration-200" />
+        <input type="text" id="chat-msg-input" placeholder={`Message #${channels[0].label}...`} required autocomplete="off" class="flex-1 px-4 py-2 border border-hairline rounded-md text-sm text-ink bg-surface-card focus:outline-none focus:border-primary input-focus-glow transition-all duration-200" />
         <button type="submit" class="btn-primary btn-press h-9 w-9 p-0 flex items-center justify-center rounded-md hover:scale-110 hover:rotate-12 transition-all duration-300">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-4 h-4"><line x1="22" x2="11" y1="2" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         </button>
@@ -70,7 +68,6 @@
 </div>
 
 <style>
-  /* Stylings specific to Chat module */
   .channel-btn {
     background-color: transparent;
     color: var(--color-body);
@@ -91,79 +88,30 @@
 <script>
   import { io } from 'socket.io-client';
 
-  // Mock Database for Channels
   interface ChatMessage {
     id?: string;
     sender: string;
-    role: 'student' | 'faculty';
+    role: 'student' | 'faculty' | 'admin';
     avatarBg: string;
     content: string;
     time: string;
+    senderId?: string;
   }
 
-  const channelsData: Record<string, { desc: string, members: string, messages: ChatMessage[] }> = {
-    general: {
-      desc: "Global discussion space for all students and professors.",
-      members: "84 online",
-      messages: [
-        { sender: "Alex Mercer", role: "student", avatarBg: "bg-timeline-read", content: "Hey everyone! Has anyone checked the exam schedule posted on the notice board?", time: "2:10 PM" },
-        { sender: "Sarah Jenkins", role: "student", avatarBg: "bg-timeline-thinking", content: "Yes! Library timing extension starting next week is an absolute life-saver.", time: "2:12 PM" },
-        { sender: "Prof. Evelyn Vance", role: "faculty", avatarBg: "bg-timeline-edit", content: "Make sure you clear your dues first, Sarah. Good luck with exam preparations!", time: "2:15 PM" }
-      ]
-    },
-    'q-and-a': {
-      desc: "Academic clarifications and faculty discussion board.",
-      members: "25 online",
-      messages: [
-        { sender: "Nikhil Sharma", role: "student", avatarBg: "bg-timeline-grep", content: "Hello Prof. Vance, will the Machine Learning final include the backpropagation derivation question?", time: "11:05 AM" },
-        { sender: "Prof. Evelyn Vance", role: "faculty", avatarBg: "bg-timeline-edit", content: "Yes Nikhil, understanding the math behind backpropagation is crucial. Expect at least one theoretical derivation.", time: "11:20 AM" }
-      ]
-    },
-    aesthetics: {
-      desc: "Visual design discussions, animations, and frontend guidelines.",
-      members: "14 online",
-      messages: [
-        { sender: "David Lee", role: "student", avatarBg: "bg-timeline-done", content: "Working on the new dashboard interface! The custom cursors make transitions look extremely fluid.", time: "1:40 PM" },
-        { sender: "Alex Mercer", role: "student", avatarBg: "bg-timeline-read", content: "Agree, styling with Tailwind v4 `@theme` variables is super clean.", time: "1:43 PM" }
-      ]
-    },
-    study: {
-      desc: "Student-run study groups and shared study tips.",
-      members: "38 online",
-      messages: [
-        { sender: "Jane Doe", role: "student", avatarBg: "bg-timeline-thinking", content: "Who is up for a group study session on Discrete Math tomorrow morning?", time: "Yesterday" },
-        { sender: "Marcus Aurel", role: "student", avatarBg: "bg-timeline-grep", content: "I'm in! We should go through the graph theory cheatsheet uploaded in the study materials directory.", time: "Yesterday" }
-      ]
-    }
-  };
+  interface Channel {
+    id: string;
+    label: string;
+    description: string;
+  }
 
-  // Bot Auto-Replies configuration
-  const botReplies: Record<string, string[]> = {
-    general: [
-      "Don't forget to submit your lab records by tomorrow afternoon!",
-      "I'm currently studying in the library, the extended study space is really quiet.",
-      "Are there any upcoming sports events scheduled this semester?",
-      "Good luck to everyone preparing for midterms!"
-    ],
-    'q-and-a': [
-      "My office hours are between 2 PM to 4 PM on Wednesdays. Please schedule slots online.",
-      "The reference syllabus has been uploaded to the dashboard under Study Materials.",
-      "Yes, the lecture notes cover all examination topics comprehensively."
-    ],
-    aesthetics: [
-      "Always ensure CSS-first transition scales do not exceed 60fps for mobile render passes.",
-      "The warm cream `#f7f7f4` palette gives developer hubs an editorial, premium look.",
-      "Try adding magnetic offset events to make layouts interactive.",
-      "I'm testing custom cursor trails! It adds a beautiful dynamic feedback layers."
-    ],
-    study: [
-      "Let's meet in Room 304, it has an interactive whiteboard.",
-      "Let's cover relations, logic proofs, and graph colorings.",
-      "Check the study notes uploaded by Dr. Pendelton. They are excellent summary items."
-    ]
-  };
+  const rootEl = document.getElementById('community-chat-root');
+  let channels: Channel[] = [];
+  try {
+    channels = JSON.parse(rootEl?.getAttribute('data-channels') || '[]');
+  } catch {
+    channels = [];
+  }
 
-  // HTML sanitization to prevent XSS
   const escapeHtml = (str: string) => {
     if (!str) return '';
     const map: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;', '/': '&#x2F;' };
@@ -174,11 +122,13 @@
   const API_URL = `${API_BASE}/api/chat`;
   const SOCKET_URL = API_BASE;
 
-  let activeChannel = 'general';
+  let activeChannel = channels[0]?.id || '';
   let socket: any = null;
   let isOffline = false;
+  let messagesCache: Record<string, ChatMessage[]> = {};
 
-  // Check if current user can delete a message
+  channels.forEach(ch => { messagesCache[ch.id] = []; });
+
   const canDeleteMessage = (msg: any) => {
     const userStr = localStorage.getItem('cc-user');
     if (!userStr) return false;
@@ -191,7 +141,6 @@
     }
   };
 
-  // Delete a message via API and socket
   const deleteMessage = async (id: string) => {
     const token = localStorage.getItem('cc-token');
     try {
@@ -204,12 +153,11 @@
     } catch (err) {
       console.warn('Failed to delete message on backend:', err);
     }
-    // Remove from local data regardless
-    channelsData[activeChannel].messages = channelsData[activeChannel].messages.filter((m: any) => m.id !== id);
+    const msgs = messagesCache[activeChannel] || [];
+    messagesCache[activeChannel] = msgs.filter((m: any) => m.id !== id);
     renderMessages();
   };
 
-  // Initialize socket connection
   const initSocket = () => {
     if (socket) return;
     try {
@@ -231,9 +179,10 @@
 
       socket.on('new-message', (message: any) => {
         if (message.channel === activeChannel) {
-          const exists = channelsData[activeChannel].messages.some(m => m.id === message.id);
+          const msgs = messagesCache[activeChannel] || [];
+          const exists = msgs.some(m => m.id === message.id);
           if (!exists) {
-            channelsData[activeChannel].messages.push({
+            msgs.push({
               id: message.id,
               sender: message.sender,
               senderId: message.senderId,
@@ -249,13 +198,13 @@
 
       socket.on('message-deleted', (data: { id: string, channel: string }) => {
         if (data.channel === activeChannel) {
-          channelsData[activeChannel].messages = channelsData[activeChannel].messages.filter((m: any) => m.id !== data.id);
+          const msgs = messagesCache[activeChannel] || [];
+          messagesCache[activeChannel] = msgs.filter((m: any) => m.id !== data.id);
           renderMessages();
         } else {
-          // Clean up from other channels' cache too
-          for (const ch of Object.keys(channelsData)) {
+          for (const ch of Object.keys(messagesCache)) {
             if (ch !== activeChannel) {
-              channelsData[ch].messages = channelsData[ch].messages.filter((m: any) => m.id !== data.id);
+              messagesCache[ch] = (messagesCache[ch] || []).filter((m: any) => m.id !== data.id);
             }
           }
         }
@@ -281,19 +230,16 @@
     }
   };
 
-  // Fetch chat history from DB
   const fetchHistory = async (channel: string) => {
     try {
       const token = localStorage.getItem('cc-token');
       const headers: Record<string, string> = {};
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
+      if (token) headers['Authorization'] = `Bearer ${token}`;
       const res = await fetch(`${API_URL}/${channel}`, { headers });
       if (!res.ok) throw new Error('HTTP error');
       const messages = await res.json();
       if (messages && messages.length > 0) {
-        channelsData[channel].messages = messages.map((msg: any) => ({
+        messagesCache[channel] = messages.map((msg: any) => ({
           id: msg.id,
           sender: msg.sender,
           senderId: msg.senderId,
@@ -308,26 +254,24 @@
     }
   };
 
-  // Format short current time e.g. "3:42 PM"
   const getFormattedTime = () => {
     const d = new Date();
     let hrs = d.getHours();
     const mins = String(d.getMinutes()).padStart(2, '0');
     const ampm = hrs >= 12 ? 'PM' : 'AM';
     hrs = hrs % 12;
-    hrs = hrs ? hrs : 12; // 12 instead of 0
+    hrs = hrs ? hrs : 12;
     return `${hrs}:${mins} ${ampm}`;
   };
 
-  // Render active messages
   const renderMessages = () => {
     const container = document.getElementById('messages-container');
     if (!container) return;
 
-    const data = channelsData[activeChannel];
+    const data = messagesCache[activeChannel] || [];
     if (!data) return;
 
-    container.innerHTML = data.messages.map((m, index) => {
+    container.innerHTML = data.map((m, index) => {
       const isFaculty = m.role === 'faculty' || m.role === 'professor';
       const isAdmin = m.role === 'admin';
       const roleBadge = isAdmin
@@ -341,12 +285,10 @@
         
       return `
         <div class="message-bubble flex gap-3.5 max-w-[85%] animate-chat-appear hover:translate-x-1 transition-transform duration-200" style="animation-delay: ${staggerDelay}ms; animation-fill-mode: backwards;">
-          <!-- Avatar Icon -->
           <div class="w-8 h-8 rounded-full ${escapeHtml(m.avatarBg)} text-ink font-bold flex items-center justify-center text-xs flex-shrink-0">
             ${initials}
           </div>
           
-          <!-- Content Bubble -->
           <div class="flex flex-col gap-1">
             <div class="flex items-center gap-2">
               <span class="text-xs font-semibold text-body-strong">${escapeHtml(m.sender)}</span>
@@ -365,10 +307,8 @@
       `;
     }).join('');
 
-    // Scroll to bottom
     container.scrollTop = container.scrollHeight;
 
-    // Attach delete handlers
     const deleteBtns = container.querySelectorAll('.chat-delete-btn');
     deleteBtns.forEach((btn: any) => {
       btn.addEventListener('click', async (e: MouseEvent) => {
@@ -381,15 +321,13 @@
     });
   };
 
-  // Channel switching controller
   const setupChannelSelector = () => {
     const list = document.getElementById('channel-list');
     const title = document.getElementById('active-channel-name');
     const desc = document.getElementById('active-channel-desc');
-    const count = document.getElementById('chat-member-count');
     const input = document.getElementById('chat-msg-input') as HTMLInputElement;
 
-    if (!list || !title || !desc || !count || !input) return;
+    if (!list || !title || !desc || !input) return;
 
     const buttons = list.querySelectorAll('.channel-btn');
     buttons.forEach((btn: any) => {
@@ -399,23 +337,20 @@
 
         activeChannel = chan;
 
-        // Emit channel join to socket.io
         if (socket && !isOffline) {
           socket.emit('join-channel', activeChannel);
         }
 
-        // Visual highlights
         buttons.forEach((b: any) => b.classList.remove('active'));
         btn.classList.add('active');
 
-        // Text changes
-        const data = channelsData[activeChannel];
-        title.innerHTML = `<span class="text-muted">#</span> ${btn.textContent.trim().split(' ').pop()}`;
-        desc.textContent = data.desc;
-        count.textContent = data.members;
-        input.placeholder = `Message ${btn.textContent.trim()}...`;
+        const ch = channels.find(c => c.id === activeChannel);
+        if (ch) {
+          title.innerHTML = `<span class="text-muted">#</span> ${ch.label}`;
+          desc.textContent = ch.description;
+          input.placeholder = `Message #${ch.label}...`;
+        }
 
-        // Render messages with cross-fade
         const container = document.getElementById('messages-container');
         if (container) {
           container.style.opacity = '0';
@@ -433,53 +368,6 @@
     });
   };
 
-  // Bot simulated responses
-  const triggerBotReply = () => {
-    const typingBox = document.getElementById('typing-indicator');
-    const typingName = document.getElementById('typing-username');
-    if (!typingBox || !typingName) return;
-
-    const currentRole = localStorage.getItem('cc-active-role') || 'student';
-    
-    // Choose sender name
-    const sender = (currentRole === 'professor' || currentRole === 'admin') 
-      ? "Alex Mercer" 
-      : "Prof. Evelyn Vance";
-    const role = (currentRole === 'professor' || currentRole === 'admin') ? 'student' : 'faculty';
-    const avatarBg = (currentRole === 'professor' || currentRole === 'admin') ? 'bg-timeline-read' : 'bg-timeline-edit';
-
-    typingName.textContent = sender;
-    
-    // Delay typing start
-    setTimeout(() => {
-      typingBox.classList.remove('hidden');
-      const messagesContainer = document.getElementById('messages-container');
-      if (messagesContainer) {
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-      }
-
-      // Delay message delivery (simulated typing duration)
-      setTimeout(() => {
-        typingBox.classList.add('hidden');
-
-        // Grab bank replies
-        const replies = botReplies[activeChannel] || botReplies.general;
-        const randReply = replies[Math.floor(Math.random() * replies.length)];
-
-        channelsData[activeChannel].messages.push({
-          sender,
-          role: role === 'faculty' ? 'faculty' : 'student',
-          avatarBg,
-          content: randReply,
-          time: getFormattedTime()
-        });
-
-        renderMessages();
-      }, 1800);
-    }, 1000);
-  };
-
-  // Send message action
   const setupMessageSubmit = () => {
     const form = document.getElementById('chat-input-form') as HTMLFormElement;
     const input = document.getElementById('chat-msg-input') as HTMLInputElement;
@@ -526,17 +414,16 @@
       if (socket && !isOffline) {
         socket.emit('send-message', payload);
       } else {
-        // Offline backup
-        channelsData[activeChannel].messages.push(payload);
+        const msgs = messagesCache[activeChannel] || [];
+        msgs.push(payload);
+        messagesCache[activeChannel] = msgs;
         renderMessages();
-        triggerBotReply();
       }
 
       input.value = '';
     });
   };
 
-  // Typing indicators notifier
   const setupTypingNotifier = () => {
     const input = document.getElementById('chat-msg-input') as HTMLInputElement;
     if (!input) return;
@@ -573,7 +460,6 @@
     });
   };
 
-  // Initialize
   const initChat = async () => {
     const root = document.getElementById('community-chat-root');
     if (!root) return;
@@ -591,9 +477,6 @@
     }, 100);
   };
 
-  // Listeners
   window.addEventListener('load', initChat);
-  
-  // Custom SPA mount trigger
   window.addEventListener('cc-tab-active-chat', initChat);
 </script>

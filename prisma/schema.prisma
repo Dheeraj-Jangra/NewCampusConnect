@@ -71,7 +71,7 @@ model StudyMaterial {
 
 model ChatMessage {
   id        String   @id @default(uuid())
-  channel   String   // e.g., "general", "q-and-a"
+  channel   String   // references a channel id from the channels config
   sender    String
   role      String   // "student" | "faculty"
   avatarBg  String
