@@ -1,0 +1,50 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Notice {
+  id        String   @id @default(uuid())
+  title     String
+  category  String
+  author    String
+  content   String
+  timestamp DateTime @default(now())
+}
+
+model Class {
+  id        String   @id @default(uuid())
+  subject   String
+  professor String
+  time      String   // "HH:MM"
+  duration  String   // in minutes, e.g., "60"
+  room      String
+  link      String
+  timestamp DateTime @default(now())
+}
+
+model StudyMaterial {
+  id        String   @id @default(uuid())
+  title     String
+  course    String
+  type      String   // e.g., "pdf", "zip"
+  size      String   // e.g., "2.4 MB"
+  author    String
+  fileName  String   // local file name stored in server/uploads
+  timestamp DateTime @default(now())
+}
+
+model ChatMessage {
+  id        String   @id @default(uuid())
+  channel   String   // e.g., "general", "q-and-a"
+  sender    String
+  role      String   // "student" | "faculty"
+  avatarBg  String
+  content   String
+  time      String   // format "3:42 PM"
+  timestamp DateTime @default(now())
+}

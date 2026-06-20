@@ -108,7 +108,7 @@
       duration: "90", // 1.5 hours
       room: "Aero-Lab 402 / Meet",
       link: "https://meet.google.com/vui-aest-hub",
-      timestamp: Date.now()
+      timestamp: new Date().toISOString()
     },
     {
       id: "c2",
@@ -118,35 +118,43 @@
       duration: "60",
       room: "Seminar Block B",
       link: "",
-      timestamp: Date.now()
+      timestamp: new Date().toISOString()
     },
     {
       id: "c3",
       subject: "Introductory Machine Learning & NLP",
-      professor: "Dr. Evelyn Vance",
+      professor: "Prof. Evelyn Vance",
       time: getUpcomingClassMockTime(-50), // Started 50 minutes ago (Live now!)
       duration: "60", // Finishes in 10 minutes
       room: "CSE Lab 3",
       link: "https://meet.google.com/ml-nlp-lecture",
-      timestamp: Date.now()
+      timestamp: new Date().toISOString()
     }
   ];
 
-  const getClasses = () => {
-    const data = localStorage.getItem('cc-classes');
-    if (!data) {
-      localStorage.setItem('cc-classes', JSON.stringify(defaultClasses));
-      return defaultClasses;
-    }
-    try {
-      return JSON.parse(data);
-    } catch {
-      return defaultClasses;
-    }
-  };
+  const API_URL = 'http://localhost:3000/api/classes';
 
-  const saveClasses = (classes: any[]) => {
-    localStorage.setItem('cc-classes', JSON.stringify(classes));
+  // Load from server with local storage fallback
+  const getClasses = async () => {
+    try {
+      const res = await fetch(API_URL);
+      if (!res.ok) throw new Error('Failed to fetch classes from API');
+      const data = await res.json();
+      localStorage.setItem('cc-classes', JSON.stringify(data));
+      return data;
+    } catch (err) {
+      console.warn('Backend classes offline, falling back to cache:', err);
+      const data = localStorage.getItem('cc-classes');
+      if (!data) {
+        localStorage.setItem('cc-classes', JSON.stringify(defaultClasses));
+        return defaultClasses;
+      }
+      try {
+        return JSON.parse(data);
+      } catch {
+        return defaultClasses;
+      }
+    }
   };
 
   // Convert time "HH:MM" to absolute Date object for today
@@ -160,8 +168,10 @@
   // Live Timer Tracker
   let timerInterval: any = null;
 
-  const startLiveCountdown = () => {
+  const startLiveCountdown = async () => {
     if (timerInterval) clearInterval(timerInterval);
+
+    const classes = await getClasses();
 
     const tick = () => {
       const countdownBox = document.getElementById('next-class-countdown-container');
@@ -169,7 +179,6 @@
       const countdownTitle = document.getElementById('next-class-title');
       if (!countdownText || !countdownTitle || !countdownBox) return;
 
-      const classes = getClasses();
       const now = new Date();
 
       // Find classes that are starting in the future today
@@ -205,19 +214,19 @@
   };
 
   // Render Classes List
-  const renderClasses = () => {
+  const renderClasses = async () => {
     const listContainer = document.getElementById('timetable-list-container');
     const noClassesAlert = document.getElementById('no-classes-alert');
     if (!listContainer || !noClassesAlert) return;
 
-    const classes = getClasses().sort((a: any, b: any) => {
-      // Sort chronologically by start time
+    const classesList = await getClasses();
+    const sortedClasses = classesList.sort((a: any, b: any) => {
       const aTime = a.time.split(':').map(Number);
       const bTime = b.time.split(':').map(Number);
       return (aTime[0] * 60 + aTime[1]) - (bTime[0] * 60 + bTime[1]);
     });
 
-    if (classes.length === 0) {
+    if (sortedClasses.length === 0) {
       noClassesAlert.classList.remove('hidden');
       listContainer.innerHTML = '';
       return;
@@ -227,7 +236,7 @@
 
     const now = new Date();
 
-    listContainer.innerHTML = classes.map((c: any, index: number) => {
+    listContainer.innerHTML = sortedClasses.map((c: any, index: number) => {
       const start = timeToDate(c.time);
       const end = new Date(start.getTime() + Number(c.duration) * 60 * 1000);
       const isLive = now >= start && now <= end;
@@ -295,7 +304,7 @@
     const form = document.getElementById('scheduler-form') as HTMLFormElement;
     if (!form) return;
 
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
       const subjectInput = document.getElementById('class-subject') as HTMLInputElement;
@@ -319,20 +328,56 @@
         link = room.startsWith('http') ? room : `https://${room}`;
       }
 
-      const newClass = {
-        id: Math.random().toString(36).substr(2, 9),
+      const activeRole = localStorage.getItem('cc-active-role') || 'student';
+      const professor = activeRole === 'professor' ? 'Prof. Evelyn Vance' : 'Guest Faculty';
+
+      const payload = {
         subject,
-        professor: "Prof. Evelyn Vance",
+        professor,
         time,
         duration,
         room: link ? 'Virtual / Link' : room,
-        link,
-        timestamp: Date.now()
+        link
       };
 
-      const classes = getClasses();
-      classes.push(newClass);
-      saveClasses(classes);
+      let saveSuccess = false;
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          saveSuccess = true;
+          window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
+            detail: { message: 'Lecture scheduled successfully!', type: 'success' } 
+          }));
+        }
+      } catch (err) {
+        console.warn('Failed to schedule class on backend, falling back to local storage:', err);
+      }
+
+      if (!saveSuccess) {
+        const localClasses = JSON.parse(localStorage.getItem('cc-classes') || '[]');
+        const offlineClass = {
+          id: Math.random().toString(36).substr(2, 9),
+          subject,
+          professor,
+          time,
+          duration,
+          room: link ? 'Virtual / Link' : room,
+          link,
+          timestamp: new Date().toISOString()
+        };
+        localClasses.push(offlineClass);
+        localStorage.setItem('cc-classes', JSON.stringify(localClasses));
+
+        window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
+          detail: { message: 'Lecture scheduled locally (offline mode)', type: 'warning' } 
+        }));
+      }
 
       form.reset();
 
@@ -352,8 +397,8 @@
         }, 1500);
       }
 
-      renderClasses();
-      startLiveCountdown();
+      await renderClasses();
+      await startLiveCountdown();
 
       window.dispatchEvent(new CustomEvent('cc-classes-changed'));
     });

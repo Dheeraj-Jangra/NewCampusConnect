@@ -89,8 +89,11 @@
 </style>
 
 <script>
+  import { io } from 'socket.io-client';
+
   // Mock Database for Channels
   interface ChatMessage {
+    id?: string;
     sender: string;
     role: 'student' | 'faculty';
     avatarBg: string;
@@ -160,7 +163,90 @@
     ]
   };
 
+  const API_URL = 'http://localhost:3000/api/chat';
+  const SOCKET_URL = 'http://localhost:3000';
+
   let activeChannel = 'general';
+  let socket: any = null;
+  let isOffline = false;
+
+  // Initialize socket connection
+  const initSocket = () => {
+    if (socket) return;
+    try {
+      socket = io(SOCKET_URL, {
+        transports: ['websocket'],
+        reconnectionAttempts: 2,
+        timeout: 3000
+      });
+
+      socket.on('connect', () => {
+        console.log('Chat socket connected!');
+        isOffline = false;
+        socket.emit('join-channel', activeChannel);
+      });
+
+      socket.on('connect_error', () => {
+        isOffline = true;
+      });
+
+      socket.on('new-message', (message: any) => {
+        if (message.channel === activeChannel) {
+          const exists = channelsData[activeChannel].messages.some(m => m.id === message.id);
+          if (!exists) {
+            channelsData[activeChannel].messages.push({
+              id: message.id,
+              sender: message.sender,
+              role: message.role === 'faculty' ? 'faculty' : 'student',
+              avatarBg: message.avatarBg,
+              content: message.content,
+              time: message.time
+            });
+            renderMessages();
+          }
+        }
+      });
+
+      socket.on('user-typing', (data: { username: string, isTyping: boolean }) => {
+        const typingBox = document.getElementById('typing-indicator');
+        const typingName = document.getElementById('typing-username');
+        if (!typingBox || !typingName) return;
+
+        if (data.isTyping) {
+          typingName.textContent = data.username;
+          typingBox.classList.remove('hidden');
+          const container = document.getElementById('messages-container');
+          if (container) container.scrollTop = container.scrollHeight;
+        } else {
+          typingBox.classList.add('hidden');
+        }
+      });
+    } catch (e) {
+      console.warn('Socket connect failed, running in offline mode:', e);
+      isOffline = true;
+    }
+  };
+
+  // Fetch chat history from DB
+  const fetchHistory = async (channel: string) => {
+    try {
+      const res = await fetch(`${API_URL}/${channel}`);
+      if (!res.ok) throw new Error('HTTP error');
+      const messages = await res.json();
+      if (messages && messages.length > 0) {
+        channelsData[channel].messages = messages.map((msg: any) => ({
+          id: msg.id,
+          sender: msg.sender,
+          role: msg.role === 'faculty' ? 'faculty' : 'student',
+          avatarBg: msg.avatarBg,
+          content: msg.content,
+          time: msg.time
+        }));
+      }
+    } catch (err) {
+      console.warn(`Could not load chat history for ${channel} from server:`, err);
+    }
+  };
 
   // Format short current time e.g. "3:42 PM"
   const getFormattedTime = () => {
@@ -227,11 +313,16 @@
 
     const buttons = list.querySelectorAll('.channel-btn');
     buttons.forEach((btn: any) => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         const chan = btn.getAttribute('data-channel');
         if (!chan || chan === activeChannel) return;
 
         activeChannel = chan;
+
+        // Emit channel join to socket.io
+        if (socket && !isOffline) {
+          socket.emit('join-channel', activeChannel);
+        }
 
         // Visual highlights
         buttons.forEach((b: any) => b.classList.remove('active'));
@@ -249,6 +340,9 @@
         if (container) {
           container.style.opacity = '0';
           container.style.transform = 'translateY(4px)';
+          
+          await fetchHistory(activeChannel);
+          
           setTimeout(() => {
             renderMessages();
             container.style.opacity = '1';
@@ -321,31 +415,70 @@
       const role = currentRole === 'professor' ? 'faculty' : 'student';
       const avatarBg = currentRole === 'professor' ? 'bg-timeline-edit' : 'bg-timeline-read';
 
-      // Push message
-      channelsData[activeChannel].messages.push({
+      const payload = {
+        channel: activeChannel,
         sender,
-        role,
+        role: role === 'faculty' ? 'faculty' : 'student',
         avatarBg,
         content: text,
         time: getFormattedTime()
-      });
+      };
+
+      if (socket && !isOffline) {
+        socket.emit('send-message', payload);
+      } else {
+        // Offline backup
+        channelsData[activeChannel].messages.push(payload);
+        renderMessages();
+        triggerBotReply();
+      }
 
       input.value = '';
-      renderMessages();
+    });
+  };
 
-      // Trigger automatic reply simulator
-      triggerBotReply();
+  // Typing indicators notifier
+  const setupTypingNotifier = () => {
+    const input = document.getElementById('chat-msg-input') as HTMLInputElement;
+    if (!input) return;
+
+    let typingTimeout: any = null;
+
+    input.addEventListener('input', () => {
+      if (!socket || isOffline) return;
+
+      const currentRole = localStorage.getItem('cc-active-role') || 'student';
+      const sender = currentRole === 'professor' ? 'Prof. Evelyn Vance' : 'Alex Mercer';
+
+      if (typingTimeout) clearTimeout(typingTimeout);
+
+      socket.emit('typing', {
+        channel: activeChannel,
+        username: sender,
+        isTyping: true
+      });
+
+      typingTimeout = setTimeout(() => {
+        socket.emit('typing', {
+          channel: activeChannel,
+          username: sender,
+          isTyping: false
+        });
+      }, 1500);
     });
   };
 
   // Initialize
-  const initChat = () => {
+  const initChat = async () => {
     const root = document.getElementById('community-chat-root');
     if (!root) return;
 
+    initSocket();
+    await fetchHistory(activeChannel);
     renderMessages();
     setupChannelSelector();
     setupMessageSubmit();
+    setupTypingNotifier();
 
     setTimeout(() => {
       root.style.opacity = '1';

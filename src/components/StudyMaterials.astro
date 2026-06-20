@@ -111,7 +111,7 @@
       type: "pdf",
       size: "2.4 MB",
       author: "Prof. Evelyn Vance",
-      timestamp: Date.now() - 1000 * 60 * 60 * 6 // 6 hours ago
+      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString()
     },
     {
       id: "m2",
@@ -120,7 +120,7 @@
       type: "pdf",
       size: "820 KB",
       author: "Dr. Arthur Pendelton",
-      timestamp: Date.now() - 1000 * 60 * 60 * 24 // 1 day ago
+      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString()
     },
     {
       id: "m3",
@@ -129,7 +129,7 @@
       type: "zip",
       size: "14.2 MB",
       author: "Office of Elec-Sciences",
-      timestamp: Date.now() - 1000 * 60 * 60 * 30 // ~1.2 days ago
+      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 30).toISOString()
     },
     {
       id: "m4",
@@ -138,45 +138,51 @@
       type: "ipynb",
       size: "4.5 MB",
       author: "T.A. Marcus Aurel",
-      timestamp: Date.now() - 1000 * 60 * 60 * 72 // 3 days ago
+      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString()
     }
   ];
 
+  const API_URL = 'http://localhost:3000/api/materials';
   let searchQuery = '';
 
-  const getMaterials = () => {
-    const data = localStorage.getItem('cc-materials');
-    if (!data) {
-      localStorage.setItem('cc-materials', JSON.stringify(defaultMaterials));
-      return defaultMaterials;
-    }
+  const getMaterials = async () => {
     try {
-      const parsed = JSON.parse(data);
-      // Self-healing check: if stale data from previous builds lacks new keys, reset localStorage
-      if (parsed.length > 0 && (parsed[0].course === undefined || parsed[0].size === undefined)) {
+      const res = await fetch(API_URL);
+      if (!res.ok) throw new Error('Failed to fetch materials from API');
+      const data = await res.json();
+      localStorage.setItem('cc-materials', JSON.stringify(data));
+      return data;
+    } catch (err) {
+      console.warn('Backend materials offline, falling back to cache:', err);
+      const data = localStorage.getItem('cc-materials');
+      if (!data) {
         localStorage.setItem('cc-materials', JSON.stringify(defaultMaterials));
         return defaultMaterials;
       }
-      return parsed;
-    } catch {
-      return defaultMaterials;
+      try {
+        const parsed = JSON.parse(data);
+        if (parsed.length > 0 && (parsed[0].course === undefined || parsed[0].size === undefined)) {
+          localStorage.setItem('cc-materials', JSON.stringify(defaultMaterials));
+          return defaultMaterials;
+        }
+        return parsed;
+      } catch {
+        return defaultMaterials;
+      }
     }
   };
 
-  const saveMaterials = (materials: any[]) => {
-    localStorage.setItem('cc-materials', JSON.stringify(materials));
-  };
-
   // Render materials list
-  const renderMaterials = () => {
+  const renderMaterials = async () => {
     const listContainer = document.getElementById('materials-list-container');
     const noMaterialsAlert = document.getElementById('no-materials-alert');
     if (!listContainer || !noMaterialsAlert) return;
 
-    const materials = getMaterials().sort((a: any, b: any) => b.timestamp - a.timestamp);
+    const materialsList = await getMaterials();
+    const sortedMaterials = materialsList.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     
     // Filter by search query
-    const filtered = materials.filter((m: any) => {
+    const filtered = sortedMaterials.filter((m: any) => {
       const q = searchQuery.toLowerCase();
       return m.title.toLowerCase().includes(q) || m.course.toLowerCase().includes(q);
     });
@@ -192,9 +198,10 @@
     listContainer.innerHTML = filtered.map((m: any, index: number) => {
       // Icon selection based on file extension
       let icon = '';
-      if (m.type === 'pdf') {
+      const type = m.type ? m.type.toLowerCase() : 'pdf';
+      if (type === 'pdf') {
         icon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-semantic-error w-5 h-5"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>`;
-      } else if (m.type === 'zip' || m.type === 'rar') {
+      } else if (type === 'zip' || type === 'rar') {
         icon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-timeline-done w-5 h-5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10h10"/><path d="M12 10v4"/><path d="M12 2v4"/></svg>`;
       } else {
         // generic file
@@ -233,29 +240,68 @@
     const downloadBtns = listContainer.querySelectorAll('.download-btn');
     downloadBtns.forEach((btn: any) => {
       btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
         const span = btn.querySelector('span');
         const icon = btn.querySelector('svg');
-        if (!span || !icon) return;
+        if (!span || !icon || !id) return;
 
         btn.disabled = true;
         span.textContent = 'Preparing...';
-        
-        let progress = 0;
-        const interval = setInterval(() => {
-          progress += 25;
-          span.textContent = `Downloading ${progress}%`;
+
+        // Check if mock file
+        const isMock = id.startsWith('m') && id.length <= 3;
+
+        if (isMock) {
+          // Simulated mock download
+          let progress = 0;
+          const interval = setInterval(() => {
+            progress += 25;
+            span.textContent = `Downloading ${progress}%`;
+            
+            if (progress >= 100) {
+              clearInterval(interval);
+              span.textContent = 'Downloaded';
+              btn.style.backgroundColor = 'var(--color-semantic-success)';
+              btn.style.color = 'var(--color-on-primary)';
+              btn.style.borderColor = 'var(--color-semantic-success)';
+              btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5 text-white"><path d="M20 6 9 17l-5-5"/></svg> <span>Downloaded</span>`;
+              
+              window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
+                detail: { message: 'Download finished successfully!', type: 'success' } 
+              }));
+
+              setTimeout(() => {
+                btn.disabled = false;
+                btn.style.backgroundColor = '';
+                btn.style.color = '';
+                btn.style.borderColor = '';
+                btn.innerHTML = `
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                  <span>Download</span>
+                `;
+              }, 2000);
+            }
+          }, 300);
+        } else {
+          // Real download from backend
+          span.textContent = 'Downloading...';
           
-          if (progress >= 100) {
-            clearInterval(interval);
+          // Triggers anchor download natively
+          const downloadUrl = `${API_URL}/download/${id}`;
+          const anchor = document.createElement('a');
+          anchor.href = downloadUrl;
+          anchor.target = '_blank';
+          anchor.click();
+          
+          setTimeout(() => {
             span.textContent = 'Downloaded';
             btn.style.backgroundColor = 'var(--color-semantic-success)';
             btn.style.color = 'var(--color-on-primary)';
             btn.style.borderColor = 'var(--color-semantic-success)';
             btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5 text-white"><path d="M20 6 9 17l-5-5"/></svg> <span>Downloaded</span>`;
             
-            // Dispatch a visual success toast
             window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
-              detail: { message: 'Download finished successfully!', type: 'success' } 
+              detail: { message: 'Resource downloaded from server!', type: 'success' } 
             }));
 
             setTimeout(() => {
@@ -268,13 +314,13 @@
                 <span>Download</span>
               `;
             }, 2000);
-          }
-        }, 300);
+          }, 1000);
+        }
       });
     });
   };
 
-  // Setup simulated file upload events
+  // Setup file upload events
   const setupUploadForm = () => {
     const form = document.getElementById('upload-form') as HTMLFormElement;
     const dropZone = document.getElementById('drop-zone');
@@ -332,7 +378,7 @@
       }
     });
 
-    // Form submit upload simulation
+    // Form submit upload simulation or real
     form.addEventListener('submit', (e) => {
       e.preventDefault();
 
@@ -346,69 +392,113 @@
 
       if (!title) return;
 
-      // Simulated Upload Progress Animation
       submitBtn.disabled = true;
       progressContainer.classList.remove('hidden');
-      
-      let progress = 0;
       progressBar.style.width = '0%';
       progressPercent.textContent = '0%';
 
-      const interval = setInterval(() => {
-        progress += Math.floor(Math.random() * 15) + 5;
-        if (progress > 100) progress = 100;
-        
-        progressBar.style.width = `${progress}%`;
-        progressPercent.textContent = `${progress}%`;
+      const activeRole = localStorage.getItem('cc-active-role') || 'student';
+      const author = activeRole === 'professor' ? 'Prof. Evelyn Vance' : 'Guest Faculty';
 
-        if (progress >= 100) {
-          clearInterval(interval);
-          
-          // Complete upload logic
-          const mockSize = selectedFile 
-            ? `${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB`
-            : `${(Math.random() * 4 + 1).toFixed(1)} MB`;
+      if (selectedFile) {
+        // Real file upload via XMLHttpRequest
+        const formData = new FormData();
+        formData.append('title', title);
+        formData.append('course', course);
+        formData.append('author', author);
+        formData.append('file', selectedFile);
 
-          const mockType = selectedFile 
-            ? selectedFile.name.split('.').pop() || 'pdf'
-            : 'pdf';
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', `${API_URL}/upload`, true);
 
-          const newMaterial = {
-            id: Math.random().toString(36).substr(2, 9),
-            title,
-            course,
-            type: mockType,
-            size: mockSize,
-            author: "Prof. Evelyn Vance",
-            timestamp: Date.now()
-          };
+        // Upload progress listener
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const percent = Math.round((event.loaded / event.total) * 100);
+            progressBar.style.width = `${percent}%`;
+            progressPercent.textContent = `${percent}%`;
+          }
+        };
 
-          const materials = getMaterials();
-          materials.push(newMaterial);
-          saveMaterials(materials);
-
-          // Reset everything
-          form.reset();
-          selectedFile = null;
-          fileInput.value = '';
-          overlay.classList.add('hidden');
-          
-          // Reset button and hide progress
-          setTimeout(() => {
-            progressContainer.classList.add('hidden');
-            progressBar.style.width = '0%';
-            submitBtn.disabled = false;
-            
-            // Visual notify
+        xhr.onload = async () => {
+          if (xhr.status === 200 || xhr.status === 201) {
             window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
-              detail: { message: 'Document published successfully!', type: 'success' } 
+              detail: { message: 'Document uploaded to server successfully!', type: 'success' } 
             }));
-            
-            renderMaterials();
-            window.dispatchEvent(new CustomEvent('cc-materials-changed'));
-          }, 400);
-        }
-      }, 150);
+            finishUpload();
+          } else {
+            console.error('File upload failed, falling back to simulated offline upload');
+            handleOfflineUpload(title, course, author);
+          }
+        };
+
+        xhr.onerror = () => {
+          console.error('File upload connection error, falling back to simulated offline upload');
+          handleOfflineUpload(title, course, author);
+        };
+
+        xhr.send(formData);
+      } else {
+        // No file selected, simulation upload
+        let progress = 0;
+        const interval = setInterval(() => {
+          progress += Math.floor(Math.random() * 15) + 5;
+          if (progress > 100) progress = 100;
+          progressBar.style.width = `${progress}%`;
+          progressPercent.textContent = `${progress}%`;
+
+          if (progress >= 100) {
+            clearInterval(interval);
+            handleOfflineUpload(title, course, author);
+          }
+        }, 150);
+      }
+
+      const handleOfflineUpload = (t: string, c: string, auth: string) => {
+        const mockSize = selectedFile 
+          ? `${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB`
+          : `${(Math.random() * 4 + 1).toFixed(1)} MB`;
+
+        const mockType = selectedFile 
+          ? selectedFile.name.split('.').pop() || 'pdf'
+          : 'pdf';
+
+        const localMaterials = JSON.parse(localStorage.getItem('cc-materials') || '[]');
+        const newLocalMaterial = {
+          id: Math.random().toString(36).substr(2, 9),
+          title: t,
+          course: c,
+          type: mockType,
+          size: mockSize,
+          author: auth,
+          timestamp: new Date().toISOString()
+        };
+
+        localMaterials.push(newLocalMaterial);
+        localStorage.setItem('cc-materials', JSON.stringify(localMaterials));
+
+        window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
+          detail: { message: 'Document published locally (offline mode)', type: 'warning' } 
+        }));
+
+        finishUpload();
+      };
+
+      const finishUpload = () => {
+        form.reset();
+        selectedFile = null;
+        fileInput.value = '';
+        overlay.classList.add('hidden');
+        
+        setTimeout(async () => {
+          progressContainer.classList.add('hidden');
+          progressBar.style.width = '0%';
+          submitBtn.disabled = false;
+          
+          await renderMaterials();
+          window.dispatchEvent(new CustomEvent('cc-materials-changed'));
+        }, 400);
+      };
     });
   };
 
@@ -417,7 +507,6 @@
     const searchInput = document.getElementById('materials-search') as HTMLInputElement;
     if (!searchInput) return;
 
-    // Bind to multiple events to capture programmatic inputs from browser tests
     ['input', 'keyup', 'change'].forEach((evt) => {
       searchInput.addEventListener(evt, () => {
         searchQuery = searchInput.value;

@@ -87,38 +87,36 @@
       title: "End-Semester Examinations Schedule - Fall 2026",
       category: "exam",
       author: "Prof. Evelyn Vance",
-      date: "June 19, 2026",
       content: "The end-semester exam schedule has been updated. Examinations will begin on July 5, 2026. Please check your student portal for your personalized exam seating arrangement and hall tickets. Ensure that you clear all library dues by next Friday.",
-      timestamp: Date.now() - 1000 * 60 * 60 * 4 // 4 hours ago
+      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString()
     },
     {
       id: "2",
       title: "Annual Hackathon 'CodeShift 2026' Registrations Open",
       category: "event",
       author: "Dept. of Computer Science",
-      date: "June 18, 2026",
       content: "Get ready to solve real-world problems! CodeShift 2026 registrations are open until June 25. Prize pools exceed $10,000, and internships are up for grabs. Teams must consist of 3-4 students. The opening ceremony takes place in the Seminar Hall.",
-      timestamp: Date.now() - 1000 * 60 * 60 * 24 // 1 day ago
+      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString()
     },
     {
       id: "3",
       title: "Mandatory Academic Advisory Meetings",
       category: "academic",
       author: "Office of the Dean",
-      date: "June 17, 2026",
       content: "All sophomore and junior students must schedule an academic advising session with their respective supervisors before selecting elective modules for the upcoming Spring semester. Slots can be booked on the department notice board.",
-      timestamp: Date.now() - 1000 * 60 * 60 * 48 // 2 days ago
+      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString()
     },
     {
       id: "4",
       title: "Campus Library Timing Extensions",
       category: "announcement",
       author: "Chief Librarian",
-      date: "June 16, 2026",
       content: "To support students preparing for upcoming examinations, the Central Library will remain open 24/7 starting Monday, June 22. Silent zones will be strictly enforced, and coffee stations will be operational between 10 PM and 6 AM.",
-      timestamp: Date.now() - 1000 * 60 * 60 * 72 // 3 days ago
+      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString()
     }
   ];
+
+  const API_URL = 'http://localhost:3000/api/notices';
 
   // Colors & badges helper mapping
   const categoryMeta: Record<string, { label: string, colorClass: string, bgClass: string, borderClass: string }> = {
@@ -130,31 +128,37 @@
 
   let activeFilter = 'all';
 
-  // Load from local storage or set defaults
-  const getNotices = () => {
-    const data = localStorage.getItem('cc-notices');
-    if (!data) {
-      localStorage.setItem('cc-notices', JSON.stringify(defaultNotices));
-      return defaultNotices;
-    }
+  // Load from server with local storage fallback
+  const getNotices = async () => {
     try {
-      return JSON.parse(data);
-    } catch {
-      return defaultNotices;
+      const res = await fetch(API_URL);
+      if (!res.ok) throw new Error('Failed to fetch from API');
+      const data = await res.json();
+      localStorage.setItem('cc-notices', JSON.stringify(data));
+      return data;
+    } catch (err) {
+      console.warn('Backend notices offline, falling back to cache:', err);
+      const data = localStorage.getItem('cc-notices');
+      if (!data) {
+        localStorage.setItem('cc-notices', JSON.stringify(defaultNotices));
+        return defaultNotices;
+      }
+      try {
+        return JSON.parse(data);
+      } catch {
+        return defaultNotices;
+      }
     }
-  };
-
-  const saveNotices = (notices: any[]) => {
-    localStorage.setItem('cc-notices', JSON.stringify(notices));
   };
 
   // Render Notices List
-  const renderNotices = () => {
+  const renderNotices = async () => {
     const listContainer = document.getElementById('notice-list-container');
     const noNoticesAlert = document.getElementById('no-notices-alert');
     if (!listContainer || !noNoticesAlert) return;
 
-    const notices = getNotices().sort((a: any, b: any) => b.timestamp - a.timestamp);
+    const notices = await getNotices();
+    notices.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     const filtered = notices.filter((n: any) => activeFilter === 'all' || n.category === activeFilter);
 
     if (filtered.length === 0) {
@@ -169,6 +173,12 @@
       const meta = categoryMeta[notice.category] || { label: 'Notice', colorClass: 'text-muted', bgClass: 'bg-surface-strong/30', borderClass: 'border-hairline' };
       const staggerDelay = Math.min(index * 50, 400);
       
+      const displayDate = notice.date || new Date(notice.timestamp).toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+      });
+
       return `
         <div class="notice-card bg-surface-card border border-hairline rounded-lg p-5 flex flex-col gap-3 transition-all duration-300 hover:border-hairline-strong hover:-translate-y-1 hover:shadow-md overflow-hidden animate-fade-in-up" style="animation-delay: ${staggerDelay}ms; animation-fill-mode: backwards;" data-category="${notice.category}" data-id="${notice.id}">
           <div class="flex items-center justify-between flex-wrap gap-2 pointer-events-none">
@@ -177,7 +187,7 @@
               <span class="px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${meta.colorClass} ${meta.bgClass} border ${meta.borderClass} rounded-pill">
                 ${meta.label}
               </span>
-              <span class="text-xs text-muted">${notice.date}</span>
+              <span class="text-xs text-muted">${displayDate}</span>
             </div>
             <!-- Author -->
             <span class="text-xs font-semibold text-body-strong">${notice.author}</span>
@@ -234,7 +244,7 @@
     const form = document.getElementById('notice-form') as HTMLFormElement;
     if (!form) return;
 
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
       
       const titleInput = document.getElementById('notice-title') as HTMLInputElement;
@@ -250,23 +260,58 @@
 
       if (!title || !content) return;
 
-      // Add to list
-      const notices = getNotices();
-      const dateOptions: Intl.DateTimeFormatOptions = { month: 'long', day: 'numeric', year: 'numeric' };
-      const formattedDate = new Date().toLocaleDateString('en-US', dateOptions);
+      const activeRole = localStorage.getItem('cc-active-role') || 'student';
+      const author = activeRole === 'professor' ? 'Prof. Evelyn Vance' : 'Guest Student';
 
-      const newNotice = {
-        id: Math.random().toString(36).substr(2, 9),
+      const payload = {
         title,
         category,
-        author: "Prof. Evelyn Vance",
-        date: formattedDate,
         content,
-        timestamp: Date.now()
+        author
       };
 
-      notices.push(newNotice);
-      saveNotices(notices);
+      let saveSuccess = false;
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          saveSuccess = true;
+          window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
+            detail: { message: 'Notice published successfully!', type: 'success' } 
+          }));
+        }
+      } catch (err) {
+        console.warn('Error saving notice to backend, falling back to local storage:', err);
+      }
+
+      if (!saveSuccess) {
+        // Fallback local storage
+        const localNotices = JSON.parse(localStorage.getItem('cc-notices') || '[]');
+        const dateOptions: Intl.DateTimeFormatOptions = { month: 'long', day: 'numeric', year: 'numeric' };
+        const formattedDate = new Date().toLocaleDateString('en-US', dateOptions);
+        
+        const offlineNotice = {
+          id: Math.random().toString(36).substr(2, 9),
+          title,
+          category,
+          author,
+          date: formattedDate,
+          content,
+          timestamp: new Date().toISOString()
+        };
+
+        localNotices.push(offlineNotice);
+        localStorage.setItem('cc-notices', JSON.stringify(localNotices));
+        
+        window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
+          detail: { message: 'Notice published locally (offline mode)', type: 'warning' } 
+        }));
+      }
 
       // Reset form
       form.reset();
@@ -288,7 +333,7 @@
       }
 
       // Re-render
-      renderNotices();
+      await renderNotices();
 
       // Dispatch global custom event so other components (Student feeds) are notified
       window.dispatchEvent(new CustomEvent('cc-notices-changed'));
@@ -322,8 +367,8 @@
         if (feed) {
           feed.style.opacity = '0';
           feed.style.transform = 'translateY(10px)';
-          setTimeout(() => {
-            renderNotices();
+          setTimeout(async () => {
+            await renderNotices();
             feed.style.opacity = '1';
             feed.style.transform = 'translateY(0)';
           }, 200);
