@@ -2,7 +2,7 @@
 // Community Chat Component
 ---
 
-<div id="community-chat-root" class="w-full flex-1 flex flex-col md:flex-row bg-surface-card border border-hairline rounded-lg h-[550px] overflow-hidden select-none opacity-0 translate-y-4 transition-all duration-500">
+<div id="community-chat-root" class="w-full flex-1 flex flex-col md:flex-row bg-surface-card border border-hairline rounded-lg h-[550px] overflow-hidden opacity-0 translate-y-4 transition-all duration-500">
   
   <!-- Sidebar: Channel Selector -->
   <div class="w-full md:w-60 border-r border-hairline bg-canvas-soft/50 flex flex-col h-1/3 md:h-full flex-shrink-0">
@@ -15,16 +15,16 @@
     </div>
     
     <div class="flex-1 overflow-y-auto p-2 flex flex-row md:flex-col gap-1.5 scrollbar-thin" id="channel-list">
-      <button data-channel="general" class="channel-btn active w-full px-3 py-2 text-left text-xs font-semibold rounded-md flex items-center gap-2 transition-all duration-200">
+      <button data-channel="general" class="channel-btn active w-full px-3 py-2 text-left text-xs font-semibold rounded-md flex items-center gap-2 transition-all duration-200 hover:translate-x-1">
         <span class="text-muted">#</span> general-chat
       </button>
-      <button data-channel="q-and-a" class="channel-btn w-full px-3 py-2 text-left text-xs font-semibold rounded-md flex items-center gap-2 transition-all duration-200">
+      <button data-channel="q-and-a" class="channel-btn w-full px-3 py-2 text-left text-xs font-semibold rounded-md flex items-center gap-2 transition-all duration-200 hover:translate-x-1">
         <span class="text-muted">#</span> faculty-q-a
       </button>
-      <button data-channel="aesthetics" class="channel-btn w-full px-3 py-2 text-left text-xs font-semibold rounded-md flex items-center gap-2 transition-all duration-200">
+      <button data-channel="aesthetics" class="channel-btn w-full px-3 py-2 text-left text-xs font-semibold rounded-md flex items-center gap-2 transition-all duration-200 hover:translate-x-1">
         <span class="text-muted">#</span> ui-aesthetics
       </button>
-      <button data-channel="study" class="channel-btn w-full px-3 py-2 text-left text-xs font-semibold rounded-md flex items-center gap-2 transition-all duration-200">
+      <button data-channel="study" class="channel-btn w-full px-3 py-2 text-left text-xs font-semibold rounded-md flex items-center gap-2 transition-all duration-200 hover:translate-x-1">
         <span class="text-muted">#</span> exam-prep-group
       </button>
     </div>
@@ -38,7 +38,7 @@
         <h4 id="active-channel-name" class="text-sm font-semibold text-ink"># general-chat</h4>
         <p id="active-channel-desc" class="text-[11px] text-muted mt-0.5">Global discussion space for all students and professors.</p>
       </div>
-      <span id="chat-member-count" class="text-[10px] font-bold text-muted bg-canvas-soft border border-hairline px-2 py-0.5 rounded-md">84 online</span>
+      <span id="chat-member-count" class="text-[10px] font-bold text-muted bg-canvas-soft border border-hairline px-2 py-0.5 rounded-md hover:scale-105 transition-transform duration-200">84 online</span>
     </div>
 
     <!-- Messages View -->
@@ -47,7 +47,7 @@
     </div>
 
     <!-- Live typing dots indicator -->
-    <div id="typing-indicator" class="px-5 py-2 border-t border-transparent text-xs text-muted flex items-center gap-1.5 hidden bg-canvas-soft/10">
+    <div id="typing-indicator" class="px-5 py-2 border-t border-transparent text-xs text-muted flex items-center gap-1.5 hidden bg-canvas-soft/10 animate-fade-in-up">
       <span id="typing-username" class="font-semibold text-body-strong">Dr. Arthur Pendelton</span> is typing
       <div class="flex gap-1 items-center ml-1">
         <span class="w-1.5 h-1.5 rounded-full bg-muted animate-bounce" style="animation-delay: 0ms;"></span>
@@ -59,8 +59,8 @@
     <!-- Input Form -->
     <div class="p-4 border-t border-hairline bg-canvas-soft/30">
       <form id="chat-input-form" class="flex items-center gap-2">
-        <input type="text" id="chat-msg-input" placeholder="Message #general-chat..." required autocomplete="off" class="flex-1 px-4 py-2 border border-hairline rounded-md text-sm text-ink bg-surface-card focus:outline-none focus:border-primary transition-all duration-200" />
-        <button type="submit" class="btn-primary btn-press h-9 w-9 p-0 flex items-center justify-center rounded-md">
+        <input type="text" id="chat-msg-input" placeholder="Message #general-chat..." required autocomplete="off" class="flex-1 px-4 py-2 border border-hairline rounded-md text-sm text-ink bg-surface-card focus:outline-none focus:border-primary input-focus-glow transition-all duration-200" />
+        <button type="submit" class="btn-primary btn-press h-9 w-9 p-0 flex items-center justify-center rounded-md hover:scale-110 hover:rotate-12 transition-all duration-300">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-4 h-4"><line x1="22" x2="11" y1="2" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         </button>
       </form>
@@ -163,8 +163,16 @@
     ]
   };
 
-  const API_URL = 'http://localhost:3000/api/chat';
-  const SOCKET_URL = 'http://localhost:3000';
+  // HTML sanitization to prevent XSS
+  const escapeHtml = (str: string) => {
+    if (!str) return '';
+    const map: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;', '/': '&#x2F;' };
+    return String(str).replace(/[&<>"'/]/g, (c) => map[c] || c);
+  };
+
+  const API_BASE = window.location.origin;
+  const API_URL = `${API_BASE}/api/chat`;
+  const SOCKET_URL = API_BASE;
 
   let activeChannel = 'general';
   let socket: any = null;
@@ -276,29 +284,30 @@
       const isFaculty = m.role === 'faculty' || m.role === 'professor';
       const isAdmin = m.role === 'admin';
       const roleBadge = isAdmin
-        ? `<span class="px-1.5 py-0.2 bg-timeline-done/10 border border-timeline-done/20 text-timeline-done rounded-md text-[9px] font-bold">Admin</span>`
+        ? `<span class="px-1.5 py-0.2 border border-timeline-done/20 text-timeline-done rounded-md text-[9px] font-bold" style="background: rgba(192, 133, 50, 0.12);">Admin</span>`
         : isFaculty 
-          ? `<span class="px-1.5 py-0.2 bg-primary/10 border border-primary/20 text-primary rounded-md text-[9px] font-bold">Faculty</span>`
+          ? `<span class="px-1.5 py-0.2 border border-primary/20 text-primary rounded-md text-[9px] font-bold" style="background: rgba(245, 78, 0, 0.1);">Faculty</span>`
           : `<span class="px-1.5 py-0.2 bg-surface-strong/60 border border-hairline text-ink rounded-md text-[9px] font-semibold">Student</span>`;
       const staggerDelay = Math.min(index * 60, 500);
+      const initials = escapeHtml(m.sender.split(' ').map(n => n[0]).join(''));
         
       return `
-        <div class="message-bubble flex gap-3.5 max-w-[85%] animate-chat-appear" style="animation-delay: ${staggerDelay}ms; animation-fill-mode: backwards;">
+        <div class="message-bubble flex gap-3.5 max-w-[85%] animate-chat-appear hover:translate-x-1 transition-transform duration-200" style="animation-delay: ${staggerDelay}ms; animation-fill-mode: backwards;">
           <!-- Avatar Icon -->
-          <div class="w-8 h-8 rounded-full ${m.avatarBg} text-ink font-bold flex items-center justify-center text-xs flex-shrink-0">
-            ${m.sender.split(' ').map(n => n[0]).join('')}
+          <div class="w-8 h-8 rounded-full ${escapeHtml(m.avatarBg)} text-ink font-bold flex items-center justify-center text-xs flex-shrink-0">
+            ${initials}
           </div>
           
           <!-- Content Bubble -->
           <div class="flex flex-col gap-1">
             <div class="flex items-center gap-2">
-              <span class="text-xs font-semibold text-body-strong">${m.sender}</span>
+              <span class="text-xs font-semibold text-body-strong">${escapeHtml(m.sender)}</span>
               ${roleBadge}
-              <span class="text-[10px] text-muted">${m.time}</span>
+              <span class="text-[10px] text-muted">${escapeHtml(m.time)}</span>
             </div>
             
             <div class="bg-canvas-soft border border-hairline-soft px-4 py-2.5 rounded-lg text-sm text-ink leading-relaxed">
-              ${m.content}
+              ${escapeHtml(m.content)}
             </div>
           </div>
         </div>

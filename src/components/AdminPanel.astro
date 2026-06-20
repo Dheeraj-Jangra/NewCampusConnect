@@ -2,7 +2,7 @@
 // Admin Panel Component for CampusConnect
 ---
 
-<div id="admin-panel-root" class="w-full flex-1 flex flex-col gap-6 select-none opacity-0 translate-y-4 transition-all duration-500">
+<div id="admin-panel-root" class="w-full flex-1 flex flex-col gap-6 opacity-0 translate-y-4 transition-all duration-500">
   
   <!-- Subheader -->
   <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-hairline pb-6">
@@ -10,8 +10,8 @@
       <h2 class="display-md text-ink">Administrator Approvals</h2>
       <p class="body-sm text-muted">Review, approve, or reject pending professor account registration requests.</p>
     </div>
-    <div class="text-xs text-muted bg-surface-card border border-hairline px-3 py-1.5 rounded-md flex items-center gap-1.5">
-      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3.5 h-3.5 text-primary"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    <div class="text-xs text-muted bg-surface-card border border-hairline px-3 py-1.5 rounded-md flex items-center gap-1.5 hover:scale-105 transition-transform duration-200">
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3.5 h-3.5 text-primary animate-heartbeat"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
       <span>Security Area</span>
     </div>
   </div>
@@ -32,9 +32,10 @@
 </div>
 
 <script>
-  const API_URL = 'http://localhost:3000/api/admin/pending-professors';
-  const APPROVE_URL = 'http://localhost:3000/api/admin/approve-professor';
-  const REJECT_URL = 'http://localhost:3000/api/admin/reject-professor';
+  const API_BASE = window.location.origin;
+  const API_URL = `${API_BASE}/api/admin/pending-professors`;
+  const APPROVE_URL = `${API_BASE}/api/admin/approve-professor`;
+  const REJECT_URL = `${API_BASE}/api/admin/reject-professor`;
 
   const fetchPendingRequests = async () => {
     const token = localStorage.getItem('cc-token');
@@ -80,7 +81,7 @@
       const staggerDelay = Math.min(index * 60, 400);
 
       return `
-        <div class="request-row bg-canvas-soft border border-hairline rounded-lg p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all duration-300 hover:border-hairline-strong animate-fade-in-up" style="animation-delay: ${staggerDelay}ms; animation-fill-mode: backwards;">
+        <div class="request-row bg-canvas-soft border border-hairline rounded-lg p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all duration-300 hover:border-hairline-strong hover-lift animate-fade-in-up" style="animation-delay: ${staggerDelay}ms; animation-fill-mode: backwards;">
           <div class="flex flex-col gap-1 min-w-0">
             <h4 class="title-sm text-ink truncate">${req.name}</h4>
             <span class="text-xs text-muted truncate">${req.email}</span>
@@ -88,10 +89,10 @@
           </div>
 
           <div class="flex items-center gap-3.5 mt-2 sm:mt-0 flex-shrink-0">
-            <button data-action="reject" data-id="${req.id}" class="btn-secondary btn-press text-xs h-9 px-4 text-semantic-error hover:border-semantic-error/40">
+            <button data-action="reject" data-id="${req.id}" data-name="${req.name}" class="btn-secondary btn-press text-xs h-9 px-4 text-semantic-error hover:border-semantic-error/40 hover:scale-105 hover-wiggle transition-all duration-200">
               Reject
             </button>
-            <button data-action="approve" data-id="${req.id}" class="btn-primary btn-press text-xs h-9 px-4 bg-semantic-success hover:bg-semantic-success/90">
+            <button data-action="approve" data-id="${req.id}" data-name="${req.name}" class="btn-primary btn-press text-xs h-9 px-4 bg-semantic-success hover:bg-semantic-success/90 hover:scale-105 transition-all duration-200">
               Approve
             </button>
           </div>
@@ -99,12 +100,15 @@
       `;
     }).join('');
 
-    // Attach click triggers
+    // Attach click triggers with confirmation
     const approveBtns = listContainer.querySelectorAll('button[data-action="approve"]');
     approveBtns.forEach((btn: any) => {
       btn.addEventListener('click', async () => {
         const id = btn.getAttribute('data-id');
-        if (id) await handleAction(id, 'approve', btn);
+        const name = btn.getAttribute('data-name') || 'this professor';
+        if (confirm(`Are you sure you want to approve ${name}?`)) {
+          if (id) await handleAction(id, 'approve', btn);
+        }
       });
     });
 
@@ -112,7 +116,10 @@
     rejectBtns.forEach((btn: any) => {
       btn.addEventListener('click', async () => {
         const id = btn.getAttribute('data-id');
-        if (id) await handleAction(id, 'reject', btn);
+        const name = btn.getAttribute('data-name') || 'this professor';
+        if (confirm(`Are you sure you want to reject ${name}? This action cannot be undone.`)) {
+          if (id) await handleAction(id, 'reject', btn);
+        }
       });
     });
   };

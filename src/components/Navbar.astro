@@ -5,7 +5,7 @@
 <header id="main-nav" class="sticky top-0 z-50 w-full h-16 bg-canvas/80 backdrop-blur-md border-b border-hairline px-6 md:px-12 flex items-center justify-between select-none transition-all duration-300">
   <!-- Brand logo -->
   <div class="flex items-center gap-2" id="nav-brand">
-    <div class="w-8 h-8 rounded-md bg-primary flex items-center justify-center text-on-primary font-bold text-lg shadow-sm transform hover:rotate-12 transition-transform duration-300">
+    <div class="w-8 h-8 rounded-md bg-primary flex items-center justify-center text-on-primary font-bold text-lg shadow-sm transform hover:rotate-12 transition-transform duration-300 animate-bounce-in">
       C
     </div>
     <span class="font-sans font-semibold tracking-tight text-lg text-ink">
@@ -16,12 +16,12 @@
   <!-- User Profile and Sign Out -->
   <div class="flex items-center gap-3">
     <!-- Dark Mode Toggle -->
-    <button id="theme-toggle" class="w-9 h-9 rounded-md bg-surface-card border border-hairline flex items-center justify-center text-muted hover:text-ink hover:border-hairline-strong transition-all duration-300" aria-label="Toggle dark mode">
+    <button id="theme-toggle" class="w-9 h-9 rounded-md bg-surface-card border border-hairline flex items-center justify-center text-muted hover:text-ink hover:border-hairline-strong hover:scale-110 hover:rotate-180 transition-all duration-500" aria-label="Toggle dark mode">
       <svg id="icon-sun" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
       <svg id="icon-moon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
     </button>
 
-    <div id="user-badge" class="hidden sm:flex items-center gap-2 px-3 py-1 bg-surface-card border border-hairline rounded-pill transition-all duration-500 transform hover:scale-105">
+    <div id="user-badge" class="hidden sm:flex items-center gap-2 px-3 py-1 bg-surface-card border border-hairline rounded-pill transition-all duration-500 transform hover:scale-105 hover-glow">
       <span class="relative flex h-2 w-2">
         <span class="animate-ping-slow absolute inline-flex h-full w-full rounded-full bg-semantic-success opacity-75"></span>
         <span class="relative inline-flex rounded-full h-2 w-2 bg-semantic-success"></span>
@@ -30,7 +30,7 @@
     </div>
 
     <!-- Sign Out Button -->
-    <button id="nav-btn-logout" class="btn-secondary btn-press text-xs h-9 px-3 flex items-center gap-1 border border-hairline hover:border-semantic-error/40 hover:text-semantic-error">
+    <button id="nav-btn-logout" class="btn-secondary btn-press text-xs h-9 px-3 flex items-center gap-1 border border-hairline hover:border-semantic-error/40 hover:text-semantic-error hover-wiggle">
       <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
       <span>Sign Out</span>
     </button>

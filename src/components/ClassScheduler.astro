@@ -2,7 +2,7 @@
 // Class Scheduler Component
 ---
 
-<div id="class-scheduler-root" class="w-full flex-1 flex flex-col gap-6 select-none opacity-0 translate-y-4 transition-all duration-500">
+<div id="class-scheduler-root" class="w-full flex-1 flex flex-col gap-6 opacity-0 translate-y-4 transition-all duration-500">
   
   <!-- Subheader & Live Countdown Banner -->
   <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-hairline pb-6">
@@ -12,8 +12,8 @@
     </div>
     
     <!-- Dynamic Ticking Countdown Box -->
-    <div id="next-class-countdown-container" class="flex items-center gap-4 bg-surface-card border border-hairline p-4 rounded-lg shadow-sm max-w-sm hidden animated-mount">
-      <div class="flex items-center justify-center w-10 h-10 rounded-full bg-timeline-thinking/10 border border-timeline-thinking/20 text-timeline-thinking flex-shrink-0">
+    <div id="next-class-countdown-container" class="flex items-center gap-4 bg-surface-card border border-hairline p-4 rounded-lg shadow-sm max-w-sm hidden animated-mount hover-glow">
+      <div class="flex items-center justify-center w-10 h-10 rounded-full border border-timeline-thinking/20 text-timeline-thinking flex-shrink-0 animate-heartbeat" style="background: rgba(223, 168, 143, 0.12);">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="animate-spin-slow"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
       </div>
       <div class="flex flex-col justify-center min-w-0">
@@ -31,7 +31,7 @@
     <div id="scheduler-professor-panel" class="lg:col-span-4 bg-surface-card border border-hairline rounded-lg p-6 flex flex-col gap-4 hidden animated-mount">
       <div class="flex items-center justify-between border-b border-hairline pb-3">
         <h3 class="title-md text-ink">Schedule Lecture</h3>
-        <span class="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-timeline-done bg-timeline-done/10 border border-timeline-done/20 rounded-pill">Professor Mode</span>
+        <span class="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-timeline-done border border-timeline-done/20 rounded-pill" style="background: rgba(192, 133, 50, 0.12);">Professor Mode</span>
       </div>
 
       <form id="scheduler-form" class="flex flex-col gap-4">
@@ -65,7 +65,7 @@
         </div>
 
         <!-- Submit Button -->
-        <button type="submit" id="scheduler-submit-btn" class="btn-primary btn-press w-full mt-2 flex items-center justify-center gap-2">
+        <button type="submit" id="scheduler-submit-btn" class="btn-primary btn-press ripple-container w-full mt-2 flex items-center justify-center gap-2">
           <span>Schedule Class</span>
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
         </button>
@@ -132,7 +132,15 @@
     }
   ];
 
-  const API_URL = 'http://localhost:3000/api/classes';
+  // HTML sanitization to prevent XSS
+  const escapeHtml = (str: string) => {
+    if (!str) return '';
+    const map: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;', '/': '&#x2F;' };
+    return String(str).replace(/[&<>"'/]/g, (c) => map[c] || c);
+  };
+
+  const API_BASE = window.location.origin;
+  const API_URL = `${API_BASE}/api/classes`;
 
   // Load from server with local storage fallback
   const getClasses = async () => {
@@ -266,13 +274,13 @@
         cardBorder = 'border-hairline opacity-60';
         accentLight = 'bg-canvas-soft';
       } else {
-        statusBadge = `<span class="px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-timeline-read bg-timeline-read/10 border border-timeline-read/30 rounded-pill">Upcoming</span>`;
+        statusBadge = `<span class="px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-timeline-read border border-timeline-read/30 rounded-pill" style="background: rgba(159, 187, 224, 0.12);">Upcoming</span>`;
         accentLight = 'bg-canvas-soft/40';
       }
 
       const joinBtn = (isLive && c.link) 
         ? `
-          <a href="${c.link}" target="_blank" class="btn-primary btn-press w-full text-xs font-semibold py-1.5 flex items-center justify-center gap-1.5 mt-2 bg-semantic-error hover:bg-semantic-error/90">
+          <a href="${sanitizeUrl(c.link)}" target="_blank" rel="noopener noreferrer" class="btn-primary btn-press w-full text-xs font-semibold py-1.5 flex items-center justify-center gap-1.5 mt-2 bg-semantic-error hover:bg-semantic-error/90 hover:scale-105 transition-transform duration-200">
             <span>Join Live Lecture</span>
             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
           </a>
@@ -280,21 +288,21 @@
         : '';
 
       return `
-        <div class="class-card bg-surface-card border ${cardBorder} rounded-lg p-5 flex flex-col gap-4 transition-all duration-300 ${isLive ? 'animate-pulse-glow' : 'hover:-translate-y-1 hover:border-hairline-strong'} animate-fade-in-up" style="animation-delay: ${staggerDelay}ms; animation-fill-mode: backwards; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s;">
+        <div class="class-card bg-surface-card border ${cardBorder} rounded-lg p-5 flex flex-col gap-4 transition-all duration-300 ${isLive ? 'animate-pulse-glow' : 'hover:border-hairline-strong hover-lift'} animate-fade-in-up" style="animation-delay: ${staggerDelay}ms; animation-fill-mode: backwards; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s;">
           <div class="flex items-center justify-between border-b border-hairline pb-2.5">
-            <span class="font-mono text-sm font-semibold text-ink">${c.time} <span class="text-xs text-muted font-normal">(${c.duration} mins)</span></span>
+            <span class="font-mono text-sm font-semibold text-ink">${escapeHtml(c.time)} <span class="text-xs text-muted font-normal">(${escapeHtml(c.duration)} mins)</span></span>
             ${statusBadge}
           </div>
 
           <div class="flex flex-col gap-1">
-            <h4 class="title-sm text-ink line-clamp-1">${c.subject}</h4>
-            <span class="text-xs text-body">${c.professor}</span>
+            <h4 class="title-sm text-ink line-clamp-1">${escapeHtml(c.subject)}</h4>
+            <span class="text-xs text-body">${escapeHtml(c.professor)}</span>
           </div>
 
           <div class="flex items-center justify-between mt-auto gap-2 bg-canvas-soft border border-hairline-soft px-3 py-2 rounded-md ${accentLight}">
             <div class="flex items-center gap-1.5 text-xs text-muted min-w-0">
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3.5 h-3.5 flex-shrink-0 text-muted"><path d="m2 22 1-1h3l9-9"/><path d="M19 17v4h2v-4h-2z"/><path d="M8 8H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/><path d="M16 11h3a2 2 0 0 1 2 2v5h-5V11z"/><path d="M12 2a3 3 0 0 0-3 3v2h6V5a3 3 0 0 0-3-3z"/></svg>
-              <span class="truncate">${c.room || 'Remote'}</span>
+              <span class="truncate">${escapeHtml(c.room || 'Remote')}</span>
             </div>
             ${c.link ? '<span class="text-[10px] font-bold uppercase text-primary tracking-wider">Meet Link</span>' : ''}
           </div>

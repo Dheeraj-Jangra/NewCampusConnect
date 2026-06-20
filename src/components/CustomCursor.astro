@@ -76,7 +76,7 @@
             dot.style.backgroundColor = 'var(--color-primary)';
             
             // If it is a text input, make cursor look like an I-Beam
-            if (el.tagName === 'INPUT' && (el as HTMLInputElement).type === 'text' || el.tagName === 'TEXTAREA') {
+            if ((el.tagName === 'INPUT' && (el as HTMLInputElement).type === 'text') || el.tagName === 'TEXTAREA') {
               ring.style.width = '6px';
               ring.style.height = '24px';
               ring.style.borderRadius = '2px';

@@ -2,7 +2,7 @@
 // Notice Board Component
 ---
 
-<div id="notice-board-root" class="w-full flex-1 flex flex-col gap-6 select-none opacity-0 translate-y-4 transition-all duration-500">
+<div id="notice-board-root" class="w-full flex-1 flex flex-col gap-6 opacity-0 translate-y-4 transition-all duration-500">
   
   <!-- Subheader -->
   <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-hairline pb-6">
@@ -13,11 +13,11 @@
     
     <!-- Category Filter Controls (Student View / Global view) -->
     <div class="flex flex-wrap gap-2 items-center" id="notice-filters">
-      <button data-filter="all" class="px-3.5 py-1.5 text-xs font-semibold rounded-pill bg-ink text-canvas border border-ink transition-all duration-300">All</button>
-      <button data-filter="exam" class="px-3.5 py-1.5 text-xs font-semibold rounded-pill bg-surface-card text-ink border border-hairline hover:border-timeline-thinking transition-all duration-300">Exams</button>
-      <button data-filter="announcement" class="px-3.5 py-1.5 text-xs font-semibold rounded-pill bg-surface-card text-ink border border-hairline hover:border-timeline-grep transition-all duration-300">Announcements</button>
-      <button data-filter="event" class="px-3.5 py-1.5 text-xs font-semibold rounded-pill bg-surface-card text-ink border border-hairline hover:border-timeline-edit transition-all duration-300">Events</button>
-      <button data-filter="academic" class="px-3.5 py-1.5 text-xs font-semibold rounded-pill bg-surface-card text-ink border border-hairline hover:border-timeline-read transition-all duration-300">Academics</button>
+      <button data-filter="all" class="px-3.5 py-1.5 text-xs font-semibold rounded-pill bg-ink text-canvas border border-ink transition-all duration-300 hover:scale-105 hover-wiggle">All</button>
+      <button data-filter="exam" class="px-3.5 py-1.5 text-xs font-semibold rounded-pill bg-surface-card text-ink border border-hairline hover:border-timeline-thinking hover:scale-105 hover-jello transition-all duration-300">Exams</button>
+      <button data-filter="announcement" class="px-3.5 py-1.5 text-xs font-semibold rounded-pill bg-surface-card text-ink border border-hairline hover:border-timeline-grep hover:scale-105 hover-jello transition-all duration-300">Announcements</button>
+      <button data-filter="event" class="px-3.5 py-1.5 text-xs font-semibold rounded-pill bg-surface-card text-ink border border-hairline hover:border-timeline-edit hover:scale-105 hover-jello transition-all duration-300">Events</button>
+      <button data-filter="academic" class="px-3.5 py-1.5 text-xs font-semibold rounded-pill bg-surface-card text-ink border border-hairline hover:border-timeline-read hover:scale-105 hover-jello transition-all duration-300">Academics</button>
     </div>
   </div>
 
@@ -28,7 +28,7 @@
     <div id="notice-professor-panel" class="lg:col-span-4 bg-surface-card border border-hairline rounded-lg p-6 flex flex-col gap-4 hidden animated-mount">
       <div class="flex items-center justify-between border-b border-hairline pb-3">
         <h3 class="title-md text-ink">Publish Notice</h3>
-        <span class="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-timeline-done bg-timeline-done/10 border border-timeline-done/20 rounded-pill">Authorized</span>
+        <span class="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-timeline-done border border-timeline-done/20 rounded-pill" style="background: rgba(192, 133, 50, 0.12);">Authorized</span>
       </div>
       
       <form id="notice-form" class="flex flex-col gap-4">
@@ -56,7 +56,7 @@
         </div>
 
         <!-- Submit Button -->
-        <button type="submit" id="notice-submit-btn" class="btn-primary btn-press w-full mt-2 flex items-center justify-center gap-2">
+        <button type="submit" id="notice-submit-btn" class="btn-primary btn-press ripple-container w-full mt-2 flex items-center justify-center gap-2">
           <span>Publish Notice</span>
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><path d="m5 12 17-7-7 17-4-6-6-4Z"/></svg>
         </button>
@@ -116,14 +116,22 @@
     }
   ];
 
-  const API_URL = 'http://localhost:3000/api/notices';
+  // HTML sanitization to prevent XSS
+  const escapeHtml = (str: string) => {
+    if (!str) return '';
+    const map: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;', '/': '&#x2F;' };
+    return String(str).replace(/[&<>"'/]/g, (c) => map[c] || c);
+  };
+
+  const API_BASE = window.location.origin;
+  const API_URL = `${API_BASE}/api/notices`;
 
   // Colors & badges helper mapping
-  const categoryMeta: Record<string, { label: string, colorClass: string, bgClass: string, borderClass: string }> = {
-    exam: { label: 'Exam', colorClass: 'text-timeline-thinking', bgClass: 'bg-timeline-thinking/10', borderClass: 'border-timeline-thinking/30' },
-    announcement: { label: 'Announcement', colorClass: 'text-timeline-grep', bgClass: 'bg-timeline-grep/10', borderClass: 'border-timeline-grep/30' },
-    event: { label: 'Event', colorClass: 'text-timeline-edit', bgClass: 'bg-timeline-edit/10', borderClass: 'border-timeline-edit/30' },
-    academic: { label: 'Academic', colorClass: 'text-timeline-read', bgClass: 'bg-timeline-read/10', borderClass: 'border-timeline-read/30' }
+  const categoryMeta: Record<string, { label: string, colorClass: string, bgStyle: string, borderClass: string }> = {
+    exam: { label: 'Exam', colorClass: 'text-timeline-thinking', bgStyle: 'background: rgba(223, 168, 143, 0.12);', borderClass: 'border-timeline-thinking/30' },
+    announcement: { label: 'Announcement', colorClass: 'text-timeline-grep', bgStyle: 'background: rgba(159, 201, 162, 0.12);', borderClass: 'border-timeline-grep/30' },
+    event: { label: 'Event', colorClass: 'text-timeline-edit', bgStyle: 'background: rgba(192, 168, 221, 0.12);', borderClass: 'border-timeline-edit/30' },
+    academic: { label: 'Academic', colorClass: 'text-timeline-read', bgStyle: 'background: rgba(159, 187, 224, 0.12);', borderClass: 'border-timeline-read/30' }
   };
 
   let activeFilter = 'all';
@@ -175,7 +183,7 @@
     }
 
     listContainer.innerHTML = filtered.map((notice: any, index: number) => {
-      const meta = categoryMeta[notice.category] || { label: 'Notice', colorClass: 'text-muted', bgClass: 'bg-surface-strong/30', borderClass: 'border-hairline' };
+      const meta = categoryMeta[notice.category] || { label: 'Notice', colorClass: 'text-muted', bgStyle: 'background: rgba(128, 125, 114, 0.12);', borderClass: 'border-hairline' };
       const staggerDelay = Math.min(index * 50, 400);
       
       const displayDate = notice.date || new Date(notice.timestamp).toLocaleDateString('en-US', {
@@ -185,29 +193,29 @@
       });
 
       return `
-        <div class="notice-card bg-surface-card border border-hairline rounded-lg p-5 flex flex-col gap-3 transition-all duration-300 hover:border-hairline-strong hover:-translate-y-1 hover:shadow-md overflow-hidden animate-fade-in-up" style="animation-delay: ${staggerDelay}ms; animation-fill-mode: backwards;" data-category="${notice.category}" data-id="${notice.id}">
+        <div class="notice-card bg-surface-card border border-hairline rounded-lg p-5 flex flex-col gap-3 transition-all duration-300 hover:border-hairline-strong hover:-translate-y-1 overflow-hidden animate-fade-in-up" style="animation-delay: ${staggerDelay}ms; animation-fill-mode: backwards;" data-category="${escapeHtml(notice.category)}" data-id="${escapeHtml(notice.id)}">
           <div class="flex items-center justify-between flex-wrap gap-2 pointer-events-none">
             <!-- Badge & Info -->
             <div class="flex items-center gap-2">
-              <span class="px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${meta.colorClass} ${meta.bgClass} border ${meta.borderClass} rounded-pill">
-                ${meta.label}
+              <span class="px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${meta.colorClass} border ${meta.borderClass} rounded-pill" style="${meta.bgStyle}">
+                ${escapeHtml(meta.label)}
               </span>
-              <span class="text-xs text-muted">${displayDate}</span>
+              <span class="text-xs text-muted">${escapeHtml(displayDate)}</span>
             </div>
             <!-- Author -->
-            <span class="text-xs font-semibold text-body-strong">${notice.author}</span>
+            <span class="text-xs font-semibold text-body-strong">${escapeHtml(notice.author)}</span>
           </div>
 
           <!-- Title -->
           <div class="flex items-center justify-between pointer-events-none">
-            <h4 class="title-sm text-ink pr-6 transition-colors duration-200 notice-title-text">${notice.title}</h4>
+            <h4 class="title-sm text-ink pr-6 transition-colors duration-200 notice-title-text">${escapeHtml(notice.title)}</h4>
             <!-- Expand Arrow Icon -->
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-muted flex-shrink-0 transform transition-transform duration-300 notice-arrow"><path d="m6 9 6 6 6-6"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-muted flex-shrink-0 transform transition-transform duration-300 notice-arrow group-hover:scale-125"><path d="m6 9 6 6 6-6"/></svg>
           </div>
 
           <!-- Collapsible Content -->
           <div class="notice-body-wrapper max-h-0 opacity-0 pointer-events-none transition-all duration-300 ease-in-out border-t border-transparent pt-0 mt-0">
-            <p class="body-sm text-body py-2 leading-relaxed whitespace-pre-line">${notice.content}</p>
+            <p class="body-sm text-body py-2 leading-relaxed whitespace-pre-line">${escapeHtml(notice.content)}</p>
           </div>
         </div>
       `;

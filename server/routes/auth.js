@@ -6,7 +6,11 @@ import prisma from '../lib/prisma.js';
 import { authMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'campus-connect-secret-key-2026';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  console.error('FATAL: JWT_SECRET environment variable is not set. Server cannot start.');
+  process.exit(1);
+}
 
 // Register User
 router.post('/register', async (req, res) => {
@@ -15,6 +19,28 @@ router.post('/register', async (req, res) => {
 
     if (!email || !password || !name || !role) {
       return res.status(400).json({ error: 'All fields (email, password, name, role) are required' });
+    }
+
+    // Validate role - only student and professor allowed via registration
+    const allowedRoles = ['student', 'professor'];
+    if (!allowedRoles.includes(role)) {
+      return res.status(400).json({ error: 'Invalid role. Only student and professor accounts can be registered.' });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Please provide a valid email address' });
+    }
+
+    // Validate password strength
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters' });
+    }
+
+    // Validate name length
+    if (name.length > 100) {
+      return res.status(400).json({ error: 'Name must be 100 characters or less' });
     }
 
     // Check if user already exists
@@ -31,7 +57,7 @@ router.post('/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     // Determine approval status
-    // Professors are unapproved by default; students (and admins seeded elsewhere) are approved
+    // Professors are unapproved by default; students are approved
     const isApproved = role !== 'professor';
 
     const user = await prisma.user.create({
@@ -180,10 +206,14 @@ router.post('/forgot-password', async (req, res) => {
     });
 
     // In production, send via email. For demo, return in response.
-    res.json({
+    // NOTE: _debug_token is only included in development mode
+    const response: any = {
       message: 'If an account with that email exists, a reset token has been generated.',
-      _debug_token: resetToken, // Remove in production
-    });
+    };
+    if (process.env.NODE_ENV !== 'production') {
+      response._debug_token = resetToken;
+    }
+    res.json(response);
   } catch (error) {
     console.error('Error in forgot-password:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -199,8 +229,19 @@ router.post('/reset-password', async (req, res) => {
       return res.status(400).json({ error: 'Email, token, and new password are required' });
     }
 
-    if (newPassword.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Please provide a valid email address' });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters' });
+    }
+
+    // Validate token format (6 digits)
+    if (!/^\d{6}$/.test(token)) {
+      return res.status(400).json({ error: 'Invalid token format' });
     }
 
     const user = await prisma.user.findUnique({ where: { email } });

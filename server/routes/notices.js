@@ -1,6 +1,6 @@
 import express from 'express';
 import prisma from '../lib/prisma.js';
-import { authMiddleware } from '../middleware/auth.js';
+import { authMiddleware, professorMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -11,6 +11,7 @@ router.get('/', async (req, res) => {
       orderBy: {
         timestamp: 'desc',
       },
+      take: 50, // Limit to prevent abuse
     });
     res.json(notices);
   } catch (error) {
@@ -19,12 +20,26 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Create notice (secured)
-router.post('/', authMiddleware, async (req, res) => {
+// Create notice (secured - professors and admins only)
+router.post('/', authMiddleware, professorMiddleware, async (req, res) => {
   try {
     const { title, category, content } = req.body;
     if (!title || !category || !content) {
       return res.status(400).json({ error: 'Title, category, and content are required' });
+    }
+
+    // Validate input lengths
+    if (title.length > 200) {
+      return res.status(400).json({ error: 'Title must be 200 characters or less' });
+    }
+    if (content.length > 5000) {
+      return res.status(400).json({ error: 'Content must be 5000 characters or less' });
+    }
+
+    // Validate category
+    const allowedCategories = ['exam', 'announcement', 'event', 'academic'];
+    if (!allowedCategories.includes(category)) {
+      return res.status(400).json({ error: 'Invalid category' });
     }
 
     const notice = await prisma.notice.create({
