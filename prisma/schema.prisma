@@ -7,6 +7,24 @@ generator client {
   provider = "prisma-client-js"
 }
 
+model User {
+  id             String          @id @default(uuid())
+  email          String          @unique
+  password       String
+  name           String
+  role           String          // "student" | "professor" | "admin"
+  isApproved     Boolean         @default(true)
+  resetToken     String?
+  resetTokenExpiry DateTime?
+  createdAt      DateTime        @default(now())
+  
+  // Relations
+  notices        Notice[]
+  classes        Class[]
+  materials      StudyMaterial[]
+  chatMessages   ChatMessage[]
+}
+
 model Notice {
   id        String   @id @default(uuid())
   title     String
@@ -14,6 +32,10 @@ model Notice {
   author    String
   content   String
   timestamp DateTime @default(now())
+  
+  // Optional linkage to User
+  authorId  String?
+  user      User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
 }
 
 model Class {
@@ -25,6 +47,10 @@ model Class {
   room      String
   link      String
   timestamp DateTime @default(now())
+  
+  // Optional linkage to User
+  professorId String?
+  user        User?    @relation(fields: [professorId], references: [id], onDelete: SetNull)
 }
 
 model StudyMaterial {
@@ -36,6 +62,10 @@ model StudyMaterial {
   author    String
   fileName  String   // local file name stored in server/uploads
   timestamp DateTime @default(now())
+  
+  // Optional linkage to User
+  authorId  String?
+  user      User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
 }
 
 model ChatMessage {
@@ -47,4 +77,8 @@ model ChatMessage {
   content   String
   time      String   // format "3:42 PM"
   timestamp DateTime @default(now())
+  
+  // Optional linkage to User
+  senderId  String?
+  user      User?    @relation(fields: [senderId], references: [id], onDelete: SetNull)
 }
