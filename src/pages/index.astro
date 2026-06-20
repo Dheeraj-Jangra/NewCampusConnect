@@ -579,7 +579,7 @@ import AdminPanel from '../components/AdminPanel.astro';
           const res = await fetch(LOGIN_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
+            body: JSON.stringify({ email, password, portalRole: activeRole })
           });
           const data = await res.json();
 

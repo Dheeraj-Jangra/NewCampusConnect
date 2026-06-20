@@ -65,7 +65,7 @@ router.post('/register', async (req, res) => {
 // Login User
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, portalRole } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
@@ -90,6 +90,19 @@ router.post('/login', async (req, res) => {
     if (user.role === 'professor' && !user.isApproved) {
       return res.status(403).json({ 
         error: 'Your professor account is currently pending administrator approval. Please wait for an admin to approve your request.' 
+      });
+    }
+
+    // Validate portal role — user must log in through the correct portal
+    if (portalRole && user.role !== portalRole) {
+      const portalNames = {
+        student: 'Student Portal',
+        professor: 'Professor Portal',
+        admin: 'Admin Portal',
+      };
+      const userPortal = portalNames[user.role] || user.role;
+      return res.status(403).json({
+        error: 'This account is registered as a ' + user.role + '. Please use the ' + userPortal + ' to sign in.',
       });
     }
 
