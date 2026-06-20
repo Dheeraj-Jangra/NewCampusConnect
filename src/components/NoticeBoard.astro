@@ -131,7 +131,12 @@
   // Load from server with local storage fallback
   const getNotices = async () => {
     try {
-      const res = await fetch(API_URL);
+      const token = localStorage.getItem('cc-token');
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const res = await fetch(API_URL, { headers });
       if (!res.ok) throw new Error('Failed to fetch from API');
       const data = await res.json();
       localStorage.setItem('cc-notices', JSON.stringify(data));
@@ -261,7 +266,14 @@
       if (!title || !content) return;
 
       const activeRole = localStorage.getItem('cc-active-role') || 'student';
-      const author = activeRole === 'professor' ? 'Prof. Evelyn Vance' : 'Guest Student';
+      const userStr = localStorage.getItem('cc-user');
+      let author = 'Faculty Member';
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          author = user.name || author;
+        } catch {}
+      }
 
       const payload = {
         title,
@@ -271,12 +283,17 @@
       };
 
       let saveSuccess = false;
+      const token = localStorage.getItem('cc-token');
       try {
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json'
+        };
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
         const res = await fetch(API_URL, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers,
           body: JSON.stringify(payload)
         });
         if (res.ok) {
@@ -378,14 +395,14 @@
   };
 
   // Toggle Visibility between Student / Professor dashboards
-  const handleRoleView = (role: 'student' | 'professor') => {
+  const handleRoleView = (role: 'student' | 'professor' | 'admin') => {
     const profPanel = document.getElementById('notice-professor-panel');
     const feed = document.getElementById('notice-board-feed');
     const root = document.getElementById('notice-board-root');
 
     if (!profPanel || !feed || !root) return;
 
-    if (role === 'professor') {
+    if (role === 'professor' || role === 'admin') {
       profPanel.classList.remove('hidden');
       feed.classList.remove('lg:col-span-12');
       feed.classList.add('lg:col-span-8');
@@ -409,7 +426,7 @@
     setupFilters();
 
     // Check current active role
-    const currentRole = (localStorage.getItem('cc-active-role') || 'student') as 'student' | 'professor';
+    const currentRole = (localStorage.getItem('cc-active-role') || 'student') as 'student' | 'professor' | 'admin';
     handleRoleView(currentRole);
 
     // Fade in board root

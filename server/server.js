@@ -5,12 +5,15 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import bcrypt from 'bcryptjs';
 
 // Import routes
 import noticesRouter from './routes/notices.js';
 import classesRouter from './routes/classes.js';
 import materialsRouter from './routes/materials.js';
 import chatRouter from './routes/chat.js';
+import authRouter from './routes/auth.js';
+import adminRouter from './routes/admin.js';
 import prisma from './lib/prisma.js';
 
 dotenv.config();
@@ -30,6 +33,8 @@ app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
+app.use('/api/auth', authRouter);
+app.use('/api/admin', adminRouter);
 app.use('/api/notices', noticesRouter);
 app.use('/api/classes', classesRouter);
 app.use('/api/materials', materialsRouter);
@@ -60,7 +65,7 @@ io.on('connection', (socket) => {
 
   // Handle incoming real-time messages
   socket.on('send-message', async (msgData) => {
-    const { channel, sender, role, avatarBg, content, time } = msgData;
+    const { channel, sender, role, avatarBg, content, time, senderId } = msgData;
 
     try {
       // Save message to database via Prisma
@@ -72,6 +77,7 @@ io.on('connection', (socket) => {
           avatarBg,
           content,
           time,
+          senderId: senderId || null,
         },
       });
 
@@ -93,6 +99,34 @@ io.on('connection', (socket) => {
     console.log(`Socket disconnected: ${socket.id}`);
   });
 });
+
+// Seed admin user
+async function seedAdminUser() {
+  try {
+    const adminUser = await prisma.user.findUnique({
+      where: { email: 'admin@campusconnect.edu' }
+    });
+
+    if (!adminUser) {
+      console.log('Seeding default administrator account...');
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash('admin123', salt);
+      
+      await prisma.user.create({
+        data: {
+          email: 'admin@campusconnect.edu',
+          password: hashedPassword,
+          name: 'Administrator',
+          role: 'admin',
+          isApproved: true
+        }
+      });
+      console.log('Admin account seeded: admin@campusconnect.edu / admin123');
+    }
+  } catch (err) {
+    console.error('Error seeding admin user:', err);
+  }
+}
 
 // Seed data function to prepopulate database if completely empty
 async function seedDatabaseIfEmpty() {
@@ -185,5 +219,6 @@ async function seedDatabaseIfEmpty() {
 // Start Server
 httpServer.listen(port, async () => {
   console.log(`Server is running on port ${port}`);
+  await seedAdminUser();
   await seedDatabaseIfEmpty();
 });

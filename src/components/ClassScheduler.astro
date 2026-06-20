@@ -137,7 +137,12 @@
   // Load from server with local storage fallback
   const getClasses = async () => {
     try {
-      const res = await fetch(API_URL);
+      const token = localStorage.getItem('cc-token');
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const res = await fetch(API_URL, { headers });
       if (!res.ok) throw new Error('Failed to fetch classes from API');
       const data = await res.json();
       localStorage.setItem('cc-classes', JSON.stringify(data));
@@ -329,7 +334,14 @@
       }
 
       const activeRole = localStorage.getItem('cc-active-role') || 'student';
-      const professor = activeRole === 'professor' ? 'Prof. Evelyn Vance' : 'Guest Faculty';
+      const userStr = localStorage.getItem('cc-user');
+      let professor = 'Faculty Member';
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          professor = user.name || professor;
+        } catch {}
+      }
 
       const payload = {
         subject,
@@ -341,12 +353,17 @@
       };
 
       let saveSuccess = false;
+      const token = localStorage.getItem('cc-token');
       try {
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json'
+        };
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
         const res = await fetch(API_URL, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers,
           body: JSON.stringify(payload)
         });
         if (res.ok) {
@@ -405,12 +422,12 @@
   };
 
   // Toggle layout based on active role
-  const handleRoleView = (role: 'student' | 'professor') => {
+  const handleRoleView = (role: 'student' | 'professor' | 'admin') => {
     const profPanel = document.getElementById('scheduler-professor-panel');
     const feed = document.getElementById('timetable-feed');
     if (!profPanel || !feed) return;
 
-    if (role === 'professor') {
+    if (role === 'professor' || role === 'admin') {
       profPanel.classList.remove('hidden');
       feed.classList.remove('lg:col-span-12');
       feed.classList.add('lg:col-span-8');
@@ -432,7 +449,7 @@
     setupSchedulerForm();
     startLiveCountdown();
 
-    const currentRole = (localStorage.getItem('cc-active-role') || 'student') as 'student' | 'professor';
+    const currentRole = (localStorage.getItem('cc-active-role') || 'student') as 'student' | 'professor' | 'admin';
     handleRoleView(currentRole);
 
     setTimeout(() => {

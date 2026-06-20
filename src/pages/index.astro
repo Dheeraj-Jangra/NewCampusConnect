@@ -5,19 +5,20 @@ import NoticeBoard from '../components/NoticeBoard.astro';
 import ClassScheduler from '../components/ClassScheduler.astro';
 import StudyMaterials from '../components/StudyMaterials.astro';
 import CommunityChat from '../components/CommunityChat.astro';
+import AdminPanel from '../components/AdminPanel.astro';
 ---
 
 <Layout title="CampusConnect | University Communication Hub">
   <main class="w-full flex-1 flex flex-col relative z-10">
     
     <!-- Toast Notification Overlay -->
-    <div id="toast-alert" class="fixed top-6 left-1/2 -translate-x-1/2 z-9999 px-4 py-3 bg-ink border border-primary/30 text-canvas text-xs font-semibold rounded-md shadow-lg flex items-center gap-2 max-w-md hidden">
+    <div id="toast-alert" class="fixed top-6 left-1/2 -translate-x-1/2 z-9999 px-5 py-3.5 bg-ink border border-primary/30 text-canvas text-sm font-semibold rounded-md shadow-lg flex items-center gap-3 w-fit min-w-[320px] hidden">
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-primary w-4 h-4"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
       <span id="toast-message">Action completed successfully.</span>
     </div>
 
-    <!-- 1. Landing Splash Screen: Role Selector Gate -->
-    <section id="splash-gate" class="flex-1 flex flex-col items-center justify-center px-6 py-12 md:py-24 text-center select-none max-w-5xl mx-auto">
+    <!-- 1. Landing Splash Screen: Role Selector & Auth Gate -->
+    <section id="splash-gate" class="flex-1 flex flex-col items-center justify-center px-6 py-12 md:py-24 text-center select-none max-w-5xl mx-auto w-full">
       
       <!-- Timeline decoration pills -->
       <div class="flex gap-2 mb-6 animate-pulse-slow">
@@ -35,43 +36,177 @@ import CommunityChat from '../components/CommunityChat.astro';
         The quietly confident developer brand interface, customized for student-faculty interactions, notices, and community resources.
       </p>
 
-      <!-- Portals Grid with stagger -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-3xl mt-2 select-none">
-        
-        <!-- Student Entry Portal Card -->
-        <div id="portal-student" class="card-editorial flex flex-col items-start gap-4 p-8 group hero-word stagger-5">
-          <div class="w-10 h-10 rounded-full bg-timeline-read/10 border border-timeline-read/30 text-timeline-read flex items-center justify-center group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
+      <!-- 1a. Portal Selection View -->
+      <div id="portal-selector-view" class="w-full flex flex-col items-center">
+        <!-- Portals Grid with stagger -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-3xl mt-2 select-none">
+          
+          <!-- Student Entry Portal Card -->
+          <div id="portal-student" class="card-editorial flex flex-col items-start gap-4 p-8 group hero-word stagger-5 cursor-pointer">
+            <div class="w-10 h-10 rounded-full bg-timeline-read/10 border border-timeline-read/30 text-timeline-read flex items-center justify-center group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
+            </div>
+            <div class="text-left">
+              <h3 class="title-md text-ink group-hover:text-primary transition-colors">Student Portal</h3>
+              <p class="body-sm text-body mt-2 leading-relaxed">Access exam dates, live lectures countdown, retrieve notes, and join peer discussions in community chat channels.</p>
+            </div>
+            <button class="btn-secondary btn-press w-full mt-4 justify-between group-hover:border-primary group-hover:bg-primary group-hover:text-on-primary">
+              <span>Enter Dashboard</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5 transition-transform group-hover:translate-x-1"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            </button>
           </div>
-          <div class="text-left">
-            <h3 class="title-md text-ink group-hover:text-primary transition-colors">Student Portal</h3>
-            <p class="body-sm text-body mt-2 leading-relaxed">Access exam dates, live lectures countdown, retrieve notes, and join peer discussions in community chat channels.</p>
+
+          <!-- Professor Entry Portal Card -->
+          <div id="portal-professor" class="card-editorial flex flex-col items-start gap-4 p-8 group hero-word stagger-6 cursor-pointer">
+            <div class="w-10 h-10 rounded-full bg-timeline-thinking/10 border border-timeline-thinking/30 text-timeline-thinking flex items-center justify-center group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/></svg>
+            </div>
+            <div class="text-left">
+              <h3 class="title-md text-ink group-hover:text-primary transition-colors">Professor Portal</h3>
+              <p class="body-sm text-body mt-2 leading-relaxed">Publish formal administrative notices, schedule live classroom meetings, share research documents, and answer student Q&As.</p>
+            </div>
+            <button class="btn-secondary btn-press w-full mt-4 justify-between group-hover:border-primary group-hover:bg-primary group-hover:text-on-primary">
+              <span>Faculty Management</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5 transition-transform group-hover:translate-x-1"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            </button>
           </div>
-          <button class="btn-secondary btn-press w-full mt-4 justify-between group-hover:border-primary group-hover:bg-primary group-hover:text-on-primary">
-            <span>Enter Dashboard</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5 transition-transform group-hover:translate-x-1"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-          </button>
+
         </div>
 
-        <!-- Professor Entry Portal Card -->
-        <div id="portal-professor" class="card-editorial flex flex-col items-start gap-4 p-8 group hero-word stagger-6">
-          <div class="w-10 h-10 rounded-full bg-timeline-thinking/10 border border-timeline-thinking/30 text-timeline-thinking flex items-center justify-center group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/></svg>
-          </div>
-          <div class="text-left">
-            <h3 class="title-md text-ink group-hover:text-primary transition-colors">Professor Portal</h3>
-            <p class="body-sm text-body mt-2 leading-relaxed">Publish formal administrative notices, schedule live classroom meetings, share research documents, and answer student Q&As.</p>
-          </div>
-          <button class="btn-secondary btn-press w-full mt-4 justify-between group-hover:border-primary group-hover:bg-primary group-hover:text-on-primary">
-            <span>Faculty Management</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5 transition-transform group-hover:translate-x-1"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-          </button>
-        </div>
-
+        <!-- Admin Quick Link -->
+        <button id="auth-admin-link" class="text-[10px] font-bold text-muted hover:text-primary transition-colors mt-8 uppercase tracking-wider focus:outline-none hover:scale-105 transform duration-300">
+          Are you an Administrator? Sign In here
+        </button>
       </div>
+
+      <!-- 1b. Authentication Card View (Hidden by default) -->
+      <div id="auth-form-view" class="w-[520px] max-w-full bg-surface-card border border-hairline rounded-lg p-10 flex flex-col gap-5 hidden animated-mount mx-auto text-left">
+        <div class="border-b border-hairline pb-4 flex items-center justify-between">
+          <div>
+            <h3 id="auth-view-title" class="title-md text-ink">Sign In</h3>
+            <p id="auth-view-subtitle" class="text-xs text-muted mt-1">Enter your campus email to log in.</p>
+          </div>
+          <span id="auth-role-badge" class="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-primary bg-primary/10 border border-primary/20 rounded-pill">Student</span>
+        </div>
+
+        <form id="auth-form" class="flex flex-col gap-4">
+          <!-- Name (Sign Up only) -->
+          <div id="auth-field-name" class="flex flex-col gap-1.5 hidden">
+            <label for="auth-name" class="text-xs font-semibold text-body-strong">Full Name</label>
+            <input type="text" id="auth-name" placeholder="e.g. Sarah Jenkins" class="w-full px-3 py-2 bg-canvas-soft border border-hairline rounded-md text-sm text-ink focus:outline-none focus:border-primary transition-all duration-200" />
+          </div>
+
+          <!-- Email -->
+          <div class="flex flex-col gap-1.5">
+            <label for="auth-email" class="text-xs font-semibold text-body-strong">Campus Email</label>
+            <input type="email" id="auth-email" required placeholder="e.g. sarah@university.edu" class="w-full px-3 py-2 bg-canvas-soft border border-hairline rounded-md text-sm text-ink focus:outline-none focus:border-primary transition-all duration-200" />
+          </div>
+
+          <!-- Password -->
+          <div class="flex flex-col gap-1.5">
+            <label for="auth-password" class="text-xs font-semibold text-body-strong">Password</label>
+            <input type="password" id="auth-password" required placeholder="••••••••" class="w-full px-3 py-2 bg-canvas-soft border border-hairline rounded-md text-sm text-ink focus:outline-none focus:border-primary transition-all duration-200" />
+          </div>
+
+          <!-- Forgot Password Link (Sign In only) -->
+          <div id="auth-forgot-link" class="text-right -mt-1">
+            <button type="button" id="auth-forgot-btn" class="text-[11px] text-primary hover:underline focus:outline-none font-semibold">
+              Forgot Password?
+            </button>
+          </div>
+
+          <!-- Role Selection (Hidden from Students, visible during registration) -->
+          <div id="auth-field-role" class="flex flex-col gap-1.5 hidden">
+            <label for="auth-role" class="text-xs font-semibold text-body-strong">Registration Role</label>
+            <select id="auth-role" class="w-full px-3 py-2 bg-canvas-soft border border-hairline rounded-md text-sm text-ink focus:outline-none focus:border-primary transition-all duration-200">
+              <option value="student">Student Account</option>
+              <option value="professor">Professor Account</option>
+            </select>
+            <span id="prof-pending-alert" class="text-[10px] text-primary font-medium mt-1 hidden">⚠️ Professor requests require administrator approval before logging in.</span>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" id="auth-submit-btn" class="btn-primary btn-press w-full mt-2 flex items-center justify-center gap-2">
+            <span id="auth-submit-text">Log In</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+          </button>
+        </form>
+
+        <!-- Toggle Sign In / Sign Up & Back -->
+        <div class="text-center text-xs text-muted flex flex-col gap-3.5 pt-2 border-t border-hairline-soft">
+          <button id="auth-toggle-btn" class="text-primary hover:underline focus:outline-none font-semibold">
+            Don't have an account? Sign Up
+          </button>
+          <button id="auth-back-btn" class="text-body hover:underline focus:outline-none flex items-center justify-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3.5 h-3.5"><line x1="19" x2="5" y1="12" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            <span>Back to portals</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 1c. Forgot Password View (Hidden by default) -->
+      <div id="forgot-password-view" class="w-[520px] max-w-full bg-surface-card border border-hairline rounded-lg p-10 flex flex-col gap-5 hidden animated-mount mx-auto text-left">
+        <div class="border-b border-hairline pb-4">
+          <h3 class="title-md text-ink">Forgot Password</h3>
+          <p class="text-xs text-muted mt-1">Enter your campus email and we'll send you a reset code.</p>
+        </div>
+
+        <form id="forgot-password-form" class="flex flex-col gap-4">
+          <div class="flex flex-col gap-1.5">
+            <label for="forgot-email" class="text-xs font-semibold text-body-strong">Campus Email</label>
+            <input type="email" id="forgot-email" required placeholder="e.g. sarah@university.edu" class="w-full px-3 py-2 bg-canvas-soft border border-hairline rounded-md text-sm text-ink focus:outline-none focus:border-primary transition-all duration-200" />
+          </div>
+          <button type="submit" id="forgot-submit-btn" class="btn-primary btn-press w-full mt-2 flex items-center justify-center gap-2">
+            <span id="forgot-submit-text">Send Reset Code</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5"><path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4z"/></svg>
+          </button>
+        </form>
+
+        <div class="text-center text-xs text-muted flex flex-col gap-3.5 pt-2 border-t border-hairline-soft">
+          <button id="forgot-back-btn" class="text-body hover:underline focus:outline-none flex items-center justify-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3.5 h-3.5"><line x1="19" x2="5" y1="12" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            <span>Back to Sign In</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 1d. Reset Password View (Hidden by default) -->
+      <div id="reset-password-view" class="w-[520px] max-w-full bg-surface-card border border-hairline rounded-lg p-10 flex flex-col gap-5 hidden animated-mount mx-auto text-left">
+        <div class="border-b border-hairline pb-4">
+          <h3 class="title-md text-ink">Reset Password</h3>
+          <p class="text-xs text-muted mt-1">Enter the 6-digit code from your email and your new password.</p>
+        </div>
+
+        <form id="reset-password-form" class="flex flex-col gap-4">
+          <div class="flex flex-col gap-1.5">
+            <label for="reset-email" class="text-xs font-semibold text-body-strong">Campus Email</label>
+            <input type="email" id="reset-email" required placeholder="e.g. sarah@university.edu" class="w-full px-3 py-2 bg-canvas-soft border border-hairline rounded-md text-sm text-ink focus:outline-none focus:border-primary transition-all duration-200" />
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label for="reset-token" class="text-xs font-semibold text-body-strong">Reset Code</label>
+            <input type="text" id="reset-token" required placeholder="e.g. 482916" maxlength="6" class="w-full px-3 py-2 bg-canvas-soft border border-hairline rounded-md text-sm text-ink tracking-widest text-center font-mono focus:outline-none focus:border-primary transition-all duration-200" />
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label for="reset-new-password" class="text-xs font-semibold text-body-strong">New Password</label>
+            <input type="password" id="reset-new-password" required placeholder="Min. 6 characters" class="w-full px-3 py-2 bg-canvas-soft border border-hairline rounded-md text-sm text-ink focus:outline-none focus:border-primary transition-all duration-200" />
+          </div>
+          <button type="submit" id="reset-submit-btn" class="btn-primary btn-press w-full mt-2 flex items-center justify-center gap-2">
+            <span id="reset-submit-text">Reset Password</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </button>
+        </form>
+
+        <div class="text-center text-xs text-muted flex flex-col gap-3.5 pt-2 border-t border-hairline-soft">
+          <button id="reset-back-btn" class="text-body hover:underline focus:outline-none flex items-center justify-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3.5 h-3.5"><line x1="19" x2="5" y1="12" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            <span>Back to Sign In</span>
+          </button>
+        </div>
+      </div>
+
     </section>
 
-    <!-- 2. Dashboard Container Screen (Hidden on startup until gate chosen) -->
+    <!-- 2. Dashboard Container Screen (Hidden on startup until login succeeded) -->
     <section id="dashboard-hub" class="flex-1 flex flex-col w-full hidden opacity-0 transition-all duration-500" style="transform: scale(1);">
       <!-- Shared Header -->
       <Navbar />
@@ -84,17 +219,20 @@ import CommunityChat from '../components/CommunityChat.astro';
           <!-- Active sliding bubble indicator -->
           <div id="tab-indicator" class="absolute top-1.5 bottom-1.5 left-0 bg-primary rounded-md transition-all duration-300 ease-out"></div>
           
-          <button data-tab="notices" class="tab-trigger relative z-10 w-1/4 text-center py-2.5 text-xs font-bold uppercase tracking-wider text-on-primary focus:outline-none transition-colors duration-200">
+          <button data-tab="notices" class="tab-trigger relative z-10 flex-1 text-center py-2.5 text-xs font-bold uppercase tracking-wider text-on-primary focus:outline-none transition-colors duration-200">
             Notices
           </button>
-          <button data-tab="classes" class="tab-trigger relative z-10 w-1/4 text-center py-2.5 text-xs font-bold uppercase tracking-wider text-ink focus:outline-none transition-colors duration-200">
+          <button data-tab="classes" class="tab-trigger relative z-10 flex-1 text-center py-2.5 text-xs font-bold uppercase tracking-wider text-ink focus:outline-none transition-colors duration-200">
             Classes
           </button>
-          <button data-tab="materials" class="tab-trigger relative z-10 w-1/4 text-center py-2.5 text-xs font-bold uppercase tracking-wider text-ink focus:outline-none transition-colors duration-200">
+          <button data-tab="materials" class="tab-trigger relative z-10 flex-1 text-center py-2.5 text-xs font-bold uppercase tracking-wider text-ink focus:outline-none transition-colors duration-200">
             Resources
           </button>
-          <button data-tab="chat" class="tab-trigger relative z-10 w-1/4 text-center py-2.5 text-xs font-bold uppercase tracking-wider text-ink focus:outline-none transition-colors duration-200">
+          <button data-tab="chat" class="tab-trigger relative z-10 flex-1 text-center py-2.5 text-xs font-bold uppercase tracking-wider text-ink focus:outline-none transition-colors duration-200">
             Chat
+          </button>
+          <button id="admin-tab-btn" data-tab="admin" class="tab-trigger relative z-10 flex-1 text-center py-2.5 text-xs font-bold uppercase tracking-wider text-ink focus:outline-none transition-colors duration-200 hidden">
+            Admin
           </button>
         </div>
 
@@ -121,6 +259,11 @@ import CommunityChat from '../components/CommunityChat.astro';
             <CommunityChat />
           </div>
 
+          <!-- Panel E: Admin Panel -->
+          <div id="panel-admin" class="tab-panel w-full flex-1 flex flex-col hidden">
+            <AdminPanel />
+          </div>
+
         </div>
 
       </div>
@@ -130,20 +273,348 @@ import CommunityChat from '../components/CommunityChat.astro';
 </Layout>
 
 <script>
-  // Page controllers and State management
+  // Auth API configuration
+  const REGISTER_URL = 'http://localhost:3000/api/auth/register';
+  const LOGIN_URL = 'http://localhost:3000/api/auth/login';
+  const FORGOT_URL = 'http://localhost:3000/api/auth/forgot-password';
+  const RESET_URL = 'http://localhost:3000/api/auth/reset-password';
+
+  // Dom references
   const gate = document.getElementById('splash-gate');
   const hub = document.getElementById('dashboard-hub');
+  
+  const portalSelector = document.getElementById('portal-selector-view');
   const portalStudent = document.getElementById('portal-student');
   const portalProfessor = document.getElementById('portal-professor');
+  const portalAdmin = document.getElementById('auth-admin-link');
+  
+  const authView = document.getElementById('auth-form-view');
+  const authTitle = document.getElementById('auth-view-title');
+  const authSubtitle = document.getElementById('auth-view-subtitle');
+  const authRoleBadge = document.getElementById('auth-role-badge');
+  const authForm = document.getElementById('auth-form') as HTMLFormElement;
+  const authForgotLink = document.getElementById('auth-forgot-link');
+  
+  const nameField = document.getElementById('auth-field-name');
+  const roleField = document.getElementById('auth-field-role');
+  const roleSelect = document.getElementById('auth-role') as HTMLSelectElement;
+  const profAlert = document.getElementById('prof-pending-alert');
+  
+  const authSubmitBtn = document.getElementById('auth-submit-btn');
+  const authSubmitText = document.getElementById('auth-submit-text');
+  const authToggleBtn = document.getElementById('auth-toggle-btn');
+  const authBackBtn = document.getElementById('auth-back-btn');
+
+  // Forgot Password view refs
+  const forgotView = document.getElementById('forgot-password-view');
+  const forgotForm = document.getElementById('forgot-password-form') as HTMLFormElement;
+  const forgotSubmitBtn = document.getElementById('forgot-submit-btn');
+  const forgotSubmitText = document.getElementById('forgot-submit-text');
+  const forgotBackBtn = document.getElementById('forgot-back-btn');
+  const forgotEmailInput = document.getElementById('forgot-email') as HTMLInputElement;
+
+  // Reset Password view refs
+  const resetView = document.getElementById('reset-password-view');
+  const resetForm = document.getElementById('reset-password-form') as HTMLFormElement;
+  const resetSubmitBtn = document.getElementById('reset-submit-btn');
+  const resetSubmitText = document.getElementById('reset-submit-text');
+  const resetBackBtn = document.getElementById('reset-back-btn');
+  const resetEmailInput = document.getElementById('reset-email') as HTMLInputElement;
+  const resetTokenInput = document.getElementById('reset-token') as HTMLInputElement;
+  const resetNewPasswordInput = document.getElementById('reset-new-password') as HTMLInputElement;
+  
   const toastAlert = document.getElementById('toast-alert');
   const toastMessage = document.getElementById('toast-message');
 
-  // Load state and roles
-  if (gate && hub && portalStudent && portalProfessor) {
-    const launchDashboard = (role: 'student' | 'professor') => {
-      // Set values
-      localStorage.setItem('cc-active-role', role);
+  const adminTabBtn = document.getElementById('admin-tab-btn');
+
+  // Form State
+  let isRegister = false;
+  let activeRole: 'student' | 'professor' | 'admin' = 'student';
+
+  if (gate && hub && portalSelector && authView && portalStudent && portalProfessor && portalAdmin && authForm && authToggleBtn && authBackBtn) {
+    
+    const showAuthView = (role: 'student' | 'professor' | 'admin') => {
+      activeRole = role;
+      isRegister = false;
       
+      // Update UI texts
+      authRoleBadge!.textContent = role;
+      authRoleBadge!.className = `px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-pill ${
+        role === 'admin' 
+          ? 'text-timeline-done bg-timeline-done/10 border border-timeline-done/20' 
+          : role === 'professor'
+            ? 'text-timeline-thinking bg-timeline-thinking/10 border border-timeline-thinking/20'
+            : 'text-timeline-read bg-timeline-read/10 border border-timeline-read/20'
+      }`;
+
+      toggleFormMode(false);
+      
+      // Transitions
+      portalSelector.classList.add('hidden');
+      authView.classList.remove('hidden');
+    };
+
+    const toggleFormMode = (toRegister: boolean) => {
+      isRegister = toRegister;
+      authForm.reset();
+
+      if (isRegister) {
+        authTitle!.textContent = 'Create Account';
+        authSubtitle!.textContent = 'Register a new campus login.';
+        nameField!.classList.remove('hidden');
+        authSubmitText!.textContent = 'Register';
+        authToggleBtn!.textContent = 'Already have an account? Sign In';
+        authForgotLink!.classList.add('hidden');
+
+        // Admin cannot register via UI; only students and professors can
+        if (activeRole !== 'admin') {
+          roleField!.classList.remove('hidden');
+          roleSelect.value = activeRole;
+          updateRoleWarnings();
+        }
+      } else {
+        authTitle!.textContent = 'Sign In';
+        authSubtitle!.textContent = 'Enter your campus credentials to log in.';
+        nameField!.classList.add('hidden');
+        roleField!.classList.add('hidden');
+        profAlert!.classList.add('hidden');
+        authSubmitText!.textContent = 'Log In';
+        authToggleBtn!.textContent = "Don't have an account? Sign Up";
+        authForgotLink!.classList.remove('hidden');
+      }
+    };
+
+    const updateRoleWarnings = () => {
+      if (roleSelect.value === 'professor' && isRegister) {
+        profAlert!.classList.remove('hidden');
+      } else {
+        profAlert!.classList.add('hidden');
+      }
+    };
+
+    // Listen to selection warnings
+    roleSelect?.addEventListener('change', updateRoleWarnings);
+
+    // Click triggers
+    portalStudent.addEventListener('click', () => showAuthView('student'));
+    portalProfessor.addEventListener('click', () => showAuthView('professor'));
+    portalAdmin.addEventListener('click', () => showAuthView('admin'));
+
+    authBackBtn.addEventListener('click', () => {
+      authView.classList.add('hidden');
+      portalSelector.classList.remove('hidden');
+      authForm.reset();
+    });
+
+    authToggleBtn.addEventListener('click', () => {
+      toggleFormMode(!isRegister);
+    });
+
+    // Forgot Password view helpers
+    const showForgotView = () => {
+      authView.classList.add('hidden');
+      forgotView!.classList.remove('hidden');
+      forgotForm.reset();
+    };
+
+    const showResetView = () => {
+      forgotView!.classList.add('hidden');
+      resetView!.classList.remove('hidden');
+      resetForm.reset();
+    };
+
+    const showAuthViewFromReset = () => {
+      resetView!.classList.add('hidden');
+      forgotView!.classList.add('hidden');
+      authView.classList.remove('hidden');
+      authForm.reset();
+    };
+
+    // Forgot Password click triggers
+    authForgotLink?.addEventListener('click', showForgotView);
+
+    forgotBackBtn?.addEventListener('click', () => {
+      forgotView!.classList.add('hidden');
+      authView.classList.remove('hidden');
+      authForm.reset();
+    });
+
+    resetBackBtn?.addEventListener('click', () => {
+      resetView!.classList.add('hidden');
+      authView.classList.remove('hidden');
+      authForm.reset();
+    });
+
+    // Forgot Password form submit
+    forgotForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = forgotEmailInput.value.trim();
+      if (!email) return;
+
+      forgotSubmitBtn!.setAttribute('disabled', 'true');
+      forgotSubmitText!.textContent = 'Sending...';
+
+      try {
+        const res = await fetch(FORGOT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          window.dispatchEvent(new CustomEvent('cc-toast-alert', {
+            detail: { message: data.message, type: 'success' }
+          }));
+          // Pre-fill email in reset form and switch to reset view
+          showResetView();
+          resetEmailInput.value = email;
+          // Show debug token in a toast for demo purposes
+          if (data._debug_token) {
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent('cc-toast-alert', {
+                detail: { message: `Demo: Your reset code is ${data._debug_token}`, type: 'success' }
+              }));
+            }, 500);
+          }
+        } else {
+          throw new Error(data.error || 'Failed to process request');
+        }
+      } catch (err: any) {
+        window.dispatchEvent(new CustomEvent('cc-toast-alert', {
+          detail: { message: err.message, type: 'error' }
+        }));
+      } finally {
+        forgotSubmitBtn!.removeAttribute('disabled');
+        forgotSubmitText!.textContent = 'Send Reset Code';
+      }
+    });
+
+    // Reset Password form submit
+    resetForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = resetEmailInput.value.trim();
+      const token = resetTokenInput.value.trim();
+      const newPassword = resetNewPasswordInput.value;
+
+      if (!email || !token || !newPassword) return;
+
+      resetSubmitBtn!.setAttribute('disabled', 'true');
+      resetSubmitText!.textContent = 'Resetting...';
+
+      try {
+        const res = await fetch(RESET_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, token, newPassword }),
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          window.dispatchEvent(new CustomEvent('cc-toast-alert', {
+            detail: { message: data.message || 'Password reset successful!', type: 'success' }
+          }));
+          // Go back to sign in
+          showAuthViewFromReset();
+        } else {
+          throw new Error(data.error || 'Password reset failed');
+        }
+      } catch (err: any) {
+        window.dispatchEvent(new CustomEvent('cc-toast-alert', {
+          detail: { message: err.message, type: 'error' }
+        }));
+      } finally {
+        resetSubmitBtn!.removeAttribute('disabled');
+        resetSubmitText!.textContent = 'Reset Password';
+      }
+    });
+
+    // Form submit handlers
+    authForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const nameInput = document.getElementById('auth-name') as HTMLInputElement;
+      const emailInput = document.getElementById('auth-email') as HTMLInputElement;
+      const passwordInput = document.getElementById('auth-password') as HTMLInputElement;
+
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+
+      if (isRegister) {
+        // Sign Up
+        const name = nameInput.value.trim();
+        const role = roleSelect.value;
+
+        if (!name || !email || !password) return;
+
+        try {
+          const res = await fetch(REGISTER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, password, role })
+          });
+          const data = await res.json();
+
+          if (res.ok) {
+            window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
+              detail: { message: data.message || 'Registration successful! Please log in.', type: 'success' } 
+            }));
+            // Switch back to login
+            toggleFormMode(false);
+          } else {
+            throw new Error(data.error || 'Registration failed');
+          }
+        } catch (err: any) {
+          window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
+            detail: { message: err.message, type: 'error' } 
+          }));
+        }
+
+      } else {
+        // Sign In
+        if (!email || !password) return;
+
+        try {
+          const res = await fetch(LOGIN_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+          });
+          const data = await res.json();
+
+          if (res.ok && data.token) {
+            // Save state
+            localStorage.setItem('cc-token', data.token);
+            localStorage.setItem('cc-user', JSON.stringify(data.user));
+            localStorage.setItem('cc-active-role', data.user.role);
+
+            window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
+              detail: { message: `Welcome back, ${data.user.name}!`, type: 'success' } 
+            }));
+
+            // Boot Dashboard
+            window.dispatchEvent(new CustomEvent('cc-login-success'));
+            launchDashboard(data.user.role);
+          } else {
+            throw new Error(data.error || 'Authentication failed');
+          }
+        } catch (err: any) {
+          window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
+            detail: { message: err.message, type: 'error' } 
+          }));
+        }
+      }
+    });
+
+    const launchDashboard = (role: 'student' | 'professor' | 'admin') => {
+      // Toggle Admin tab options
+      if (role === 'admin') {
+        adminTabBtn?.classList.remove('hidden');
+      } else {
+        adminTabBtn?.classList.add('hidden');
+      }
+
       // Animate gate collapse
       gate.style.opacity = '0';
       gate.style.transform = 'scale(0.95)';
@@ -161,15 +632,17 @@ import CommunityChat from '../components/CommunityChat.astro';
           hub.style.opacity = '1';
           hub.style.transform = 'scale(1)';
           
-          // Trigger first tab render
-          window.dispatchEvent(new CustomEvent('cc-tab-active-notices'));
+          // Switch to notices or admin tab on load
+          const initialTab = role === 'admin' ? 'admin' : 'notices';
+          const triggerBtn = document.querySelector(`.tab-trigger[data-tab="${initialTab}"]`) as HTMLElement;
+          if (triggerBtn) {
+            switchTab(triggerBtn, false);
+          } else {
+            window.dispatchEvent(new CustomEvent('cc-tab-active-notices'));
+          }
         }, 50);
       }, 300);
     };
-
-    // Event listener portals
-    portalStudent.addEventListener('click', () => launchDashboard('student'));
-    portalProfessor.addEventListener('click', () => launchDashboard('professor'));
 
     // Listen to Home logo click in Navbar to reset views
     window.addEventListener('cc-go-home', () => {
@@ -177,21 +650,30 @@ import CommunityChat from '../components/CommunityChat.astro';
       hub.style.transform = 'scale(0.98)';
       setTimeout(() => {
         hub.classList.add('hidden');
+        portalSelector.classList.remove('hidden');
+        authView.classList.add('hidden');
         gate.classList.remove('hidden');
         gate.style.opacity = '1';
         gate.style.transform = 'scale(1)';
+        
+        localStorage.removeItem('cc-token');
+        localStorage.removeItem('cc-user');
         localStorage.removeItem('cc-active-role');
       }, 300);
     });
 
-    // Check on startup if role is already stored
+    // Check on startup if user is already logged in
     window.addEventListener('load', () => {
-      const storedRole = localStorage.getItem('cc-active-role') as 'student' | 'professor';
-      if (storedRole) {
-        gate.classList.add('hidden');
-        hub.classList.remove('hidden');
-        hub.style.opacity = '1';
-        window.dispatchEvent(new CustomEvent('cc-role-selected-init', { detail: { role: storedRole } }));
+      const storedToken = localStorage.getItem('cc-token');
+      const userStr = localStorage.getItem('cc-user');
+      if (storedToken && userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          launchDashboard(user.role);
+        } catch {
+          localStorage.removeItem('cc-token');
+          localStorage.removeItem('cc-user');
+        }
       }
     });
   }
@@ -201,49 +683,49 @@ import CommunityChat from '../components/CommunityChat.astro';
   const tabIndicator = document.getElementById('tab-indicator');
   const panels = document.querySelectorAll('.tab-panel');
 
-  if (tabTriggers.length > 0 && tabIndicator) {
-    const switchTab = (activeTrigger: any, animate = true) => {
-      const targetTab = activeTrigger.getAttribute('data-tab');
-      
-      // Position indicator using actual button offset
-      tabIndicator.style.width = `${activeTrigger.offsetWidth}px`;
-      tabIndicator.style.transform = `translateX(${activeTrigger.offsetLeft}px)`;
+  const switchTab = (activeTrigger: any, animate = true) => {
+    const targetTab = activeTrigger.getAttribute('data-tab');
+    if (!tabIndicator) return;
+    
+    // Position indicator using actual button offset
+    tabIndicator.style.width = `${activeTrigger.offsetWidth}px`;
+    tabIndicator.style.transform = `translateX(${activeTrigger.offsetLeft}px)`;
 
-      // Update button colors
-      tabTriggers.forEach((tr: any) => {
-        tr.classList.remove('text-on-primary');
-        tr.classList.add('text-ink');
-      });
-      activeTrigger.classList.remove('text-ink');
-      activeTrigger.classList.add('text-on-primary');
+    // Update button colors
+    tabTriggers.forEach((tr: any) => {
+      tr.classList.remove('text-on-primary');
+      tr.classList.add('text-ink');
+    });
+    activeTrigger.classList.remove('text-ink');
+    activeTrigger.classList.add('text-on-primary');
 
-      // Animate out current panel, then swap
-      const currentPanel = document.querySelector('.tab-panel:not(.hidden)') as HTMLElement;
-      const activePanel = document.getElementById(`panel-${targetTab}`);
-      
-      if (currentPanel && currentPanel !== activePanel && animate) {
-        currentPanel.style.animation = 'panel-exit 0.2s cubic-bezier(0.4, 0, 1, 1) forwards';
-        setTimeout(() => {
-          currentPanel.classList.add('hidden');
-          currentPanel.style.animation = '';
-          
-          if (activePanel) {
-            activePanel.classList.remove('hidden');
-            activePanel.style.animation = 'panel-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards';
-            window.dispatchEvent(new CustomEvent(`cc-tab-active-${targetTab}`));
-          }
-        }, 200);
-      } else {
-        // No current panel or same panel — just show target
-        panels.forEach((panel: any) => panel.classList.add('hidden'));
+    // Animate out current panel, then swap
+    const currentPanel = document.querySelector('.tab-panel:not(.hidden)') as HTMLElement;
+    const activePanel = document.getElementById(`panel-${targetTab}`);
+    
+    if (currentPanel && currentPanel !== activePanel && animate) {
+      currentPanel.style.animation = 'panel-exit 0.2s cubic-bezier(0.4, 0, 1, 1) forwards';
+      setTimeout(() => {
+        currentPanel.classList.add('hidden');
+        currentPanel.style.animation = '';
+        
         if (activePanel) {
           activePanel.classList.remove('hidden');
-          activePanel.style.animation = animate ? 'panel-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards' : '';
+          activePanel.style.animation = 'panel-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards';
           window.dispatchEvent(new CustomEvent(`cc-tab-active-${targetTab}`));
         }
+      }, 200);
+    } else {
+      panels.forEach((panel: any) => panel.classList.add('hidden'));
+      if (activePanel) {
+        activePanel.classList.remove('hidden');
+        activePanel.style.animation = animate ? 'panel-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards' : '';
+        window.dispatchEvent(new CustomEvent(`cc-tab-active-${targetTab}`));
       }
-    };
+    }
+  };
 
+  if (tabTriggers.length > 0 && tabIndicator) {
     // Attach click events
     tabTriggers.forEach((trigger: any) => {
       trigger.addEventListener('click', () => switchTab(trigger));

@@ -13,20 +13,7 @@
     </span>
   </div>
 
-  <!-- Role Selector Capsule -->
-  <div class="relative flex items-center bg-canvas-soft border border-hairline p-1 rounded-pill h-10 w-60" id="role-selector-pill">
-    <!-- Active sliding background bubble -->
-    <div id="nav-indicator" class="absolute top-1 bottom-1 left-0 bg-ink rounded-pill transition-all duration-300 ease-out"></div>
-    
-    <button id="nav-btn-student" class="relative z-10 w-1/2 text-center text-[11px] font-semibold uppercase tracking-wider text-canvas py-1.5 transition-colors duration-300 focus:outline-none">
-      Student
-    </button>
-    <button id="nav-btn-professor" class="relative z-10 w-1/2 text-center text-[11px] font-semibold uppercase tracking-wider text-muted py-1.5 transition-colors duration-300 focus:outline-none">
-      Professor
-    </button>
-  </div>
-
-  <!-- Animated User Badge -->
+  <!-- User Profile and Sign Out -->
   <div class="flex items-center gap-3">
     <!-- Dark Mode Toggle -->
     <button id="theme-toggle" class="w-9 h-9 rounded-md bg-surface-card border border-hairline flex items-center justify-center text-muted hover:text-ink hover:border-hairline-strong transition-all duration-300" aria-label="Toggle dark mode">
@@ -39,8 +26,14 @@
         <span class="animate-ping-slow absolute inline-flex h-full w-full rounded-full bg-semantic-success opacity-75"></span>
         <span class="relative inline-flex rounded-full h-2 w-2 bg-semantic-success"></span>
       </span>
-      <span id="user-name" class="font-sans text-xs font-medium text-body-strong">Alex Mercer (Student)</span>
+      <span id="user-name" class="font-sans text-xs font-semibold text-body-strong">Loading Profile...</span>
     </div>
+
+    <!-- Sign Out Button -->
+    <button id="nav-btn-logout" class="btn-secondary btn-press text-xs h-9 px-3 flex items-center gap-1 border border-hairline hover:border-semantic-error/40 hover:text-semantic-error">
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+      <span>Sign Out</span>
+    </button>
   </div>
 </header>
 
@@ -73,92 +66,47 @@
     applyTheme(isDark);
   });
 
-  // ── Role Selector ──
-  const btnStudent = document.getElementById('nav-btn-student');
-  const btnProfessor = document.getElementById('nav-btn-professor');
-  const indicator = document.getElementById('nav-indicator');
+  // ── Auth Handling and Profile Displays ──
   const userName = document.getElementById('user-name');
-  const userBadge = document.getElementById('user-badge');
+  const btnLogout = document.getElementById('nav-btn-logout');
   const brand = document.getElementById('nav-brand');
 
-  if (btnStudent && btnProfessor && indicator && userName) {
-    // Set initial indicator position
-    indicator.style.width = `${btnStudent.offsetWidth}px`;
-    indicator.style.transform = `translateX(${btnStudent.offsetLeft}px)`;
-
-    const setRole = (role: 'student' | 'professor', publishEvent = true) => {
-      // Save to localStorage
-      localStorage.setItem('cc-active-role', role);
-      
-      // Update UI classes
-      if (role === 'student') {
-        indicator.style.width = `${btnStudent.offsetWidth}px`;
-        indicator.style.transform = `translateX(${btnStudent.offsetLeft}px)`;
-        btnStudent.classList.remove('text-muted');
-        btnStudent.classList.add('text-canvas');
-        btnProfessor.classList.remove('text-canvas');
-        btnProfessor.classList.add('text-muted');
-        
-        // Dynamic text swap with slide transition
-        if (userBadge) {
-          userBadge.style.transform = 'scale(0.9) translateY(5px)';
-          userBadge.style.opacity = '0';
-          setTimeout(() => {
-            userName.textContent = 'Alex Mercer (Student)';
-            userBadge.style.transform = 'scale(1) translateY(0)';
-            userBadge.style.opacity = '1';
-          }, 200);
-        }
-      } else {
-        indicator.style.width = `${btnProfessor.offsetWidth}px`;
-        indicator.style.transform = `translateX(${btnProfessor.offsetLeft}px)`;
-        
-        btnProfessor.classList.remove('text-muted');
-        btnProfessor.classList.add('text-canvas');
-        btnStudent.classList.remove('text-canvas');
-        btnStudent.classList.add('text-muted');
-        
-        if (userBadge) {
-          userBadge.style.transform = 'scale(0.9) translateY(5px)';
-          userBadge.style.opacity = '0';
-          setTimeout(() => {
-            userName.textContent = 'Prof. Evelyn Vance';
-            userBadge.style.transform = 'scale(1) translateY(0)';
-            userBadge.style.opacity = '1';
-          }, 200);
-        }
+  const updateProfileDisplay = () => {
+    const userStr = localStorage.getItem('cc-user');
+    if (userStr && userName) {
+      try {
+        const user = JSON.parse(userStr);
+        const capitalizedRole = user.role.charAt(0).toUpperCase() + user.role.slice(1);
+        userName.textContent = `${user.name} (${capitalizedRole})`;
+      } catch (err) {
+        userName.textContent = 'Guest';
       }
+    } else if (userName) {
+      userName.textContent = 'Guest';
+    }
+  };
 
-      if (publishEvent) {
-        // Dispatch global custom event
-        window.dispatchEvent(new CustomEvent('cc-role-changed', { detail: { role } }));
-      }
-    };
+  // Run on mount
+  updateProfileDisplay();
 
-    // Click events
-    btnStudent.addEventListener('click', () => setRole('student'));
-    btnProfessor.addEventListener('click', () => setRole('professor'));
+  // Watch for profile update triggers
+  window.addEventListener('cc-login-success', updateProfileDisplay);
+  window.addEventListener('cc-role-changed', updateProfileDisplay);
+
+  // Logout trigger
+  btnLogout?.addEventListener('click', () => {
+    // Clear credentials
+    localStorage.removeItem('cc-token');
+    localStorage.removeItem('cc-user');
+    localStorage.removeItem('cc-active-role');
     
-    // Logo resets role to student / triggers redirect to welcome splash if we want
-    brand?.addEventListener('click', () => {
-      window.dispatchEvent(new CustomEvent('cc-go-home'));
-    });
+    // Notify app to transition back to Welcome Gate
+    window.dispatchEvent(new CustomEvent('cc-go-home'));
+  });
 
-    // Check localStorage on load
-    window.addEventListener('load', () => {
-      const storedRole = localStorage.getItem('cc-active-role') as 'student' | 'professor';
-      if (storedRole) {
-        setRole(storedRole, false);
-      }
-    });
-
-    // Support listener if updated elsewhere (e.g. from splash screen cards)
-    window.addEventListener('cc-role-selected-init', (e: any) => {
-      if (e.detail && e.detail.role) {
-        setRole(e.detail.role, false);
-      }
-    });
-  }
+  brand?.addEventListener('click', () => {
+    window.dispatchEvent(new CustomEvent('cc-go-home'));
+  });
 
   // ── Scroll-aware backdrop deepening ──
   const mainNav = document.getElementById('main-nav');

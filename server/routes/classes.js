@@ -1,5 +1,6 @@
 import express from 'express';
 import prisma from '../lib/prisma.js';
+import { authMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -18,10 +19,10 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Create/schedule class
-router.post('/', async (req, res) => {
+// Create/schedule class (secured)
+router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { subject, professor, time, duration, room, link } = req.body;
+    const { subject, time, duration, room, link } = req.body;
     if (!subject || !time || !duration || !room) {
       return res.status(400).json({ error: 'Subject, time, duration, and room are required' });
     }
@@ -29,7 +30,8 @@ router.post('/', async (req, res) => {
     const newClass = await prisma.class.create({
       data: {
         subject,
-        professor: professor || 'Prof. Evelyn Vance',
+        professor: req.user.name,
+        professorId: req.user.id,
         time,
         duration: String(duration),
         room,

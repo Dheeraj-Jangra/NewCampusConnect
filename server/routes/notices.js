@@ -1,5 +1,6 @@
 import express from 'express';
 import prisma from '../lib/prisma.js';
+import { authMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -18,10 +19,10 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Create notice
-router.post('/', async (req, res) => {
+// Create notice (secured)
+router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { title, category, content, author } = req.body;
+    const { title, category, content } = req.body;
     if (!title || !category || !content) {
       return res.status(400).json({ error: 'Title, category, and content are required' });
     }
@@ -31,7 +32,8 @@ router.post('/', async (req, res) => {
         title,
         category,
         content,
-        author: author || 'Prof. Evelyn Vance',
+        author: req.user.name,
+        authorId: req.user.id,
       },
     });
 

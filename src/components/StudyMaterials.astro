@@ -147,7 +147,12 @@
 
   const getMaterials = async () => {
     try {
-      const res = await fetch(API_URL);
+      const token = localStorage.getItem('cc-token');
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const res = await fetch(API_URL, { headers });
       if (!res.ok) throw new Error('Failed to fetch materials from API');
       const data = await res.json();
       localStorage.setItem('cc-materials', JSON.stringify(data));
@@ -398,7 +403,14 @@
       progressPercent.textContent = '0%';
 
       const activeRole = localStorage.getItem('cc-active-role') || 'student';
-      const author = activeRole === 'professor' ? 'Prof. Evelyn Vance' : 'Guest Faculty';
+      const userStr = localStorage.getItem('cc-user');
+      let author = 'Faculty Member';
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          author = user.name || author;
+        } catch {}
+      }
 
       if (selectedFile) {
         // Real file upload via XMLHttpRequest
@@ -410,6 +422,12 @@
 
         const xhr = new XMLHttpRequest();
         xhr.open('POST', `${API_URL}/upload`, true);
+
+        // Attach Authorization header
+        const token = localStorage.getItem('cc-token');
+        if (token) {
+          xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+        }
 
         // Upload progress listener
         xhr.upload.onprogress = (event) => {
@@ -516,12 +534,12 @@
   };
 
   // Toggle layout based on active role
-  const handleRoleView = (role: 'student' | 'professor') => {
+  const handleRoleView = (role: 'student' | 'professor' | 'admin') => {
     const profPanel = document.getElementById('materials-professor-panel');
     const browser = document.getElementById('materials-browser');
     if (!profPanel || !browser) return;
 
-    if (role === 'professor') {
+    if (role === 'professor' || role === 'admin') {
       profPanel.classList.remove('hidden');
       browser.classList.remove('lg:col-span-12');
       browser.classList.add('lg:col-span-8');
@@ -543,7 +561,7 @@
     setupUploadForm();
     setupSearch();
 
-    const currentRole = (localStorage.getItem('cc-active-role') || 'student') as 'student' | 'professor';
+    const currentRole = (localStorage.getItem('cc-active-role') || 'student') as 'student' | 'professor' | 'admin';
     handleRoleView(currentRole);
 
     setTimeout(() => {

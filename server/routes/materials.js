@@ -4,6 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import prisma from '../lib/prisma.js';
+import { authMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -49,10 +50,10 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Upload a material resource
-router.post('/upload', upload.single('file'), async (req, res) => {
+// Upload a material resource (secured)
+router.post('/upload', authMiddleware, upload.single('file'), async (req, res) => {
   try {
-    const { title, course, author } = req.body;
+    const { title, course } = req.body;
     const file = req.file;
 
     if (!title || !course) {
@@ -84,7 +85,8 @@ router.post('/upload', upload.single('file'), async (req, res) => {
         course,
         type: fileType,
         size: fileSizeStr,
-        author: author || 'Prof. Evelyn Vance',
+        author: req.user.name,
+        authorId: req.user.id,
         fileName: file.filename,
       },
     });

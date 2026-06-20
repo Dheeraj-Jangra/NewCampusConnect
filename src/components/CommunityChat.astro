@@ -230,14 +230,19 @@
   // Fetch chat history from DB
   const fetchHistory = async (channel: string) => {
     try {
-      const res = await fetch(`${API_URL}/${channel}`);
+      const token = localStorage.getItem('cc-token');
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const res = await fetch(`${API_URL}/${channel}`, { headers });
       if (!res.ok) throw new Error('HTTP error');
       const messages = await res.json();
       if (messages && messages.length > 0) {
         channelsData[channel].messages = messages.map((msg: any) => ({
           id: msg.id,
           sender: msg.sender,
-          role: msg.role === 'faculty' ? 'faculty' : 'student',
+          role: msg.role === 'faculty' || msg.role === 'professor' ? 'faculty' : (msg.role === 'admin' ? 'admin' : 'student'),
           avatarBg: msg.avatarBg,
           content: msg.content,
           time: msg.time
@@ -268,10 +273,13 @@
     if (!data) return;
 
     container.innerHTML = data.messages.map((m, index) => {
-      const isFaculty = m.role === 'faculty';
-      const roleBadge = isFaculty 
-        ? `<span class="px-1.5 py-0.2 bg-primary/10 border border-primary/20 text-primary rounded-md text-[9px] font-bold">Faculty</span>`
-        : `<span class="px-1.5 py-0.2 bg-surface-strong/60 border border-hairline text-ink rounded-md text-[9px] font-semibold">Student</span>`;
+      const isFaculty = m.role === 'faculty' || m.role === 'professor';
+      const isAdmin = m.role === 'admin';
+      const roleBadge = isAdmin
+        ? `<span class="px-1.5 py-0.2 bg-timeline-done/10 border border-timeline-done/20 text-timeline-done rounded-md text-[9px] font-bold">Admin</span>`
+        : isFaculty 
+          ? `<span class="px-1.5 py-0.2 bg-primary/10 border border-primary/20 text-primary rounded-md text-[9px] font-bold">Faculty</span>`
+          : `<span class="px-1.5 py-0.2 bg-surface-strong/60 border border-hairline text-ink rounded-md text-[9px] font-semibold">Student</span>`;
       const staggerDelay = Math.min(index * 60, 500);
         
       return `
@@ -362,11 +370,11 @@
     const currentRole = localStorage.getItem('cc-active-role') || 'student';
     
     // Choose sender name
-    const sender = currentRole === 'student' 
-      ? "Prof. Evelyn Vance" 
-      : "Alex Mercer";
-    const role = currentRole === 'student' ? 'faculty' : 'student';
-    const avatarBg = currentRole === 'student' ? 'bg-timeline-edit' : 'bg-timeline-read';
+    const sender = (currentRole === 'professor' || currentRole === 'admin') 
+      ? "Alex Mercer" 
+      : "Prof. Evelyn Vance";
+    const role = (currentRole === 'professor' || currentRole === 'admin') ? 'student' : 'faculty';
+    const avatarBg = (currentRole === 'professor' || currentRole === 'admin') ? 'bg-timeline-read' : 'bg-timeline-edit';
 
     typingName.textContent = sender;
     
@@ -388,7 +396,7 @@
 
         channelsData[activeChannel].messages.push({
           sender,
-          role,
+          role: role === 'faculty' ? 'faculty' : 'student',
           avatarBg,
           content: randReply,
           time: getFormattedTime()
@@ -410,18 +418,37 @@
       const text = input.value.trim();
       if (!text) return;
 
-      const currentRole = localStorage.getItem('cc-active-role') || 'student';
-      const sender = currentRole === 'professor' ? 'Prof. Evelyn Vance' : 'Alex Mercer';
-      const role = currentRole === 'professor' ? 'faculty' : 'student';
-      const avatarBg = currentRole === 'professor' ? 'bg-timeline-edit' : 'bg-timeline-read';
+      const userStr = localStorage.getItem('cc-user');
+      let sender = 'Anonymous';
+      let senderId = '';
+      let role = 'student';
+      let avatarBg = 'bg-timeline-read';
+
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          sender = user.name || sender;
+          senderId = user.id || '';
+          role = user.role || role;
+        } catch {}
+      }
+
+      if (role === 'admin') {
+        avatarBg = 'bg-timeline-done';
+      } else if (role === 'professor') {
+        avatarBg = 'bg-timeline-edit';
+      } else {
+        avatarBg = 'bg-timeline-read';
+      }
 
       const payload = {
         channel: activeChannel,
         sender,
-        role: role === 'faculty' ? 'faculty' : 'student',
+        role,
         avatarBg,
         content: text,
-        time: getFormattedTime()
+        time: getFormattedTime(),
+        senderId
       };
 
       if (socket && !isOffline) {
@@ -447,8 +474,14 @@
     input.addEventListener('input', () => {
       if (!socket || isOffline) return;
 
-      const currentRole = localStorage.getItem('cc-active-role') || 'student';
-      const sender = currentRole === 'professor' ? 'Prof. Evelyn Vance' : 'Alex Mercer';
+      const userStr = localStorage.getItem('cc-user');
+      let sender = 'Anonymous';
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          sender = user.name || sender;
+        } catch {}
+      }
 
       if (typingTimeout) clearTimeout(typingTimeout);
 
