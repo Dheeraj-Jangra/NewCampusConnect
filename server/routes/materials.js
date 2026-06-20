@@ -50,7 +50,7 @@ const storage = multer.diskStorage({
 });
 
 // File filter to validate types
-const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+const fileFilter = (req, file, cb) => {
   const ext = path.extname(file.originalname).toLowerCase().replace('.', '');
   if (ALLOWED_EXTENSIONS.has(ext) || ALLOWED_MIMES.has(file.mimetype)) {
     cb(null, true);
@@ -108,7 +108,7 @@ router.post('/upload', authMiddleware, professorMiddleware, upload.single('file'
     }
 
     // Helper to format file size
-    const formatBytes = (bytes: number, decimals = 1) => {
+    const formatBytes = (bytes, decimals = 1) => {
       if (!+bytes) return '0 Bytes';
       const k = 1024;
       const dm = decimals < 0 ? 0 : decimals;

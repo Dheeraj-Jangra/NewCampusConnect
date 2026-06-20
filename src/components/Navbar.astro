@@ -77,7 +77,8 @@
       try {
         const user = JSON.parse(userStr);
         const capitalizedRole = user.role.charAt(0).toUpperCase() + user.role.slice(1);
-        userName.textContent = `${user.name} (${capitalizedRole})`;
+        const uname = user.username ? `@${user.username} ` : '';
+        userName.textContent = `${user.name} ${uname}(${capitalizedRole})`;
       } catch (err) {
         userName.textContent = 'Guest';
       }

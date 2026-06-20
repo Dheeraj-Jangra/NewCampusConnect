@@ -15,7 +15,7 @@ if (!JWT_SECRET) {
 // Register User
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, name, role } = req.body;
+    const { email, password, name, role, username } = req.body;
 
     if (!email || !password || !name || !role) {
       return res.status(400).json({ error: 'All fields (email, password, name, role) are required' });
@@ -43,6 +43,23 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Name must be 100 characters or less' });
     }
 
+    // Validate username
+    if (username) {
+      const usernameStr = String(username).trim();
+      if (usernameStr.length < 3 || usernameStr.length > 30) {
+        return res.status(400).json({ error: 'Username must be between 3 and 30 characters' });
+      }
+      if (!/^[a-zA-Z0-9_-]+$/.test(usernameStr)) {
+        return res.status(400).json({ error: 'Username can only contain letters, numbers, underscores, and hyphens' });
+      }
+      const existingUsername = await prisma.user.findUnique({
+        where: { username: usernameStr },
+      });
+      if (existingUsername) {
+        return res.status(400).json({ error: 'Username is already taken' });
+      }
+    }
+
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
       where: { email },
@@ -66,6 +83,7 @@ router.post('/register', async (req, res) => {
         password: hashedPassword,
         name,
         role,
+        username: username ? String(username).trim() : null,
         isApproved,
       },
     });
@@ -77,6 +95,7 @@ router.post('/register', async (req, res) => {
       user: {
         id: user.id,
         email: user.email,
+        username: user.username,
         name: user.name,
         role: user.role,
         isApproved: user.isApproved,
@@ -134,7 +153,7 @@ router.post('/login', async (req, res) => {
 
     // Generate JWT token
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role, name: user.name },
+      { id: user.id, email: user.email, role: user.role, name: user.name, username: user.username },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -144,6 +163,7 @@ router.post('/login', async (req, res) => {
       user: {
         id: user.id,
         email: user.email,
+        username: user.username,
         name: user.name,
         role: user.role,
       },
@@ -162,6 +182,7 @@ router.get('/me', authMiddleware, async (req, res) => {
       select: {
         id: true,
         email: true,
+        username: true,
         name: true,
         role: true,
         isApproved: true,
@@ -177,6 +198,108 @@ router.get('/me', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Error getting user profile:', error);
     res.status(500).json({ error: 'Internal server error fetching profile' });
+  }
+});
+
+// Update Profile (name, username)
+router.put('/profile', authMiddleware, async (req, res) => {
+  try {
+    const { name, username } = req.body;
+
+    if (!name && !username) {
+      return res.status(400).json({ error: 'At least one field (name or username) must be provided' });
+    }
+
+    const updateData = {};
+
+    if (name) {
+      if (name.length > 100) {
+        return res.status(400).json({ error: 'Name must be 100 characters or less' });
+      }
+      updateData.name = name.trim();
+    }
+
+    if (username !== undefined) {
+      const usernameStr = String(username).trim();
+      if (!usernameStr) {
+        return res.status(400).json({ error: 'Username cannot be empty' });
+      }
+      if (usernameStr.length < 3 || usernameStr.length > 30) {
+        return res.status(400).json({ error: 'Username must be between 3 and 30 characters' });
+      }
+      if (!/^[a-zA-Z0-9_-]+$/.test(usernameStr)) {
+        return res.status(400).json({ error: 'Username can only contain letters, numbers, underscores, and hyphens' });
+      }
+
+      // Check uniqueness excluding current user
+      const existing = await prisma.user.findUnique({ where: { username: usernameStr } });
+      if (existing && existing.id !== req.user.id) {
+        return res.status(400).json({ error: 'Username is already taken' });
+      }
+      updateData.username = usernameStr;
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: req.user.id },
+      data: updateData,
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        name: true,
+        role: true,
+      },
+    });
+
+    // Issue new JWT with updated data
+    const token = jwt.sign(
+      { id: updated.id, email: updated.email, role: updated.role, name: updated.name, username: updated.username },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.json({ message: 'Profile updated successfully', user: updated, token });
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(500).json({ error: 'Failed to update profile' });
+  }
+});
+
+// Change Password
+router.put('/password', authMiddleware, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Current password and new password are required' });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({ error: 'New password must be at least 8 characters' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ error: 'Current password is incorrect' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { password: hashedPassword },
+    });
+
+    res.json({ message: 'Password changed successfully' });
+  } catch (error) {
+    console.error('Error changing password:', error);
+    res.status(500).json({ error: 'Failed to change password' });
   }
 });
 
@@ -207,7 +330,7 @@ router.post('/forgot-password', async (req, res) => {
 
     // In production, send via email. For demo, return in response.
     // NOTE: _debug_token is only included in development mode
-    const response: any = {
+    const response = {
       message: 'If an account with that email exists, a reset token has been generated.',
     };
     if (process.env.NODE_ENV !== 'production') {
