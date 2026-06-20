@@ -91,6 +91,13 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Handle message deletion broadcast
+  socket.on('delete-message', async (data) => {
+    const { id, channel } = data;
+    // Broadcast deletion to everyone in the channel
+    io.to(channel).emit('message-deleted', { id, channel });
+  });
+
   // Handle typing indicator sync
   socket.on('typing', (typingData) => {
     const { channel, username, isTyping } = typingData;

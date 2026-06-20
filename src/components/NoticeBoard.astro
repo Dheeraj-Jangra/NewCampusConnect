@@ -135,6 +135,42 @@
   };
 
   let activeFilter = 'all';
+  let currentRole: string = 'student';
+
+  // Delete a notice
+  const deleteNotice = async (id: string) => {
+    const token = localStorage.getItem('cc-token');
+    try {
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const res = await fetch(`${API_URL}/${id}`, {
+        method: 'DELETE',
+        headers,
+      });
+      if (res.ok) {
+        window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
+          detail: { message: 'Notice deleted successfully', type: 'success' } 
+        }));
+        await renderNotices();
+        window.dispatchEvent(new CustomEvent('cc-notices-changed'));
+        return;
+      }
+    } catch (err) {
+      console.warn('Failed to delete notice on backend, removing locally:', err);
+    }
+
+    // Offline fallback: remove from localStorage
+    const localNotices = JSON.parse(localStorage.getItem('cc-notices') || '[]');
+    const filtered = localNotices.filter((n: any) => n.id !== id);
+    localStorage.setItem('cc-notices', JSON.stringify(filtered));
+    window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
+      detail: { message: 'Notice removed locally', type: 'warning' } 
+    }));
+    await renderNotices();
+    window.dispatchEvent(new CustomEvent('cc-notices-changed'));
+  };
 
   // Load from server with local storage fallback
   const getNotices = async () => {
@@ -170,6 +206,7 @@
     const noNoticesAlert = document.getElementById('no-notices-alert');
     if (!listContainer || !noNoticesAlert) return;
 
+    currentRole = localStorage.getItem('cc-active-role') || 'student';
     const notices = await getNotices();
     notices.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     const filtered = notices.filter((n: any) => activeFilter === 'all' || n.category === activeFilter);
@@ -204,6 +241,10 @@
             </div>
             <!-- Author -->
             <span class="text-xs font-semibold text-body-strong">${escapeHtml(notice.author)}</span>
+            <!-- Delete button (professors/admins only) -->
+            <button data-id="${escapeHtml(notice.id)}" class="notice-delete-btn ml-2 p-1 rounded-md text-muted hover:text-semantic-error hover:bg-semantic-error/10 transition-all duration-200 ${currentRole === 'professor' || currentRole === 'admin' ? '' : 'hidden'}" title="Delete notice">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+            </button>
           </div>
 
           <!-- Title -->
@@ -225,6 +266,9 @@
     const cards = listContainer.querySelectorAll('.notice-card');
     cards.forEach((card: any) => {
       card.addEventListener('click', (e: MouseEvent) => {
+        const target = e.target as HTMLElement;
+        if (target.closest('.notice-delete-btn')) return;
+
         const bodyWrapper = card.querySelector('.notice-body-wrapper');
         const arrow = card.querySelector('.notice-arrow');
         const titleText = card.querySelector('.notice-title-text');
@@ -248,6 +292,20 @@
             titleText.classList.remove('text-primary');
           }
         }
+      });
+    });
+
+    // Attach delete handlers
+    const deleteBtns = listContainer.querySelectorAll('.notice-delete-btn');
+    deleteBtns.forEach((btn: any) => {
+      btn.addEventListener('click', async (e: MouseEvent) => {
+        e.stopPropagation();
+        const id = btn.getAttribute('data-id');
+        if (!id) return;
+        if (!confirm('Delete this notice? This action cannot be undone.')) return;
+        btn.disabled = true;
+        btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3.5 h-3.5 animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>`;
+        await deleteNotice(id);
       });
     });
   };
@@ -409,6 +467,8 @@
     const root = document.getElementById('notice-board-root');
 
     if (!profPanel || !feed || !root) return;
+
+    currentRole = role;
 
     if (role === 'professor' || role === 'admin') {
       profPanel.classList.remove('hidden');

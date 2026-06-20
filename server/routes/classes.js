@@ -78,4 +78,23 @@ router.post('/', authMiddleware, professorMiddleware, async (req, res) => {
   }
 });
 
+// Delete class (professors and admins only)
+router.delete('/:id', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'professor' && req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Access denied: Professor or admin privileges required' });
+  }
+  try {
+    const { id } = req.params;
+    const existing = await prisma.class.findUnique({ where: { id } });
+    if (!existing) {
+      return res.status(404).json({ error: 'Class not found' });
+    }
+    await prisma.class.delete({ where: { id } });
+    res.json({ message: 'Class deleted successfully', id });
+  } catch (error) {
+    console.error('Error deleting class:', error);
+    res.status(500).json({ error: 'Failed to delete class' });
+  }
+});
+
 export default router;

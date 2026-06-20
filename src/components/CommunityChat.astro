@@ -178,6 +178,37 @@
   let socket: any = null;
   let isOffline = false;
 
+  // Check if current user can delete a message
+  const canDeleteMessage = (msg: any) => {
+    const userStr = localStorage.getItem('cc-user');
+    if (!userStr) return false;
+    try {
+      const user = JSON.parse(userStr);
+      if (user.role === 'admin' || user.role === 'professor') return true;
+      return msg.senderId && msg.senderId === user.id;
+    } catch {
+      return false;
+    }
+  };
+
+  // Delete a message via API and socket
+  const deleteMessage = async (id: string) => {
+    const token = localStorage.getItem('cc-token');
+    try {
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch(`${API_BASE}/api/chat/${id}`, { method: 'DELETE', headers });
+      if (res.ok && socket && !isOffline) {
+        socket.emit('delete-message', { id, channel: activeChannel });
+      }
+    } catch (err) {
+      console.warn('Failed to delete message on backend:', err);
+    }
+    // Remove from local data regardless
+    channelsData[activeChannel].messages = channelsData[activeChannel].messages.filter((m: any) => m.id !== id);
+    renderMessages();
+  };
+
   // Initialize socket connection
   const initSocket = () => {
     if (socket) return;
@@ -205,12 +236,27 @@
             channelsData[activeChannel].messages.push({
               id: message.id,
               sender: message.sender,
+              senderId: message.senderId,
               role: message.role === 'faculty' ? 'faculty' : 'student',
               avatarBg: message.avatarBg,
               content: message.content,
               time: message.time
             });
             renderMessages();
+          }
+        }
+      });
+
+      socket.on('message-deleted', (data: { id: string, channel: string }) => {
+        if (data.channel === activeChannel) {
+          channelsData[activeChannel].messages = channelsData[activeChannel].messages.filter((m: any) => m.id !== data.id);
+          renderMessages();
+        } else {
+          // Clean up from other channels' cache too
+          for (const ch of Object.keys(channelsData)) {
+            if (ch !== activeChannel) {
+              channelsData[ch].messages = channelsData[ch].messages.filter((m: any) => m.id !== data.id);
+            }
           }
         }
       });
@@ -250,6 +296,7 @@
         channelsData[channel].messages = messages.map((msg: any) => ({
           id: msg.id,
           sender: msg.sender,
+          senderId: msg.senderId,
           role: msg.role === 'faculty' || msg.role === 'professor' ? 'faculty' : (msg.role === 'admin' ? 'admin' : 'student'),
           avatarBg: msg.avatarBg,
           content: msg.content,
@@ -290,6 +337,7 @@
           : `<span class="px-1.5 py-0.2 bg-surface-strong/60 border border-hairline text-ink rounded-md text-[9px] font-semibold">Student</span>`;
       const staggerDelay = Math.min(index * 60, 500);
       const initials = escapeHtml(m.sender.split(' ').map(n => n[0]).join(''));
+      const showDelete = canDeleteMessage(m);
         
       return `
         <div class="message-bubble flex gap-3.5 max-w-[85%] animate-chat-appear hover:translate-x-1 transition-transform duration-200" style="animation-delay: ${staggerDelay}ms; animation-fill-mode: backwards;">
@@ -304,6 +352,9 @@
               <span class="text-xs font-semibold text-body-strong">${escapeHtml(m.sender)}</span>
               ${roleBadge}
               <span class="text-[10px] text-muted">${escapeHtml(m.time)}</span>
+              ${showDelete ? `<button data-id="${escapeHtml(m.id || '')}" class="chat-delete-btn ml-1 p-0.5 rounded-sm text-muted hover:text-semantic-error hover:bg-semantic-error/10 transition-all duration-200" title="Delete message">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+              </button>` : ''}
             </div>
             
             <div class="bg-canvas-soft border border-hairline-soft px-4 py-2.5 rounded-lg text-sm text-ink leading-relaxed">
@@ -316,6 +367,18 @@
 
     // Scroll to bottom
     container.scrollTop = container.scrollHeight;
+
+    // Attach delete handlers
+    const deleteBtns = container.querySelectorAll('.chat-delete-btn');
+    deleteBtns.forEach((btn: any) => {
+      btn.addEventListener('click', async (e: MouseEvent) => {
+        e.stopPropagation();
+        const id = btn.getAttribute('data-id');
+        if (!id) return;
+        if (!confirm('Delete this message?')) return;
+        await deleteMessage(id);
+      });
+    });
   };
 
   // Channel switching controller
