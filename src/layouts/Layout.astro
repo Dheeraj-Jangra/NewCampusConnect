@@ -39,6 +39,44 @@ const {
 		<div class="relative z-10 flex-1 flex flex-col">
 			<slot />
 		</div>
+
+		<!-- Scroll Reveal Observer -->
+		<script>
+			(function() {
+				const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+				if (prefersReduced) {
+					document.querySelectorAll('[data-reveal]').forEach(el => el.classList.add('revealed'));
+					return;
+				}
+
+				const observer = new IntersectionObserver((entries) => {
+					entries.forEach(entry => {
+						if (entry.isIntersecting) {
+							entry.target.classList.add('revealed');
+							observer.unobserve(entry.target);
+						}
+					});
+				}, {
+					threshold: 0.1,
+					rootMargin: '0px 0px -40px 0px'
+				});
+
+				document.querySelectorAll('[data-reveal]').forEach(el => observer.observe(el));
+
+				// Re-observe new elements added later (e.g. dynamic tab panels)
+				const mutationObserver = new MutationObserver((mutations) => {
+					mutations.forEach(mutation => {
+						mutation.addedNodes.forEach(node => {
+							if (node.nodeType === 1) {
+								if (node.hasAttribute('data-reveal')) observer.observe(node);
+								node.querySelectorAll?.('[data-reveal]').forEach(el => observer.observe(el));
+							}
+						});
+					});
+				});
+				mutationObserver.observe(document.body, { childList: true, subtree: true });
+			})();
+		</script>
 	</body>
 </html>
 

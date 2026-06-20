@@ -2,7 +2,7 @@
 // Navbar Component for CampusConnect
 ---
 
-<header class="sticky top-0 z-50 w-full h-16 bg-canvas/80 backdrop-blur-md border-b border-hairline px-6 md:px-12 flex items-center justify-between select-none">
+<header id="main-nav" class="sticky top-0 z-50 w-full h-16 bg-canvas/80 backdrop-blur-md border-b border-hairline px-6 md:px-12 flex items-center justify-between select-none transition-all duration-300">
   <!-- Brand logo -->
   <div class="flex items-center gap-2" id="nav-brand">
     <div class="w-8 h-8 rounded-md bg-primary flex items-center justify-center text-on-primary font-bold text-lg shadow-sm transform hover:rotate-12 transition-transform duration-300">
@@ -156,6 +156,30 @@
     window.addEventListener('cc-role-selected-init', (e: any) => {
       if (e.detail && e.detail.role) {
         setRole(e.detail.role, false);
+      }
+    });
+  }
+
+  // ── Scroll-aware backdrop deepening ──
+  const mainNav = document.getElementById('main-nav');
+  if (mainNav) {
+    let ticking = false;
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const scrolled = window.scrollY > 20;
+          if (scrolled) {
+            mainNav.style.backgroundColor = 'color-mix(in srgb, var(--color-canvas) 92%, transparent)';
+            mainNav.style.backdropFilter = 'blur(16px)';
+            mainNav.style.boxShadow = '0 1px 3px rgba(38, 37, 30, 0.04)';
+          } else {
+            mainNav.style.backgroundColor = '';
+            mainNav.style.backdropFilter = '';
+            mainNav.style.boxShadow = '';
+          }
+          ticking = false;
+        });
+        ticking = true;
       }
     });
   }

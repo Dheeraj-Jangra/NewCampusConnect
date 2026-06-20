@@ -2,11 +2,11 @@
 // Background Grid and Floating Gradients Component
 ---
 
-<div class="fixed inset-0 pointer-events-none overflow-hidden z-0 bg-canvas">
+<div class="fixed inset-0 pointer-events-none overflow-hidden z-0 bg-canvas" id="bg-grid">
   <!-- Dynamic Glow Blobs -->
-  <div class="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-timeline-thinking/10 blur-3xl animate-float-slow"></div>
-  <div class="absolute top-1/2 -right-40 w-120 h-120 rounded-full bg-timeline-read/10 blur-3xl animate-float-slow" style="animation-delay: -5s; animation-duration: 20s;"></div>
-  <div class="absolute -bottom-40 left-1/3 w-80 h-80 rounded-full bg-timeline-edit/15 blur-3xl animate-float-slow" style="animation-delay: -10s; animation-duration: 25s;"></div>
+  <div class="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-timeline-thinking/10 blur-3xl animate-float-slow" data-parallax="0.02"></div>
+  <div class="absolute top-1/2 -right-40 w-120 h-120 rounded-full bg-timeline-read/10 blur-3xl animate-float-slow" data-parallax="0.015" style="animation-delay: -5s; animation-duration: 20s;"></div>
+  <div class="absolute -bottom-40 left-1/3 w-80 h-80 rounded-full bg-timeline-edit/15 blur-3xl animate-float-slow" data-parallax="0.025" style="animation-delay: -10s; animation-duration: 25s;"></div>
   
   <!-- Subtle Grid Pattern -->
   <div class="absolute inset-0 opacity-[0.03]" style="background-image: radial-gradient(var(--color-ink) 1px, transparent 1px); background-size: 24px 24px;"></div>
@@ -14,3 +14,49 @@
   <!-- Sleek Radial Gradient Fade -->
   <div class="absolute inset-0 bg-radial from-transparent via-transparent to-canvas/80"></div>
 </div>
+
+<script>
+  (function() {
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduced) return;
+
+    const container = document.getElementById('bg-grid');
+    if (!container) return;
+
+    const blobs = container.querySelectorAll('[data-parallax]');
+    if (blobs.length === 0) return;
+
+    let mouseX = 0, mouseY = 0;
+    let currentX = 0, currentY = 0;
+    let rafId: number;
+
+    document.addEventListener('mousemove', (e) => {
+      mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+      mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+    });
+
+    const animate = () => {
+      currentX += (mouseX - currentX) * 0.04;
+      currentY += (mouseY - currentY) * 0.04;
+
+      blobs.forEach(blob => {
+        const factor = parseFloat(blob.getAttribute('data-parallax') || '0.02');
+        const x = currentX * factor * 100;
+        const y = currentY * factor * 100;
+        (blob as HTMLElement).style.translate = `${x}px ${y}px`;
+      });
+
+      rafId = requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        cancelAnimationFrame(rafId);
+      } else {
+        animate();
+      }
+    });
+  })();
+</script>

@@ -21,25 +21,25 @@ import CommunityChat from '../components/CommunityChat.astro';
       
       <!-- Timeline decoration pills -->
       <div class="flex gap-2 mb-6 animate-pulse-slow">
-        <span class="px-2.5 py-0.5 text-[9px] font-bold tracking-wider rounded-pill bg-timeline-thinking/10 text-timeline-thinking border border-timeline-thinking/20 uppercase">Thinking</span>
-        <span class="px-2.5 py-0.5 text-[9px] font-bold tracking-wider rounded-pill bg-timeline-grep/10 text-timeline-grep border border-timeline-grep/20 uppercase">Reading</span>
-        <span class="px-2.5 py-0.5 text-[9px] font-bold tracking-wider rounded-pill bg-timeline-edit/10 text-timeline-edit border border-timeline-edit/20 uppercase">Editing</span>
-        <span class="px-2.5 py-0.5 text-[9px] font-bold tracking-wider rounded-pill bg-timeline-done/10 text-timeline-done border border-timeline-done/20 uppercase">Done</span>
+        <span class="px-2.5 py-0.5 text-[9px] font-bold tracking-wider rounded-pill bg-timeline-thinking/10 text-timeline-thinking border border-timeline-thinking/20 uppercase hero-word stagger-1">Thinking</span>
+        <span class="px-2.5 py-0.5 text-[9px] font-bold tracking-wider rounded-pill bg-timeline-grep/10 text-timeline-grep border border-timeline-grep/20 uppercase hero-word stagger-2">Reading</span>
+        <span class="px-2.5 py-0.5 text-[9px] font-bold tracking-wider rounded-pill bg-timeline-edit/10 text-timeline-edit border border-timeline-edit/20 uppercase hero-word stagger-3">Editing</span>
+        <span class="px-2.5 py-0.5 text-[9px] font-bold tracking-wider rounded-pill bg-timeline-done/10 text-timeline-done border border-timeline-done/20 uppercase hero-word stagger-4">Done</span>
       </div>
 
-      <!-- Hero Header -->
-      <h1 class="display-mega text-ink mb-4 animated-mount">
-        Campus<span class="text-primary">Connect</span>
+      <!-- Hero Header with word stagger -->
+      <h1 class="display-mega text-ink mb-4">
+        <span class="hero-word stagger-1">Campus</span><span class="hero-word stagger-2 text-primary">Connect</span>
       </h1>
-      <p class="body-md text-muted max-w-xl mx-auto mb-12 leading-relaxed animated-mount" style="animation-delay: 200ms;">
+      <p class="body-md text-muted max-w-xl mx-auto mb-12 leading-relaxed hero-word stagger-4">
         The quietly confident developer brand interface, customized for student-faculty interactions, notices, and community resources.
       </p>
 
-      <!-- Portals Grid -->
+      <!-- Portals Grid with stagger -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-3xl mt-2 select-none">
         
         <!-- Student Entry Portal Card -->
-        <div id="portal-student" class="card-editorial flex flex-col items-start gap-4 p-8 group">
+        <div id="portal-student" class="card-editorial flex flex-col items-start gap-4 p-8 group hero-word stagger-5">
           <div class="w-10 h-10 rounded-full bg-timeline-read/10 border border-timeline-read/30 text-timeline-read flex items-center justify-center group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
           </div>
@@ -47,14 +47,14 @@ import CommunityChat from '../components/CommunityChat.astro';
             <h3 class="title-md text-ink group-hover:text-primary transition-colors">Student Portal</h3>
             <p class="body-sm text-body mt-2 leading-relaxed">Access exam dates, live lectures countdown, retrieve notes, and join peer discussions in community chat channels.</p>
           </div>
-          <button class="btn-secondary w-full mt-4 justify-between group-hover:border-primary group-hover:bg-primary group-hover:text-on-primary">
+          <button class="btn-secondary btn-press w-full mt-4 justify-between group-hover:border-primary group-hover:bg-primary group-hover:text-on-primary">
             <span>Enter Dashboard</span>
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5 transition-transform group-hover:translate-x-1"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
           </button>
         </div>
 
         <!-- Professor Entry Portal Card -->
-        <div id="portal-professor" class="card-editorial flex flex-col items-start gap-4 p-8 group">
+        <div id="portal-professor" class="card-editorial flex flex-col items-start gap-4 p-8 group hero-word stagger-6">
           <div class="w-10 h-10 rounded-full bg-timeline-thinking/10 border border-timeline-thinking/30 text-timeline-thinking flex items-center justify-center group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/></svg>
           </div>
@@ -62,7 +62,7 @@ import CommunityChat from '../components/CommunityChat.astro';
             <h3 class="title-md text-ink group-hover:text-primary transition-colors">Professor Portal</h3>
             <p class="body-sm text-body mt-2 leading-relaxed">Publish formal administrative notices, schedule live classroom meetings, share research documents, and answer student Q&As.</p>
           </div>
-          <button class="btn-secondary w-full mt-4 justify-between group-hover:border-primary group-hover:bg-primary group-hover:text-on-primary">
+          <button class="btn-secondary btn-press w-full mt-4 justify-between group-hover:border-primary group-hover:bg-primary group-hover:text-on-primary">
             <span>Faculty Management</span>
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5 transition-transform group-hover:translate-x-1"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
           </button>
@@ -72,7 +72,7 @@ import CommunityChat from '../components/CommunityChat.astro';
     </section>
 
     <!-- 2. Dashboard Container Screen (Hidden on startup until gate chosen) -->
-    <section id="dashboard-hub" class="flex-1 flex flex-col w-full hidden opacity-0 transition-all duration-500">
+    <section id="dashboard-hub" class="flex-1 flex flex-col w-full hidden opacity-0 transition-all duration-500" style="transform: scale(1);">
       <!-- Shared Header -->
       <Navbar />
 
@@ -156,9 +156,10 @@ import CommunityChat from '../components/CommunityChat.astro';
         window.dispatchEvent(new CustomEvent('cc-role-selected-init', { detail: { role } }));
         window.dispatchEvent(new CustomEvent('cc-role-changed', { detail: { role } }));
         
-        // Fade in hub
+        // Fade in hub with scale
         setTimeout(() => {
           hub.style.opacity = '1';
+          hub.style.transform = 'scale(1)';
           
           // Trigger first tab render
           window.dispatchEvent(new CustomEvent('cc-tab-active-notices'));
@@ -173,6 +174,7 @@ import CommunityChat from '../components/CommunityChat.astro';
     // Listen to Home logo click in Navbar to reset views
     window.addEventListener('cc-go-home', () => {
       hub.style.opacity = '0';
+      hub.style.transform = 'scale(0.98)';
       setTimeout(() => {
         hub.classList.add('hidden');
         gate.classList.remove('hidden');
@@ -215,17 +217,30 @@ import CommunityChat from '../components/CommunityChat.astro';
       activeTrigger.classList.remove('text-ink');
       activeTrigger.classList.add('text-on-primary');
 
-      // Hide all panels and show selected with transition
-      panels.forEach((panel: any) => {
-        panel.classList.add('hidden');
-      });
-
+      // Animate out current panel, then swap
+      const currentPanel = document.querySelector('.tab-panel:not(.hidden)') as HTMLElement;
       const activePanel = document.getElementById(`panel-${targetTab}`);
-      if (activePanel) {
-        activePanel.classList.remove('hidden');
-        
-        // Trigger specific sub-component load event
-        window.dispatchEvent(new CustomEvent(`cc-tab-active-${targetTab}`));
+      
+      if (currentPanel && currentPanel !== activePanel && animate) {
+        currentPanel.style.animation = 'panel-exit 0.2s cubic-bezier(0.4, 0, 1, 1) forwards';
+        setTimeout(() => {
+          currentPanel.classList.add('hidden');
+          currentPanel.style.animation = '';
+          
+          if (activePanel) {
+            activePanel.classList.remove('hidden');
+            activePanel.style.animation = 'panel-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards';
+            window.dispatchEvent(new CustomEvent(`cc-tab-active-${targetTab}`));
+          }
+        }, 200);
+      } else {
+        // No current panel or same panel — just show target
+        panels.forEach((panel: any) => panel.classList.add('hidden'));
+        if (activePanel) {
+          activePanel.classList.remove('hidden');
+          activePanel.style.animation = animate ? 'panel-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards' : '';
+          window.dispatchEvent(new CustomEvent(`cc-tab-active-${targetTab}`));
+        }
       }
     };
 

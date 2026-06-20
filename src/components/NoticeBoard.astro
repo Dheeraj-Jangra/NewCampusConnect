@@ -56,7 +56,7 @@
         </div>
 
         <!-- Submit Button -->
-        <button type="submit" id="notice-submit-btn" class="btn-primary w-full mt-2 flex items-center justify-center gap-2">
+        <button type="submit" id="notice-submit-btn" class="btn-primary btn-press w-full mt-2 flex items-center justify-center gap-2">
           <span>Publish Notice</span>
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><path d="m5 12 17-7-7 17-4-6-6-4Z"/></svg>
         </button>
@@ -165,11 +165,12 @@
       noNoticesAlert.classList.add('hidden');
     }
 
-    listContainer.innerHTML = filtered.map((notice: any) => {
+    listContainer.innerHTML = filtered.map((notice: any, index: number) => {
       const meta = categoryMeta[notice.category] || { label: 'Notice', colorClass: 'text-muted', bgClass: 'bg-surface-strong/30', borderClass: 'border-hairline' };
+      const staggerDelay = Math.min(index * 50, 400);
       
       return `
-        <div class="notice-card bg-surface-card border border-hairline rounded-lg p-5 flex flex-col gap-3 transition-all duration-300 hover:border-hairline-strong hover:-translate-y-1 hover:shadow-md overflow-hidden" data-category="${notice.category}" data-id="${notice.id}">
+        <div class="notice-card bg-surface-card border border-hairline rounded-lg p-5 flex flex-col gap-3 transition-all duration-300 hover:border-hairline-strong hover:-translate-y-1 hover:shadow-md overflow-hidden animate-fade-in-up" style="animation-delay: ${staggerDelay}ms; animation-fill-mode: backwards;" data-category="${notice.category}" data-id="${notice.id}">
           <div class="flex items-center justify-between flex-wrap gap-2 pointer-events-none">
             <!-- Badge & Info -->
             <div class="flex items-center gap-2">
