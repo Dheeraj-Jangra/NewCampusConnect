@@ -101,7 +101,6 @@
   let activeFilter = 'all';
   let currentRole: string = 'student';
 
-  // Delete a notice
   const deleteNotice = async (id: string) => {
     const token = localStorage.getItem('cc-token');
     try {
@@ -113,22 +112,22 @@
         method: 'DELETE',
         headers,
       });
-      if (res.ok) {
-        window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
-          detail: { message: 'Notice deleted successfully', type: 'success' } 
-        }));
-        await renderNotices();
-        window.dispatchEvent(new CustomEvent('cc-notices-changed'));
-        return;
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `Failed with status ${res.status}`);
       }
-    } catch (err) {
-      console.warn('Failed to delete notice on backend, removing locally:', err);
+      window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
+        detail: { message: 'Notice deleted successfully', type: 'success' } 
+      }));
+      await renderNotices();
+      window.dispatchEvent(new CustomEvent('cc-notices-changed'));
+      return;
+    } catch (err: any) {
+      console.error('Failed to delete notice:', err?.message || err);
+      window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
+        detail: { message: err?.message || 'Failed to delete notice', type: 'error' } 
+      }));
     }
-
-    console.error('Failed to delete notice on backend:', err);
-    window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
-      detail: { message: 'Failed to delete notice', type: 'error' } 
-    }));
   };
 
   const getNotices = async () => {
@@ -184,7 +183,7 @@
             <!-- Author -->
             <span class="text-xs font-semibold text-body-strong">${escapeHtml(notice.author)}</span>
             <!-- Delete button (professors/admins only) -->
-            <button data-id="${escapeHtml(notice.id)}" class="notice-delete-btn ml-2 p-1 rounded-md text-muted hover:text-semantic-error hover:bg-semantic-error/10 transition-all duration-200 ${currentRole === 'professor' || currentRole === 'admin' ? '' : 'hidden'}" title="Delete notice">
+            <button data-id="${escapeHtml(notice.id)}" class="notice-delete-btn pointer-events-auto ml-2 p-1 rounded-md text-muted hover:text-semantic-error hover:bg-semantic-error/10 transition-all duration-200 ${currentRole === 'professor' || currentRole === 'admin' ? '' : 'hidden'}" title="Delete notice">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
             </button>
           </div>

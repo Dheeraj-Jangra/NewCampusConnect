@@ -107,16 +107,17 @@
       const headers: Record<string, string> = {};
       if (token) headers['Authorization'] = `Bearer ${token}`;
       const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE', headers });
-      if (res.ok) {
-        window.dispatchEvent(new CustomEvent('cc-toast-alert', { detail: { message: 'Class deleted successfully', type: 'success' } }));
-        await renderClasses();
-        await startLiveCountdown();
-        window.dispatchEvent(new CustomEvent('cc-classes-changed'));
-        return;
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `Failed with status ${res.status}`);
       }
-    } catch (err) {
-      console.error('Failed to delete class on backend:', err);
-      window.dispatchEvent(new CustomEvent('cc-toast-alert', { detail: { message: 'Failed to delete class', type: 'error' } }));
+      window.dispatchEvent(new CustomEvent('cc-toast-alert', { detail: { message: 'Class deleted successfully', type: 'success' } }));
+      await renderClasses();
+      await startLiveCountdown();
+      window.dispatchEvent(new CustomEvent('cc-classes-changed'));
+    } catch (err: any) {
+      console.error('Failed to delete class:', err?.message || err);
+      window.dispatchEvent(new CustomEvent('cc-toast-alert', { detail: { message: err?.message || 'Failed to delete class', type: 'error' } }));
     }
   };
 
