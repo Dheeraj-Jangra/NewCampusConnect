@@ -846,3 +846,8 @@
   outline: 2px solid var(--color-primary);
   outline-offset: 1px;
 }
+
+/* ── Bottom nav safe area (iOS) ── */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
