@@ -15,6 +15,7 @@ import chatRouter from './routes/chat.js';
 import authRouter from './routes/auth.js';
 import adminRouter from './routes/admin.js';
 import searchRouter from './routes/search.js';
+import channelsRouter, { seedDefaultChannels } from './routes/channels.js';
 import prisma from './lib/prisma.js';
 
 dotenv.config();
@@ -55,6 +56,7 @@ app.use('/api/notices', noticesRouter);
 app.use('/api/classes', classesRouter);
 app.use('/api/materials', materialsRouter);
 app.use('/api/chat', chatRouter);
+app.use('/api/channels', channelsRouter);
 app.use('/api/search', searchRouter);
 
 // Basic health check
@@ -91,7 +93,19 @@ io.on('connection', (socket) => {
     const { channel, sender, role, avatarBg, content, time, senderId } = msgData;
 
     try {
-      // Save message to database via Prisma
+      // Check channel post restriction
+      const channelRecord = await prisma.chatChannel.findFirst({ where: { label: channel } });
+      if (channelRecord && channelRecord.postRestriction !== 'all') {
+        const normalizedRole = role === 'professor' ? 'faculty' : role;
+        const normalizedRestriction = channelRecord.postRestriction;
+        if (normalizedRestriction === 'faculty' && normalizedRole !== 'faculty' && normalizedRole !== 'admin') {
+          return; // Silently reject — student cannot post here
+        }
+        if (normalizedRestriction === 'admin' && normalizedRole !== 'admin') {
+          return; // Silently reject — only admins can post here
+        }
+      }
+
       const savedMsg = await prisma.chatMessage.create({
         data: {
           channel,
@@ -104,7 +118,6 @@ io.on('connection', (socket) => {
         },
       });
 
-      // Broadcast message to everyone in the channel (including sender to acknowledge database write)
       io.to(channel).emit('new-message', savedMsg);
     } catch (err) {
       console.error('Error saving chat message to database:', err);
@@ -168,4 +181,5 @@ async function seedAdminUser() {
 httpServer.listen(port, async () => {
   console.log(`Server is running on port ${port}`);
   await seedAdminUser();
+  await seedDefaultChannels();
 });

@@ -1,32 +1,49 @@
 ---
-import { channels } from '../config/channels';
+// Community Chat Component — channels loaded from API
 ---
 
 <div
   id="community-chat-root"
   class="w-full flex-1 flex flex-col md:flex-row bg-surface-card border border-hairline rounded-lg h-[550px] overflow-hidden opacity-0 translate-y-4 transition-all duration-500"
-  data-channels={JSON.stringify(channels)}
 >
   
   <!-- Sidebar: Channel Selector -->
   <div class="w-full md:w-60 border-r border-hairline bg-canvas-soft/50 flex flex-col h-1/3 md:h-full flex-shrink-0">
     <div class="p-4 border-b border-hairline flex items-center justify-between">
-      <span class="text-xs font-bold uppercase tracking-wider text-ink">Community Channels</span>
+      <span class="text-xs font-bold uppercase tracking-wider text-ink">Channels</span>
       <span class="flex h-2 w-2 relative">
         <span class="animate-ping-slow absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
         <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
       </span>
     </div>
+
+    <!-- Create Channel Button (professors/admins) -->
+    <div id="channel-create-section" class="px-3 pt-3 hidden">
+      <button id="create-channel-btn" class="w-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-primary border border-primary/30 rounded-md hover:bg-primary/10 transition-all duration-200 flex items-center justify-center gap-1">
+        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+        New Channel
+      </button>
+    </div>
+
+    <!-- Create Channel Form (hidden by default) -->
+    <div id="channel-create-form" class="px-3 pt-3 hidden">
+      <div class="flex flex-col gap-2 bg-surface-card border border-hairline rounded-md p-3">
+        <input type="text" id="new-channel-label" placeholder="channel-name" maxlength="40" class="w-full px-2.5 py-1.5 bg-canvas-soft border border-hairline rounded text-xs text-ink focus:outline-none focus:border-primary transition-all duration-200" />
+        <input type="text" id="new-channel-desc" placeholder="Description (optional)" maxlength="120" class="w-full px-2.5 py-1.5 bg-canvas-soft border border-hairline rounded text-xs text-ink focus:outline-none focus:border-primary transition-all duration-200" />
+        <select id="new-channel-restriction" class="w-full px-2.5 py-1.5 bg-canvas-soft border border-hairline rounded text-xs text-ink focus:outline-none focus:border-primary transition-all duration-200">
+          <option value="all">Everyone can post</option>
+          <option value="faculty">Faculty only</option>
+          <option value="admin">Admin only</option>
+        </select>
+        <div class="flex gap-1.5">
+          <button id="confirm-create-channel" class="flex-1 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-canvas bg-primary rounded hover:bg-primary/90 transition-all duration-200">Create</button>
+          <button id="cancel-create-channel" class="flex-1 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-muted border border-hairline rounded hover:bg-surface-strong/30 transition-all duration-200">Cancel</button>
+        </div>
+      </div>
+    </div>
     
     <div class="flex-1 overflow-y-auto p-2 flex flex-row md:flex-col gap-1.5 scrollbar-thin" id="channel-list">
-      {channels.map((ch, i) => (
-        <button
-          data-channel={ch.id}
-          class={`channel-btn ${i === 0 ? 'active' : ''} w-full px-3 py-2 text-left text-xs font-semibold rounded-md flex items-center gap-2 transition-all duration-200 hover:translate-x-1`}
-        >
-          <span class="text-muted">#</span> {ch.label}
-        </button>
-      ))}
+      <!-- Rendered by JS -->
     </div>
   </div>
 
@@ -35,9 +52,12 @@ import { channels } from '../config/channels';
     <!-- Chat Header -->
     <div class="px-5 py-3 border-b border-hairline flex items-center justify-between">
       <div>
-        <h4 id="active-channel-name" class="text-sm font-semibold text-ink"># {channels[0].label}</h4>
-        <p id="active-channel-desc" class="text-[11px] text-muted mt-0.5">{channels[0].description}</p>
+        <h4 id="active-channel-name" class="text-sm font-semibold text-ink">#general-chat</h4>
+        <p id="active-channel-desc" class="text-[11px] text-muted mt-0.5">Loading...</p>
       </div>
+      <button id="delete-channel-btn" class="hidden p-1.5 rounded-md text-muted hover:text-semantic-error hover:bg-semantic-error/10 transition-all duration-200" title="Delete this channel">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+      </button>
     </div>
 
     <!-- Messages View -->
@@ -54,10 +74,16 @@ import { channels } from '../config/channels';
       </div>
     </div>
 
+    <!-- Restriction banner (shown when user can't post) -->
+    <div id="restriction-banner" class="px-5 py-2 border-t border-timeline-edit/20 text-[11px] text-timeline-edit flex items-center gap-1.5 hidden" style="background: rgba(192, 168, 221, 0.08);">
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="flex-shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+      <span id="restriction-message">Only faculty can post in this channel.</span>
+    </div>
+
     <!-- Input Form -->
     <div class="p-4 border-t border-hairline bg-canvas-soft/30">
       <form id="chat-input-form" class="flex items-center gap-2">
-        <input type="text" id="chat-msg-input" placeholder={`Message #${channels[0].label}...`} required autocomplete="off" class="flex-1 px-4 py-2 border border-hairline rounded-md text-sm text-ink bg-surface-card focus:outline-none focus:border-primary input-focus-glow transition-all duration-200" />
+        <input type="text" id="chat-msg-input" placeholder="Message #general-chat..." required autocomplete="off" class="flex-1 px-4 py-2 border border-hairline rounded-md text-sm text-ink bg-surface-card focus:outline-none focus:border-primary input-focus-glow transition-all duration-200" />
         <button type="submit" class="btn-primary btn-press h-9 w-9 p-0 flex items-center justify-center rounded-md hover:scale-110 hover:rotate-12 transition-all duration-300">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-4 h-4"><line x1="22" x2="11" y1="2" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         </button>
@@ -102,14 +128,8 @@ import { channels } from '../config/channels';
     id: string;
     label: string;
     description: string;
-  }
-
-  const rootEl = document.getElementById('community-chat-root');
-  let channels: Channel[] = [];
-  try {
-    channels = JSON.parse(rootEl?.getAttribute('data-channels') || '[]');
-  } catch {
-    channels = [];
+    isDefault?: boolean;
+    postRestriction?: string;
   }
 
   const escapeHtml = (str: string) => {
@@ -119,14 +139,26 @@ import { channels } from '../config/channels';
   };
 
   import { API_BASE, SOCKET_URL } from '../lib/api';
-  const API_URL = `${API_BASE}/api/chat`;
+  const CHANNELS_URL = `${API_BASE}/api/channels`;
+  const CHAT_URL = `${API_BASE}/api/chat`;
 
-  let activeChannel = channels[0]?.id || '';
+  let channels: Channel[] = [];
+  let activeChannel = '';
   let socket: any = null;
   let isOffline = false;
   let messagesCache: Record<string, ChatMessage[]> = {};
+  let channelsSetupDone = false;
 
-  channels.forEach(ch => { messagesCache[ch.id] = []; });
+  const getUserRole = (): string => {
+    const userStr = localStorage.getItem('cc-user');
+    if (!userStr) return 'student';
+    try { return JSON.parse(userStr).role || 'student'; } catch { return 'student'; }
+  };
+
+  const canManageChannels = () => {
+    const role = getUserRole();
+    return role === 'professor' || role === 'admin';
+  };
 
   const canDeleteMessage = (msg: any) => {
     const userStr = localStorage.getItem('cc-user');
@@ -135,9 +167,7 @@ import { channels } from '../config/channels';
       const user = JSON.parse(userStr);
       if (user.role === 'admin' || user.role === 'professor') return true;
       return msg.senderId && msg.senderId === user.id;
-    } catch {
-      return false;
-    }
+    } catch { return false; }
   };
 
   const deleteMessage = async (id: string) => {
@@ -145,7 +175,7 @@ import { channels } from '../config/channels';
     try {
       const headers: Record<string, string> = {};
       if (token) headers['Authorization'] = `Bearer ${token}`;
-      const res = await fetch(`${API_BASE}/api/chat/${id}`, { method: 'DELETE', headers });
+      const res = await fetch(`${CHAT_URL}/${id}`, { method: 'DELETE', headers });
       if (res.ok && socket && !isOffline) {
         socket.emit('delete-message', { id, channel: activeChannel });
       }
@@ -157,6 +187,198 @@ import { channels } from '../config/channels';
     renderMessages();
   };
 
+  // --- Channel API helpers ---
+  const fetchChannels = async (): Promise<Channel[]> => {
+    try {
+      const res = await fetch(CHANNELS_URL);
+      if (!res.ok) throw new Error('Failed to fetch channels');
+      return await res.json();
+    } catch (err) {
+      console.error('Failed to load channels:', err);
+      return [];
+    }
+  };
+
+  const createChannel = async (label: string, description: string, postRestriction: string): Promise<Channel | null> => {
+    const token = localStorage.getItem('cc-token');
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    try {
+      const res = await fetch(CHANNELS_URL, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ label, description, postRestriction }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || 'Failed to create channel');
+      }
+      return await res.json();
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('cc-toast-alert', { detail: { message: err?.message || 'Failed to create channel', type: 'error' } }));
+      return null;
+    }
+  };
+
+  const deleteChannel = async (id: string): Promise<boolean> => {
+    const token = localStorage.getItem('cc-token');
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    try {
+      const res = await fetch(`${CHANNELS_URL}/${id}`, { method: 'DELETE', headers });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || 'Failed to delete channel');
+      }
+      window.dispatchEvent(new CustomEvent('cc-toast-alert', { detail: { message: 'Channel deleted', type: 'success' } }));
+      return true;
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('cc-toast-alert', { detail: { message: err?.message || 'Failed to delete channel', type: 'error' } }));
+      return false;
+    }
+  };
+
+  // --- Render channel sidebar ---
+  const renderChannelList = () => {
+    const list = document.getElementById('channel-list');
+    if (!list) return;
+
+    list.innerHTML = channels.map((ch, i) => {
+      const isActive = ch.id === activeChannel;
+      const deleteBtn = canManageChannels() && !ch.isDefault
+        ? `<button data-channel-id="${escapeHtml(ch.id)}" data-channel-label="${escapeHtml(ch.label)}" class="channel-delete-btn ml-auto p-0.5 rounded text-muted hover:text-semantic-error opacity-0 group-hover:opacity-100 transition-all duration-200 flex-shrink-0" title="Delete channel">
+            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+           </button>`
+        : '';
+
+      return `
+        <button data-channel="${escapeHtml(ch.id)}" class="channel-btn group ${isActive ? 'active' : ''} w-full px-3 py-2 text-left text-xs font-semibold rounded-md flex items-center gap-2 transition-all duration-200 hover:translate-x-1">
+          <span class="text-muted">#</span>
+          <span class="truncate flex-1">${escapeHtml(ch.label)}</span>
+          ${deleteBtn}
+        </button>
+      `;
+    }).join('');
+
+    // Attach channel select handlers
+    list.querySelectorAll('.channel-btn').forEach((btn: any) => {
+      btn.addEventListener('click', async (e: MouseEvent) => {
+        // Ignore if delete button was clicked
+        if ((e.target as HTMLElement).closest('.channel-delete-btn')) return;
+        const chan = btn.getAttribute('data-channel');
+        if (!chan || chan === activeChannel) return;
+        await switchChannel(chan);
+      });
+    });
+
+    // Attach delete handlers
+    list.querySelectorAll('.channel-delete-btn').forEach((btn: any) => {
+      btn.addEventListener('click', async (e: MouseEvent) => {
+        e.stopPropagation();
+        const id = btn.getAttribute('data-channel-id');
+        const label = btn.getAttribute('data-channel-label');
+        if (!id) return;
+        if (!confirm(`Delete channel #${label}? All messages will be lost.`)) return;
+        const ok = await deleteChannel(id);
+        if (ok) {
+          channels = channels.filter(c => c.id !== id);
+          delete messagesCache[label];
+          if (activeChannel === label) {
+            activeChannel = channels[0]?.id || '';
+            if (activeChannel) await switchChannel(activeChannel);
+          }
+          renderChannelList();
+        }
+      });
+    });
+
+    // Update create/delete channel UI visibility
+    const createSection = document.getElementById('channel-create-section');
+    if (createSection) {
+      createSection.classList.toggle('hidden', !canManageChannels());
+    }
+  };
+
+  const canPostInChannel = (ch: Channel): boolean => {
+    const restriction = ch.postRestriction || 'all';
+    if (restriction === 'all') return true;
+    const role = getUserRole();
+    if (restriction === 'faculty') return role === 'professor' || role === 'admin';
+    if (restriction === 'admin') return role === 'admin';
+    return true;
+  };
+
+  const switchChannel = async (channelId: string) => {
+    const ch = channels.find(c => c.id === channelId);
+    if (!ch) return;
+
+    activeChannel = ch.id;
+
+    if (socket && !isOffline) {
+      socket.emit('join-channel', activeChannel);
+    }
+
+    // Update button states
+    document.querySelectorAll('.channel-btn').forEach((b: any) => {
+      b.classList.toggle('active', b.getAttribute('data-channel') === channelId);
+    });
+
+    // Update header
+    const title = document.getElementById('active-channel-name');
+    const desc = document.getElementById('active-channel-desc');
+    const input = document.getElementById('chat-msg-input') as HTMLInputElement;
+    const deleteBtn = document.getElementById('delete-channel-btn');
+
+    if (title) title.innerHTML = `<span class="text-muted">#</span> ${escapeHtml(ch.label)}`;
+    if (desc) desc.textContent = ch.description || '';
+    if (input) input.placeholder = `Message #${ch.label}...`;
+
+    // Show delete button only for non-default channels when prof/admin
+    if (deleteBtn) {
+      const show = canManageChannels() && !ch.isDefault;
+      deleteBtn.classList.toggle('hidden', !show);
+      deleteBtn.setAttribute('data-channel-id', ch.id);
+    }
+
+    // Handle post restriction
+    const restrictionBanner = document.getElementById('restriction-banner');
+    const restrictionMsg = document.getElementById('restriction-message');
+    const canPost = canPostInChannel(ch);
+
+    if (restrictionBanner && restrictionMsg) {
+      if (!canPost) {
+        restrictionBanner.classList.remove('hidden');
+        const restriction = ch.postRestriction || 'all';
+        restrictionMsg.textContent = restriction === 'faculty'
+          ? 'Only professors and admins can post in this channel.'
+          : 'Only admins can post in this channel.';
+      } else {
+        restrictionBanner.classList.add('hidden');
+      }
+    }
+
+    if (input) {
+      input.disabled = !canPost;
+      if (!canPost) {
+        input.value = '';
+      }
+    }
+
+    // Load messages
+    const container = document.getElementById('messages-container');
+    if (container) {
+      container.style.opacity = '0';
+      container.style.transform = 'translateY(4px)';
+      await fetchHistory(activeChannel);
+      setTimeout(() => {
+        renderMessages();
+        container.style.opacity = '1';
+        container.style.transform = 'translateY(0)';
+      }, 200);
+    }
+  };
+
+  // --- Socket ---
   const initSocket = () => {
     if (socket) return;
     try {
@@ -167,25 +389,21 @@ import { channels } from '../config/channels';
       });
 
       socket.on('connect', () => {
-        console.log('Chat socket connected!');
         isOffline = false;
-        socket.emit('join-channel', activeChannel);
+        if (activeChannel) socket.emit('join-channel', activeChannel);
       });
 
-      socket.on('connect_error', () => {
-        isOffline = true;
-      });
+      socket.on('connect_error', () => { isOffline = true; });
 
       socket.on('new-message', (message: any) => {
         if (message.channel === activeChannel) {
           const msgs = messagesCache[activeChannel] || [];
-          const exists = msgs.some(m => m.id === message.id);
-          if (!exists) {
+          if (!msgs.some(m => m.id === message.id)) {
             msgs.push({
               id: message.id,
               sender: message.sender,
               senderId: message.senderId,
-              role: message.role === 'faculty' ? 'faculty' : 'student',
+              role: message.role === 'faculty' || message.role === 'professor' ? 'faculty' : (message.role === 'admin' ? 'admin' : 'student'),
               avatarBg: message.avatarBg,
               content: message.content,
               time: message.time
@@ -196,24 +414,15 @@ import { channels } from '../config/channels';
       });
 
       socket.on('message-deleted', (data: { id: string, channel: string }) => {
-        if (data.channel === activeChannel) {
-          const msgs = messagesCache[activeChannel] || [];
-          messagesCache[activeChannel] = msgs.filter((m: any) => m.id !== data.id);
-          renderMessages();
-        } else {
-          for (const ch of Object.keys(messagesCache)) {
-            if (ch !== activeChannel) {
-              messagesCache[ch] = (messagesCache[ch] || []).filter((m: any) => m.id !== data.id);
-            }
-          }
-        }
+        const cache = messagesCache[data.channel] || [];
+        messagesCache[data.channel] = cache.filter((m: any) => m.id !== data.id);
+        if (data.channel === activeChannel) renderMessages();
       });
 
       socket.on('user-typing', (data: { username: string, isTyping: boolean }) => {
         const typingBox = document.getElementById('typing-indicator');
         const typingName = document.getElementById('typing-username');
         if (!typingBox || !typingName) return;
-
         if (data.isTyping) {
           typingName.textContent = data.username;
           typingBox.classList.remove('hidden');
@@ -224,7 +433,6 @@ import { channels } from '../config/channels';
         }
       });
     } catch (e) {
-      console.warn('Socket connect failed, running in offline mode:', e);
       isOffline = true;
     }
   };
@@ -234,7 +442,7 @@ import { channels } from '../config/channels';
       const token = localStorage.getItem('cc-token');
       const headers: Record<string, string> = {};
       if (token) headers['Authorization'] = `Bearer ${token}`;
-      const res = await fetch(`${API_URL}/${channel}`, { headers });
+      const res = await fetch(`${CHAT_URL}/${channel}`, { headers });
       if (!res.ok) throw new Error('HTTP error');
       const messages = await res.json();
       if (messages && messages.length > 0) {
@@ -247,9 +455,11 @@ import { channels } from '../config/channels';
           content: msg.content,
           time: msg.time
         }));
+      } else {
+        messagesCache[channel] = [];
       }
     } catch (err) {
-      console.warn(`Could not load chat history for ${channel} from server:`, err);
+      messagesCache[channel] = messagesCache[channel] || [];
     }
   };
 
@@ -258,36 +468,32 @@ import { channels } from '../config/channels';
     let hrs = d.getHours();
     const mins = String(d.getMinutes()).padStart(2, '0');
     const ampm = hrs >= 12 ? 'PM' : 'AM';
-    hrs = hrs % 12;
-    hrs = hrs ? hrs : 12;
+    hrs = hrs % 12 || 12;
     return `${hrs}:${mins} ${ampm}`;
   };
 
   const renderMessages = () => {
     const container = document.getElementById('messages-container');
     if (!container) return;
-
     const data = messagesCache[activeChannel] || [];
-    if (!data) return;
 
     container.innerHTML = data.map((m, index) => {
       const isFaculty = m.role === 'faculty' || m.role === 'professor';
       const isAdmin = m.role === 'admin';
       const roleBadge = isAdmin
         ? `<span class="px-1.5 py-0.2 border border-timeline-done/20 text-timeline-done rounded-md text-[9px] font-bold" style="background: rgba(192, 133, 50, 0.12);">Admin</span>`
-        : isFaculty 
+        : isFaculty
           ? `<span class="px-1.5 py-0.2 border border-primary/20 text-primary rounded-md text-[9px] font-bold" style="background: rgba(245, 78, 0, 0.1);">Faculty</span>`
           : `<span class="px-1.5 py-0.2 bg-surface-strong/60 border border-hairline text-ink rounded-md text-[9px] font-semibold">Student</span>`;
       const staggerDelay = Math.min(index * 60, 500);
-      const initials = escapeHtml(m.sender.split(' ').map(n => n[0]).join(''));
+      const initials = escapeHtml(m.sender.split(' ').map((n: string) => n[0]).join(''));
       const showDelete = canDeleteMessage(m);
-        
+
       return `
         <div class="message-bubble flex gap-3.5 max-w-[85%] animate-chat-appear hover:translate-x-1 transition-transform duration-200" style="animation-delay: ${staggerDelay}ms; animation-fill-mode: backwards;">
           <div class="w-8 h-8 rounded-full ${escapeHtml(m.avatarBg)} text-ink font-bold flex items-center justify-center text-xs flex-shrink-0">
             ${initials}
           </div>
-          
           <div class="flex flex-col gap-1">
             <div class="flex items-center gap-2">
               <span class="text-xs font-semibold text-body-strong">${escapeHtml(m.sender)}</span>
@@ -297,7 +503,6 @@ import { channels } from '../config/channels';
                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
               </button>` : ''}
             </div>
-            
             <div class="bg-canvas-soft border border-hairline-soft px-4 py-2.5 rounded-lg text-sm text-ink leading-relaxed">
               ${escapeHtml(m.content)}
             </div>
@@ -308,61 +513,12 @@ import { channels } from '../config/channels';
 
     container.scrollTop = container.scrollHeight;
 
-    const deleteBtns = container.querySelectorAll('.chat-delete-btn');
-    deleteBtns.forEach((btn: any) => {
+    container.querySelectorAll('.chat-delete-btn').forEach((btn: any) => {
       btn.addEventListener('click', async (e: MouseEvent) => {
         e.stopPropagation();
         const id = btn.getAttribute('data-id');
-        if (!id) return;
-        if (!confirm('Delete this message?')) return;
+        if (!id || !confirm('Delete this message?')) return;
         await deleteMessage(id);
-      });
-    });
-  };
-
-  const setupChannelSelector = () => {
-    const list = document.getElementById('channel-list');
-    const title = document.getElementById('active-channel-name');
-    const desc = document.getElementById('active-channel-desc');
-    const input = document.getElementById('chat-msg-input') as HTMLInputElement;
-
-    if (!list || !title || !desc || !input) return;
-
-    const buttons = list.querySelectorAll('.channel-btn');
-    buttons.forEach((btn: any) => {
-      btn.addEventListener('click', async () => {
-        const chan = btn.getAttribute('data-channel');
-        if (!chan || chan === activeChannel) return;
-
-        activeChannel = chan;
-
-        if (socket && !isOffline) {
-          socket.emit('join-channel', activeChannel);
-        }
-
-        buttons.forEach((b: any) => b.classList.remove('active'));
-        btn.classList.add('active');
-
-        const ch = channels.find(c => c.id === activeChannel);
-        if (ch) {
-          title.innerHTML = `<span class="text-muted">#</span> ${ch.label}`;
-          desc.textContent = ch.description;
-          input.placeholder = `Message #${ch.label}...`;
-        }
-
-        const container = document.getElementById('messages-container');
-        if (container) {
-          container.style.opacity = '0';
-          container.style.transform = 'translateY(4px)';
-          
-          await fetchHistory(activeChannel);
-          
-          setTimeout(() => {
-            renderMessages();
-            container.style.opacity = '1';
-            container.style.transform = 'translateY(0)';
-          }, 200);
-        }
       });
     });
   };
@@ -392,29 +548,16 @@ import { channels } from '../config/channels';
         } catch {}
       }
 
-      if (role === 'admin') {
-        avatarBg = 'bg-timeline-done';
-      } else if (role === 'professor') {
-        avatarBg = 'bg-timeline-edit';
-      } else {
-        avatarBg = 'bg-timeline-read';
-      }
+      if (role === 'admin') avatarBg = 'bg-timeline-done';
+      else if (role === 'professor') avatarBg = 'bg-timeline-edit';
 
-      const payload = {
-        channel: activeChannel,
-        sender,
-        role,
-        avatarBg,
-        content: text,
-        time: getFormattedTime(),
-        senderId
-      };
+      const payload = { channel: activeChannel, sender, role, avatarBg, content: text, time: getFormattedTime(), senderId };
 
       if (socket && !isOffline) {
         socket.emit('send-message', payload);
       } else {
         const msgs = messagesCache[activeChannel] || [];
-        msgs.push(payload);
+        msgs.push(payload as ChatMessage);
         messagesCache[activeChannel] = msgs;
         renderMessages();
       }
@@ -426,49 +569,127 @@ import { channels } from '../config/channels';
   const setupTypingNotifier = () => {
     const input = document.getElementById('chat-msg-input') as HTMLInputElement;
     if (!input) return;
-
     let typingTimeout: any = null;
 
     input.addEventListener('input', () => {
       if (!socket || isOffline) return;
-
       const userStr = localStorage.getItem('cc-user');
       let sender = 'Anonymous';
-      if (userStr) {
-        try {
-          const user = JSON.parse(userStr);
-          sender = user.name || sender;
-        } catch {}
-      }
+      if (userStr) { try { sender = JSON.parse(userStr).name || sender; } catch {} }
 
       if (typingTimeout) clearTimeout(typingTimeout);
-
-      socket.emit('typing', {
-        channel: activeChannel,
-        username: sender,
-        isTyping: true
-      });
-
+      socket.emit('typing', { channel: activeChannel, username: sender, isTyping: true });
       typingTimeout = setTimeout(() => {
-        socket.emit('typing', {
-          channel: activeChannel,
-          username: sender,
-          isTyping: false
-        });
+        socket.emit('typing', { channel: activeChannel, username: sender, isTyping: false });
       }, 1500);
     });
   };
 
+  const setupCreateChannel = () => {
+    const createBtn = document.getElementById('create-channel-btn');
+    const form = document.getElementById('channel-create-form');
+    const confirmBtn = document.getElementById('confirm-create-channel');
+    const cancelBtn = document.getElementById('cancel-create-channel');
+    const labelInput = document.getElementById('new-channel-label') as HTMLInputElement;
+    const descInput = document.getElementById('new-channel-desc') as HTMLInputElement;
+    const restrictionSelect = document.getElementById('new-channel-restriction') as HTMLSelectElement;
+
+    if (!createBtn || !form || !confirmBtn || !cancelBtn || !labelInput || !descInput || !restrictionSelect) return;
+
+    createBtn.addEventListener('click', () => {
+      createBtn.classList.add('hidden');
+      form.classList.remove('hidden');
+      labelInput.value = '';
+      descInput.value = '';
+      restrictionSelect.value = 'all';
+      labelInput.focus();
+    });
+
+    cancelBtn.addEventListener('click', () => {
+      form.classList.add('hidden');
+      createBtn.classList.remove('hidden');
+    });
+
+    confirmBtn.addEventListener('click', async () => {
+      const label = labelInput.value.trim();
+      if (!label) return;
+      confirmBtn.textContent = 'Creating...';
+      confirmBtn.setAttribute('disabled', 'true');
+
+      const newChannel = await createChannel(label, descInput.value.trim(), restrictionSelect.value);
+
+      confirmBtn.textContent = 'Create';
+      confirmBtn.removeAttribute('disabled');
+
+      if (newChannel) {
+        channels.push(newChannel);
+        messagesCache[newChannel.label] = [];
+        form.classList.add('hidden');
+        createBtn.classList.remove('hidden');
+        renderChannelList();
+        await switchChannel(newChannel.id);
+        window.dispatchEvent(new CustomEvent('cc-toast-alert', { detail: { message: `Channel #${newChannel.label} created!`, type: 'success' } }));
+      }
+    });
+
+    labelInput.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (e.key === 'Enter') { e.preventDefault(); confirmBtn.click(); }
+    });
+  };
+
+  const setupDeleteChannelHeader = () => {
+    const deleteBtn = document.getElementById('delete-channel-btn');
+    if (!deleteBtn) return;
+    deleteBtn.addEventListener('click', async () => {
+      const id = deleteBtn.getAttribute('data-channel-id');
+      const ch = channels.find(c => c.id === id);
+      if (!id || !ch) return;
+      if (!confirm(`Delete channel #${ch.label}? All messages will be lost.`)) return;
+      const ok = await deleteChannel(id);
+      if (ok) {
+        channels = channels.filter(c => c.id !== id);
+        delete messagesCache[ch.label];
+        if (activeChannel === ch.id) {
+          activeChannel = channels[0]?.id || '';
+          if (activeChannel) await switchChannel(activeChannel);
+        }
+        renderChannelList();
+      }
+    });
+  };
+
+  // --- Init ---
   const initChat = async () => {
     const root = document.getElementById('community-chat-root');
     if (!root) return;
 
+    // Load channels from API
+    channels = await fetchChannels();
+    if (channels.length === 0) {
+      // Fallback to static config if API fails
+      channels = [
+        { id: 'general', label: 'general-chat', description: 'Global discussion space.', isDefault: true },
+      ];
+    }
+
+    // Init messages cache
+    messagesCache = {};
+    channels.forEach(ch => { messagesCache[ch.label] = []; });
+
+    activeChannel = channels[0]?.id || '';
+
+    renderChannelList();
     initSocket();
-    await fetchHistory(activeChannel);
+    if (activeChannel) await fetchHistory(activeChannel);
     renderMessages();
-    setupChannelSelector();
-    setupMessageSubmit();
-    setupTypingNotifier();
+
+    if (!channelsSetupDone) {
+      setupMessageSubmit();
+      setupTypingNotifier();
+      setupCreateChannel();
+      setupDeleteChannelHeader();
+      channelsSetupDone = true;
+    }
 
     setTimeout(() => {
       root.style.opacity = '1';

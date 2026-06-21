@@ -71,7 +71,7 @@ model StudyMaterial {
 
 model ChatMessage {
   id        String   @id @default(uuid())
-  channel   String   // references a channel id from the channels config
+  channel   String   // references a channel id
   sender    String
   role      String   // "student" | "faculty"
   avatarBg  String
@@ -82,4 +82,13 @@ model ChatMessage {
   // Optional linkage to User
   senderId  String?
   user      User?    @relation(fields: [senderId], references: [id], onDelete: SetNull)
+}
+
+model ChatChannel {
+  id              String   @id @default(uuid())
+  label           String
+  description     String
+  isDefault       Boolean  @default(false)
+  postRestriction String   @default("all") // "all" | "faculty" | "admin"
+  createdAt       DateTime @default(now())
 }
