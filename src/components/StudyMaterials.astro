@@ -262,21 +262,30 @@
     // Attach animated download triggers
     const downloadBtns = listContainer.querySelectorAll('.download-btn');
     downloadBtns.forEach((btn: any) => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         const id = btn.getAttribute('data-id');
         const span = btn.querySelector('span');
         const icon = btn.querySelector('svg');
         if (!span || !icon || !id) return;
 
         span.textContent = 'Downloading...';
-        
-        const downloadUrl = `${API_URL}/download/${id}`;
-        const anchor = document.createElement('a');
-        anchor.href = downloadUrl;
-        anchor.target = '_blank';
-        anchor.click();
-        
-        setTimeout(() => {
+        btn.disabled = true;
+
+        try {
+          const token = localStorage.getItem('cc-token');
+          const headers: Record<string, string> = {};
+          if (token) headers['Authorization'] = `Bearer ${token}`;
+          
+          const res = await fetch(`${API_URL}/download/${id}`, { headers });
+          const data = await res.json();
+          
+          if (data.url) {
+            const anchor = document.createElement('a');
+            anchor.href = data.url;
+            anchor.download = data.filename || '';
+            anchor.click();
+          }
+          
           span.textContent = 'Downloaded';
           btn.style.backgroundColor = 'var(--color-semantic-success)';
           btn.style.color = 'var(--color-on-primary)';
@@ -284,7 +293,7 @@
           btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5 text-white"><path d="M20 6 9 17l-5-5"/></svg> <span>Downloaded</span>`;
           
           window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
-            detail: { message: 'Resource downloaded from server!', type: 'success' } 
+            detail: { message: 'Resource downloaded from cloud!', type: 'success' } 
           }));
 
           setTimeout(() => {
@@ -297,20 +306,41 @@
               <span>Download</span>
             `;
           }, 2000);
-        }, 1000);
+        } catch (err) {
+          span.textContent = 'Download';
+          btn.disabled = false;
+          window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
+            detail: { message: 'Failed to download file', type: 'error' } 
+          }));
+        }
       });
     });
 
     // Attach preview triggers
     const previewBtns = listContainer.querySelectorAll('.preview-btn');
     previewBtns.forEach((btn: any) => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         const id = btn.getAttribute('data-id');
         const title = btn.getAttribute('data-title');
         const type = (btn.getAttribute('data-type') || '').toLowerCase();
         if (!id || !title) return;
-        const url = `${API_URL}/preview/${id}`;
-        openPreview(url, title, type);
+        
+        try {
+          const token = localStorage.getItem('cc-token');
+          const headers: Record<string, string> = {};
+          if (token) headers['Authorization'] = `Bearer ${token}`;
+          
+          const res = await fetch(`${API_URL}/preview/${id}`, { headers });
+          const data = await res.json();
+          
+          if (data.url) {
+            openPreview(data.url, title, type);
+          }
+        } catch (err) {
+          window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
+            detail: { message: 'Failed to load preview', type: 'error' } 
+          }));
+        }
       });
     });
 
@@ -561,9 +591,8 @@
 
     titleEl.textContent = title;
     metaEl.textContent = type.toUpperCase() || 'File';
-    // Convert preview URL to download URL for the download button
-    const downloadUrl = url.replace('/preview/', '/download/');
-    downloadBtn.href = downloadUrl;
+    // Store the material ID for download
+    downloadBtn.setAttribute('data-preview-url', url);
 
     // Determine preview renderer
     const imageTypes = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'];
@@ -621,5 +650,38 @@
   });
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closePreview();
+  });
+
+  // Preview download button handler
+  document.getElementById('preview-download-btn')?.addEventListener('click', async (e) => {
+    e.preventDefault();
+    const btn = e.currentTarget as HTMLAnchorElement;
+    const previewUrl = btn.getAttribute('data-preview-url');
+    if (!previewUrl) return;
+    
+    // Extract ID from preview URL and fetch download URL
+    const idMatch = previewUrl.match(/\/preview\/([a-f0-9-]+)/);
+    if (!idMatch) return;
+    
+    const id = idMatch[1];
+    try {
+      const token = localStorage.getItem('cc-token');
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      
+      const res = await fetch(`${API_URL}/download/${id}`, { headers });
+      const data = await res.json();
+      
+      if (data.url) {
+        const anchor = document.createElement('a');
+        anchor.href = data.url;
+        anchor.download = data.filename || '';
+        anchor.click();
+      }
+    } catch (err) {
+      window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
+        detail: { message: 'Failed to download file', type: 'error' } 
+      }));
+    }
   });
 </script>

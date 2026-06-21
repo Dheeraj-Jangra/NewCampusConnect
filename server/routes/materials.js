@@ -1,83 +1,23 @@
 import express from 'express';
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
-import crypto from 'crypto';
-import { fileURLToPath } from 'url';
 import prisma from '../lib/prisma.js';
 import { authMiddleware, professorMiddleware } from '../middleware/auth.js';
+import { uploadFile, getSignedDownloadUrl, getSignedPreviewUrl, deleteFile, fileExists } from '../lib/storage.js';
 
 const router = express.Router();
 
-// Resolve paths for ESM
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const uploadsDir = path.join(__dirname, '../uploads');
-
-// Ensure uploads directory exists
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-// Allowed file types for upload
-const ALLOWED_EXTENSIONS = new Set(['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'zip', 'rar', 'md', 'ipynb', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg']);
-const ALLOWED_MIMES = new Set([
-  'application/pdf',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.ms-powerpoint',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-  'application/vnd.ms-excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  'text/plain',
-  'application/zip',
-  'application/x-rar-compressed',
-  'text/markdown',
-  'application/x-ipynb+json',
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'image/webp',
-  'image/svg+xml',
-]);
-
-// Multer Storage config
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadsDir);
-  },
-  filename: (req, file, cb) => {
-    // Use crypto for unique, secure filenames
-    const uniqueSuffix = crypto.randomUUID();
-    const ext = path.extname(file.originalname).toLowerCase();
-    cb(null, `${uniqueSuffix}${ext}`);
-  },
-});
-
-// File filter to validate types
-const fileFilter = (req, file, cb) => {
-  const ext = path.extname(file.originalname).toLowerCase().replace('.', '');
-  if (ALLOWED_EXTENSIONS.has(ext) || ALLOWED_MIMES.has(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error(`File type not allowed. Allowed types: ${Array.from(ALLOWED_EXTENSIONS).join(', ')}`));
-  }
-};
-
+// Multer memory storage (files go to buffer, then to R2)
 const upload = multer({
-  storage,
-  fileFilter,
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 },
 });
 
 // Fetch all materials
 router.get('/', async (req, res) => {
   try {
     const materials = await prisma.studyMaterial.findMany({
-      orderBy: {
-        timestamp: 'desc',
-      },
-      take: 50, // Limit to prevent abuse
+      orderBy: { timestamp: 'desc' },
+      take: 50,
     });
     res.json(materials);
   } catch (error) {
@@ -86,113 +26,82 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Upload a material resource (secured - professors and admins only)
+// Upload a material resource (professors and admins only)
 router.post('/upload', authMiddleware, professorMiddleware, upload.single('file'), async (req, res) => {
   try {
     const { title, course } = req.body;
     const file = req.file;
 
     if (!title || !course) {
-      // Clean up uploaded file if data is missing
-      if (file) fs.unlinkSync(file.path);
       return res.status(400).json({ error: 'Title and course code are required' });
     }
-
-    // Validate input lengths
     if (title.length > 200) {
-      if (file) fs.unlinkSync(file.path);
       return res.status(400).json({ error: 'Title must be 200 characters or less' });
     }
     if (course.length > 50) {
-      if (file) fs.unlinkSync(file.path);
       return res.status(400).json({ error: 'Course code must be 50 characters or less' });
     }
-
     if (!file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    // Helper to format file size
-    const formatBytes = (bytes, decimals = 1) => {
-      if (!+bytes) return '0 Bytes';
-      const k = 1024;
-      const dm = decimals < 0 ? 0 : decimals;
-      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-      const i = Math.floor(Math.log(bytes) / Math.log(k));
-      return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
-    };
-
-    const fileType = path.extname(file.originalname).toLowerCase().replace('.', '') || 'pdf';
-    const fileSizeStr = formatBytes(file.size);
+    // Upload to R2
+    const { key, size, type, url } = await uploadFile(file);
 
     const material = await prisma.studyMaterial.create({
       data: {
         title,
         course,
-        type: fileType,
-        size: fileSizeStr,
+        type,
+        size,
         author: req.user.name,
         authorId: req.user.id,
-        fileName: file.filename,
+        fileName: key, // Store R2 key instead of local filename
       },
     });
 
     res.status(201).json(material);
   } catch (error) {
     console.error('Error uploading material:', error);
-    // Clean up file on error
-    if (req.file) {
-      try { fs.unlinkSync(req.file.path); } catch {}
-    }
-    res.status(500).json({ error: 'Failed to upload material' });
+    res.status(500).json({ error: error.message || 'Failed to upload material' });
   }
 });
 
-// Download a physical material file
+// Download a material file (returns signed URL)
 router.get('/download/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Validate ID format (UUID)
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(id)) {
       return res.status(400).json({ error: 'Invalid material ID format' });
     }
 
-    const material = await prisma.studyMaterial.findUnique({
-      where: { id },
-    });
-
+    const material = await prisma.studyMaterial.findUnique({ where: { id } });
     if (!material) {
-      return res.status(404).json({ error: 'Material resource not found' });
+      return res.status(404).json({ error: 'Material not found' });
     }
 
-    const filePath = path.join(uploadsDir, material.fileName);
-
-    // Prevent path traversal
-    const resolvedPath = path.resolve(filePath);
-    const resolvedUploadsDir = path.resolve(uploadsDir);
-    if (!resolvedPath.startsWith(resolvedUploadsDir)) {
-      return res.status(403).json({ error: 'Access denied' });
+    // Check file exists in R2
+    const exists = await fileExists(material.fileName);
+    if (!exists) {
+      return res.status(404).json({ error: 'File not found in storage' });
     }
 
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ error: 'Physical file not found on disk' });
-    }
-
-    // Dynamic clean filename download
+    // Generate download filename
     const cleanExtension = material.type.replace(/[^a-zA-Z0-9]/g, '');
     const cleanTitle = material.title.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 100);
     const downloadName = `${cleanTitle}.${cleanExtension}`;
 
-    res.download(filePath, downloadName);
+    const signedUrl = await getSignedDownloadUrl(material.fileName, downloadName);
+    res.json({ url: signedUrl, filename: downloadName });
   } catch (error) {
-    console.error('Error downloading file:', error);
-    res.status(500).json({ error: 'Failed to download file' });
+    console.error('Error generating download URL:', error);
+    res.status(500).json({ error: 'Failed to generate download URL' });
   }
 });
 
-// Preview a material file inline (no download)
+// Preview a material file inline (returns signed URL)
 router.get('/preview/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -204,46 +113,24 @@ router.get('/preview/:id', async (req, res) => {
 
     const material = await prisma.studyMaterial.findUnique({ where: { id } });
     if (!material) {
-      return res.status(404).json({ error: 'Material resource not found' });
+      return res.status(404).json({ error: 'Material not found' });
     }
 
-    const filePath = path.join(uploadsDir, material.fileName);
-
-    const resolvedPath = path.resolve(filePath);
-    const resolvedUploadsDir = path.resolve(uploadsDir);
-    if (!resolvedPath.startsWith(resolvedUploadsDir)) {
-      return res.status(403).json({ error: 'Access denied' });
+    const exists = await fileExists(material.fileName);
+    if (!exists) {
+      return res.status(404).json({ error: 'File not found in storage' });
     }
 
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ error: 'Physical file not found on disk' });
-    }
-
-    // Set Content-Disposition to inline so browser displays instead of downloading
-    const mimeTypes = {
-      pdf: 'application/pdf',
-      jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif',
-      webp: 'image/webp', svg: 'image/svg+xml', bmp: 'image/bmp',
-      mp4: 'video/mp4', webm: 'video/webm', ogg: 'video/ogg', mov: 'video/quicktime',
-      mp3: 'audio/mpeg', wav: 'audio/wav', aac: 'audio/aac', flac: 'audio/flac',
-      txt: 'text/plain', md: 'text/markdown',
-    };
-    const ext = material.type.toLowerCase();
-    const contentType = mimeTypes[ext] || 'application/octet-stream';
-
-    res.setHeader('Content-Type', contentType);
-    res.setHeader('Content-Disposition', `inline; filename="${material.title.replace(/[^a-zA-Z0-9._-]/g, '_')}.${ext}"`);
-    res.setHeader('Cache-Control', 'private, max-age=3600');
-
-    const fileStream = fs.createReadStream(filePath);
-    fileStream.pipe(res);
+    const previewName = `${material.title.replace(/[^a-zA-Z0-9._-]/g, '_')}.${material.type}`;
+    const signedUrl = await getSignedPreviewUrl(material.fileName, previewName, material.type);
+    res.json({ url: signedUrl, type: material.type });
   } catch (error) {
-    console.error('Error previewing file:', error);
-    res.status(500).json({ error: 'Failed to preview file' });
+    console.error('Error generating preview URL:', error);
+    res.status(500).json({ error: 'Failed to generate preview URL' });
   }
 });
 
-// Delete material — admin: any, professor: own only, student: denied
+// Delete material — admin: any, professor: own only
 router.delete('/:id', authMiddleware, async (req, res) => {
   if (req.user.role !== 'professor' && req.user.role !== 'admin') {
     return res.status(403).json({ error: 'Access denied: Professor or admin privileges required' });
@@ -254,19 +141,17 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     if (!existing) {
       return res.status(404).json({ error: 'Material not found' });
     }
-    // Professors can only delete their own materials; admins can delete any
     if (req.user.role === 'professor' && existing.authorId !== req.user.id) {
       return res.status(403).json({ error: 'Professors can only delete materials they uploaded' });
     }
-    // Delete physical file from disk
-    const filePath = path.join(uploadsDir, existing.fileName);
+
+    // Delete from R2
     try {
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
+      await deleteFile(existing.fileName);
     } catch (fileErr) {
-      console.warn('Could not delete physical file:', fileErr);
+      console.warn('Could not delete file from R2:', fileErr);
     }
+
     await prisma.studyMaterial.delete({ where: { id } });
     res.json({ message: 'Material deleted successfully', id });
   } catch (error) {
