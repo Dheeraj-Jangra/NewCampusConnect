@@ -66,6 +66,64 @@
       </div>
     </div>
   </div>
+
+  <!-- Member Profile Overlay -->
+  <div id="member-profile-overlay" class="hidden fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4" style="background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);">
+    <div id="member-profile-card" class="bg-surface-card border border-hairline rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl animate-fade-in-up">
+      <!-- Profile Header -->
+      <div class="flex items-center justify-between p-4 sm:p-6 border-b border-hairline">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">
+            <span id="profile-avatar-letter">U</span>
+          </div>
+          <div>
+            <h3 id="profile-display-name" class="title-sm text-ink">User Name</h3>
+            <span id="profile-display-role" class="text-[10px] text-muted uppercase tracking-wider font-bold">Role</span>
+          </div>
+        </div>
+        <button id="profile-close-btn" class="w-8 h-8 rounded-full flex items-center justify-center text-muted hover:text-ink hover:bg-canvas-soft transition-all duration-200">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <!-- Profile Details -->
+      <div class="p-4 sm:p-6 flex flex-col gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <div class="flex flex-col gap-1">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-muted">Email</span>
+            <span id="profile-email" class="text-sm text-ink break-all">—</span>
+          </div>
+          <div class="flex flex-col gap-1">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-muted">Username</span>
+            <span id="profile-username" class="text-sm text-ink">—</span>
+          </div>
+          <div class="flex flex-col gap-1">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-muted">Roll Number</span>
+            <span id="profile-rollnumber" class="text-sm text-ink">—</span>
+          </div>
+          <div class="flex flex-col gap-1">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-muted">Account Status</span>
+            <span id="profile-status" class="text-sm text-ink">—</span>
+          </div>
+        </div>
+        <div class="flex flex-col gap-1">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-muted">Member Since</span>
+          <span id="profile-joined" class="text-sm text-ink">—</span>
+        </div>
+      </div>
+
+      <!-- Profile Actions -->
+      <div class="flex items-center justify-between gap-3 p-4 sm:p-6 border-t border-hairline bg-canvas-soft/30 rounded-b-xl">
+        <button id="profile-back-btn" class="btn-secondary btn-press text-xs h-9 px-4 transition-all duration-200 hover:scale-105">
+          Back
+        </button>
+        <button id="profile-revoke-btn" class="btn-primary btn-press text-xs h-9 px-4 sm:px-5 bg-semantic-error hover:bg-semantic-error/90 hover:scale-105 transition-all duration-200 flex items-center gap-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="M18 8V2"/><path d="m15 5 3-3 3 3"/><path d="M18 2v8"/></svg>
+          <span>Revoke Account</span>
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -90,7 +148,23 @@
   const searchInput = document.getElementById('members-search-input') as HTMLInputElement;
   const roleFilter = document.getElementById('members-role-filter') as HTMLSelectElement;
 
+  // Profile overlay refs
+  const profileOverlay = document.getElementById('member-profile-overlay');
+  const profileCard = document.getElementById('member-profile-card');
+  const profileAvatarLetter = document.getElementById('profile-avatar-letter');
+  const profileDisplayName = document.getElementById('profile-display-name');
+  const profileDisplayRole = document.getElementById('profile-display-role');
+  const profileEmail = document.getElementById('profile-email');
+  const profileUsername = document.getElementById('profile-username');
+  const profileRollNumber = document.getElementById('profile-rollnumber');
+  const profileStatus = document.getElementById('profile-status');
+  const profileJoined = document.getElementById('profile-joined');
+  const profileCloseBtn = document.getElementById('profile-close-btn');
+  const profileBackBtn = document.getElementById('profile-back-btn');
+  const profileRevokeBtn = document.getElementById('profile-revoke-btn');
+
   let searchTimeout: number | null = null;
+  let currentProfileMember: any = null;
 
   // --- Sub-tab switching ---
   const switchSubTab = (tab: 'approvals' | 'members') => {
@@ -251,6 +325,91 @@
     }
   };
 
+  const openProfile = (member: any) => {
+    currentProfileMember = member;
+    if (!profileOverlay || !profileCard) return;
+
+    profileAvatarLetter!.textContent = member.name.charAt(0).toUpperCase();
+    profileDisplayName!.textContent = member.name;
+    profileEmail!.textContent = member.email;
+    profileUsername!.textContent = member.username || '—';
+    profileRollNumber!.textContent = member.rollNumber || '—';
+
+    const roleLabel = member.role === 'professor' ? 'Professor' : 'Student';
+    profileDisplayRole!.textContent = roleLabel;
+    profileDisplayRole!.className = `text-[10px] uppercase tracking-wider font-bold ${
+      member.role === 'professor' ? 'text-timeline-thinking' : 'text-timeline-read'
+    }`;
+
+    const isApproved = member.isApproved;
+    profileStatus!.textContent = isApproved ? 'Active' : 'Pending Approval';
+    profileStatus!.className = `text-sm ${isApproved ? 'text-semantic-success' : 'text-semantic-error'}`;
+
+    profileJoined!.textContent = new Date(member.createdAt).toLocaleDateString('en-US', {
+      weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+    });
+
+    profileOverlay.classList.remove('hidden');
+    profileCard.style.animation = 'none';
+    requestAnimationFrame(() => {
+      profileCard.style.animation = 'panel-enter 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards';
+    });
+  };
+
+  const closeProfile = () => {
+    if (!profileOverlay) return;
+    profileCard!.style.animation = 'panel-exit 0.2s cubic-bezier(0.4, 0, 1, 1) forwards';
+    setTimeout(() => {
+      profileOverlay.classList.add('hidden');
+      currentProfileMember = null;
+    }, 200);
+  };
+
+  profileCloseBtn?.addEventListener('click', closeProfile);
+  profileBackBtn?.addEventListener('click', closeProfile);
+  profileOverlay?.addEventListener('click', (e) => {
+    if (e.target === profileOverlay) closeProfile();
+  });
+
+  const handleRevoke = async () => {
+    if (!currentProfileMember) return;
+
+    const name = currentProfileMember.name;
+    if (!confirm(`Are you sure you want to permanently revoke ${name}'s account? This action cannot be undone.`)) return;
+
+    const token = localStorage.getItem('cc-token');
+    if (!token) return;
+
+    profileRevokeBtn!.setAttribute('disabled', 'true');
+    profileRevokeBtn!.innerHTML = '<span>Revoking...</span>';
+
+    try {
+      const res = await fetch(`${API_MEMBERS}/${currentProfileMember.id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        window.dispatchEvent(new CustomEvent('cc-toast-alert', {
+          detail: { message: `${name}'s account has been revoked.`, type: 'success' }
+        }));
+        closeProfile();
+        await fetchMembers(searchInput?.value || '', roleFilter?.value || 'all');
+      } else {
+        const err = await res.json();
+        throw new Error(err.error || 'Failed to revoke account');
+      }
+    } catch (err: any) {
+      window.dispatchEvent(new CustomEvent('cc-toast-alert', {
+        detail: { message: err.message, type: 'error' }
+      }));
+      profileRevokeBtn!.removeAttribute('disabled');
+      profileRevokeBtn!.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="M18 8V2"/><path d="m15 5 3-3 3 3"/><path d="M18 2v8"/></svg><span>Revoke Account</span>`;
+    }
+  };
+
+  profileRevokeBtn?.addEventListener('click', handleRevoke);
+
   const renderMembers = (members: any[]) => {
     if (!membersResults || !membersEmpty) return;
 
@@ -262,31 +421,40 @@
     membersEmpty.classList.add('hidden');
 
     membersResults.innerHTML = `
-      <!-- Table Header -->
-      <div class="grid grid-cols-12 gap-3 px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted border-b border-hairline bg-canvas-soft/50">
+      <!-- Desktop Table Header (hidden on mobile) -->
+      <div class="hidden md:grid md:grid-cols-12 md:gap-3 px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted border-b border-hairline bg-canvas-soft/50">
         <span class="col-span-3">Name</span>
         <span class="col-span-3">Email</span>
         <span class="col-span-2">Role</span>
         <span class="col-span-2">Roll No.</span>
-        <span class="col-span-2">Joined</span>
+        <span class="col-span-2 text-right">Actions</span>
       </div>
       ${members.map((m: any, i: number) => {
-        const dateStr = new Date(m.createdAt).toLocaleDateString('en-US', {
-          month: 'short', day: 'numeric', year: 'numeric'
-        });
         const roleBadge = m.role === 'professor'
-          ? '<span class="text-timeline-thinking px-1.5 py-0.5 text-[10px] font-bold rounded-pill border border-timeline-thinking/20" style="background: rgba(223,168,143,0.12);">Professor</span>'
-          : '<span class="text-timeline-read px-1.5 py-0.5 text-[10px] font-bold rounded-pill border border-timeline-read/20" style="background: rgba(159,187,224,0.12);">Student</span>';
+          ? '<span class="text-timeline-thinking px-1.5 py-0.5 text-[10px] font-bold rounded-pill border border-timeline-thinking/20 shrink-0" style="background: rgba(223,168,143,0.12);">Professor</span>'
+          : '<span class="text-timeline-read px-1.5 py-0.5 text-[10px] font-bold rounded-pill border border-timeline-read/20 shrink-0" style="background: rgba(159,187,224,0.12);">Student</span>';
         const statusDot = m.role === 'professor' && !m.isApproved
-          ? '<span class="inline-block w-1.5 h-1.5 rounded-full bg-semantic-error animate-pulse ml-1.5" title="Pending approval"></span>'
+          ? '<span class="inline-block w-1.5 h-1.5 rounded-full bg-semantic-error animate-pulse ml-1" title="Pending approval"></span>'
           : '';
         return `
-          <div class="grid grid-cols-12 gap-3 px-5 py-3.5 text-sm text-ink border-b border-hairline last:border-b-0 hover:bg-canvas-soft/50 transition-colors duration-150 animate-fade-in-up" style="animation-delay: ${Math.min(i * 40, 300)}ms; animation-fill-mode: backwards;">
-            <span class="col-span-3 truncate font-medium">${m.name}${statusDot}</span>
-            <span class="col-span-3 truncate text-muted text-xs">${m.email}</span>
-            <span class="col-span-2">${roleBadge}</span>
-            <span class="col-span-2 truncate text-muted text-xs">${m.rollNumber || '—'}</span>
-            <span class="col-span-2 truncate text-muted text-xs">${dateStr}</span>
+          <div class="member-row flex flex-col gap-2.5 px-4 py-3.5 text-sm text-ink border-b border-hairline last:border-b-0 hover:bg-canvas-soft/50 transition-all duration-150 animate-fade-in-up cursor-pointer md:grid md:grid-cols-12 md:gap-3 md:py-3.5 md:px-5" style="animation-delay: ${Math.min(i * 40, 300)}ms; animation-fill-mode: backwards;" data-id="${m.id}">
+            <!-- Mobile: stacked card layout -->
+            <div class="flex items-center justify-between gap-2 md:col-span-3 md:contents">
+              <span class="font-medium truncate text-sm min-w-0">${m.name}${statusDot}</span>
+              ${roleBadge}
+            </div>
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted md:col-span-3 md:contents">
+              <span class="truncate max-w-full">${m.email}</span>
+            </div>
+            <span class="hidden md:block md:col-span-2 md:contents"></span>
+            <div class="flex items-center gap-3 text-xs text-muted md:col-span-2 md:contents">
+              <span class="shrink-0">Roll: ${m.rollNumber || '—'}</span>
+              <span class="text-muted-soft shrink-0 hidden sm:inline">${new Date(m.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+            </div>
+            <div class="flex items-center gap-3 pt-1 md:pt-0 md:col-span-2 md:justify-end">
+              <button data-action="view-profile" data-id="${m.id}" class="text-[10px] font-bold uppercase tracking-wider text-primary hover:text-primary/80 transition-colors duration-200 hover:scale-105 py-1 px-2 rounded hover:bg-primary/5">Profile</button>
+              <button data-action="revoke-row" data-id="${m.id}" data-name="${m.name}" class="text-[10px] font-bold uppercase tracking-wider text-semantic-error hover:text-semantic-error/80 transition-colors duration-200 hover:scale-105 py-1 px-2 rounded hover:bg-semantic-error/5">Revoke</button>
+            </div>
           </div>
         `;
       }).join('')}
@@ -295,6 +463,69 @@
         ${members.length} member${members.length !== 1 ? 's' : ''} found
       </div>
     `;
+
+    // Attach row click — view profile
+    membersResults.querySelectorAll('.member-row').forEach((row: any) => {
+      const memberId = row.getAttribute('data-id');
+      const member = members.find((m: any) => m.id === memberId);
+      if (!member) return;
+
+      // Click on the row (excluding buttons) opens profile
+      row.addEventListener('click', (e: MouseEvent) => {
+        const target = e.target as HTMLElement;
+        if (target.closest('button')) return;
+        openProfile(member);
+      });
+    });
+
+    // Attach profile button
+    membersResults.querySelectorAll('button[data-action="view-profile"]').forEach((btn: any) => {
+      btn.addEventListener('click', (e: Event) => {
+        e.stopPropagation();
+        const id = btn.getAttribute('data-id');
+        const member = members.find((m: any) => m.id === id);
+        if (member) openProfile(member);
+      });
+    });
+
+    // Attach revoke button on row
+    membersResults.querySelectorAll('button[data-action="revoke-row"]').forEach((btn: any) => {
+      btn.addEventListener('click', async (e: Event) => {
+        e.stopPropagation();
+        const id = btn.getAttribute('data-id');
+        const name = btn.getAttribute('data-name') || 'this user';
+        if (!confirm(`Permanently revoke ${name}'s account? This cannot be undone.`)) return;
+
+        const token = localStorage.getItem('cc-token');
+        if (!token) return;
+
+        btn.setAttribute('disabled', 'true');
+        btn.textContent = '...';
+
+        try {
+          const res = await fetch(`${API_MEMBERS}/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+
+          if (res.ok) {
+            window.dispatchEvent(new CustomEvent('cc-toast-alert', {
+              detail: { message: `${name}'s account revoked.`, type: 'success' }
+            }));
+            await fetchMembers(searchInput?.value || '', roleFilter?.value || 'all');
+          } else {
+            const err = await res.json();
+            throw new Error(err.error || 'Failed to revoke');
+          }
+        } catch (err: any) {
+          btn.removeAttribute('disabled');
+          btn.textContent = 'Revoke';
+          window.dispatchEvent(new CustomEvent('cc-toast-alert', {
+            detail: { message: err.message, type: 'error' }
+          }));
+        }
+      });
+    });
   };
 
   // --- Search with debounce ---
@@ -312,7 +543,6 @@
   const initAdminPanel = () => {
     if (!root) return;
 
-    // Default to approvals subtab
     switchSubTab('approvals');
 
     setTimeout(() => {
@@ -323,7 +553,6 @@
 
   window.addEventListener('cc-tab-active-admin', initAdminPanel);
 
-  // Also handle initial load if admin panel is already active
   if (document.getElementById('panel-admin') && !document.getElementById('panel-admin')?.classList.contains('hidden')) {
     initAdminPanel();
   }

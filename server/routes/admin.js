@@ -135,4 +135,68 @@ router.get('/members', async (req, res) => {
   }
 });
 
+// Get full profile of a specific member
+router.get('/members/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        username: true,
+        role: true,
+        rollNumber: true,
+        isApproved: true,
+        createdAt: true,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error('Error fetching member profile:', error);
+    res.status(500).json({ error: 'Failed to fetch member profile' });
+  }
+});
+
+// Revoke (delete) any user account
+router.delete('/members/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Prevent admin from deleting their own account
+    if (id === req.user.id) {
+      return res.status(400).json({ error: 'You cannot revoke your own account' });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (user.role === 'admin') {
+      return res.status(400).json({ error: 'Cannot revoke another administrator account' });
+    }
+
+    // Delete the user (cascading deletes will clean up related records)
+    await prisma.user.delete({
+      where: { id },
+    });
+
+    res.json({ message: `Account for ${user.name} has been revoked successfully`, userId: id });
+  } catch (error) {
+    console.error('Error revoking account:', error);
+    res.status(500).json({ error: 'Failed to revoke account' });
+  }
+});
+
 export default router;
