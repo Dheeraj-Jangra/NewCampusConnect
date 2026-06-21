@@ -92,4 +92,47 @@ router.post('/reject-professor/:id', async (req, res) => {
   }
 });
 
+// Get all registered members (students & professors) with optional search
+router.get('/members', async (req, res) => {
+  try {
+    const { search, role } = req.query;
+
+    const where = {
+      role: { in: ['student', 'professor'] },
+    };
+
+    if (role && ['student', 'professor'].includes(role)) {
+      where.role = role;
+    }
+
+    if (search && String(search).trim()) {
+      const query = String(search).trim();
+      where.OR = [
+        { name: { contains: query, mode: 'insensitive' } },
+        { rollNumber: { contains: query, mode: 'insensitive' } },
+      ];
+    }
+
+    const members = await prisma.user.findMany({
+      where,
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        username: true,
+        role: true,
+        rollNumber: true,
+        isApproved: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    res.json(members);
+  } catch (error) {
+    console.error('Error fetching members:', error);
+    res.status(500).json({ error: 'Failed to fetch members' });
+  }
+});
+
 export default router;

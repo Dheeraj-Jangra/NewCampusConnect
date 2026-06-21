@@ -14,6 +14,7 @@ model User {
   password       String
   name           String
   role           String          // "student" | "professor" | "admin"
+  rollNumber     String?         // optional student roll number
   isApproved     Boolean         @default(true)
   resetToken     String?
   resetTokenExpiry DateTime?
