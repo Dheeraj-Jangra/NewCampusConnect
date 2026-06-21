@@ -20,7 +20,7 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 // Allowed file types for upload
-const ALLOWED_EXTENSIONS = new Set(['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'zip', 'rar', 'md', 'ipynb']);
+const ALLOWED_EXTENSIONS = new Set(['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'zip', 'rar', 'md', 'ipynb', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg']);
 const ALLOWED_MIMES = new Set([
   'application/pdf',
   'application/msword',
@@ -34,6 +34,11 @@ const ALLOWED_MIMES = new Set([
   'application/x-rar-compressed',
   'text/markdown',
   'application/x-ipynb+json',
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'image/svg+xml',
 ]);
 
 // Multer Storage config
