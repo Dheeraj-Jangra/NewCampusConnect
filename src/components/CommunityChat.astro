@@ -511,9 +511,9 @@
 
       return `
         <div class="message-bubble flex gap-3.5 max-w-[85%] animate-chat-appear hover:translate-x-1 transition-transform duration-200" style="animation-delay: ${staggerDelay}ms; animation-fill-mode: backwards;">
-          <div class="w-8 h-8 rounded-full ${escapeHtml(m.avatarBg)} text-ink font-bold flex items-center justify-center text-xs flex-shrink-0">
+          <button class="dm-avatar-btn w-8 h-8 rounded-full ${escapeHtml(m.avatarBg)} text-ink font-bold flex items-center justify-center text-xs flex-shrink-0 hover:ring-2 hover:ring-primary hover:scale-110 transition-all duration-200 cursor-pointer" data-sender-id="${escapeHtml(m.senderId || '')}" data-sender-name="${escapeHtml(m.sender)}" data-sender-role="${escapeHtml(m.role)}" title="Message ${escapeHtml(m.sender)}">
             ${initials}
-          </div>
+          </button>
           <div class="flex flex-col gap-1">
             <div class="flex items-center gap-2">
               <span class="text-xs font-semibold text-body-strong">${escapeHtml(m.sender)}</span>
@@ -539,6 +539,21 @@
         const id = btn.getAttribute('data-id');
         if (!id || !confirm('Delete this message?')) return;
         await deleteMessage(id);
+      });
+    });
+
+    // Avatar click — open DM
+    container.querySelectorAll('.dm-avatar-btn').forEach((btn: any) => {
+      btn.addEventListener('click', (e: MouseEvent) => {
+        e.stopPropagation();
+        const senderId = btn.getAttribute('data-sender-id');
+        const senderName = btn.getAttribute('data-sender-name');
+        const senderRole = btn.getAttribute('data-sender-role');
+        const currentUser = (() => { try { return JSON.parse(localStorage.getItem('cc-user') || '{}'); } catch { return {}; }})();
+        if (!senderId || senderId === currentUser.id) return; // Can't DM yourself
+        window.dispatchEvent(new CustomEvent('open-dm', {
+          detail: { userId: senderId, userName: senderName, userRole: senderRole }
+        }));
       });
     });
   };

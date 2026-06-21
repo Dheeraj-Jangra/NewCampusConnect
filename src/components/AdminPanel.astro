@@ -118,10 +118,16 @@
         <button id="admin-profile-back-btn" class="btn-secondary btn-press text-xs h-10 px-5 transition-all duration-200 hover:scale-105">
           Back
         </button>
-        <button id="admin-profile-revoke-btn" class="btn-primary btn-press text-xs h-10 px-5 bg-semantic-error hover:bg-semantic-error/90 hover:scale-105 transition-all duration-200 flex items-center gap-1.5">
-          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="M18 8V2"/><path d="m15 5 3-3 3 3"/><path d="M18 2v8"/></svg>
-          <span>Revoke Account</span>
-        </button>
+        <div class="flex items-center gap-2">
+          <button id="admin-profile-message-btn" class="btn-secondary btn-press text-xs h-10 px-4 transition-all duration-200 hover:scale-105 flex items-center gap-1.5 hover:border-primary hover:text-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+            <span>Message</span>
+          </button>
+          <button id="admin-profile-revoke-btn" class="btn-primary btn-press text-xs h-10 px-5 bg-semantic-error hover:bg-semantic-error/90 hover:scale-105 transition-all duration-200 flex items-center gap-1.5">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="M18 8V2"/><path d="m15 5 3-3 3 3"/><path d="M18 2v8"/></svg>
+            <span>Revoke Account</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -387,6 +393,20 @@
   profileBackBtn?.addEventListener('click', closeProfile);
   profileOverlay?.addEventListener('click', (e) => {
     if (e.target === profileOverlay) closeProfile();
+  });
+
+  // Message button — open DM overlay
+  const profileMessageBtn = document.getElementById('admin-profile-message-btn');
+  profileMessageBtn?.addEventListener('click', () => {
+    if (!currentProfileMember) return;
+    window.dispatchEvent(new CustomEvent('open-dm', {
+      detail: {
+        userId: currentProfileMember.id,
+        userName: currentProfileMember.name,
+        userRole: currentProfileMember.role,
+      }
+    }));
+    closeProfile();
   });
 
   const handleRevoke = async () => {

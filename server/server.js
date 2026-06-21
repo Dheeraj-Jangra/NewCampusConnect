@@ -16,6 +16,7 @@ import authRouter from './routes/auth.js';
 import adminRouter from './routes/admin.js';
 import searchRouter from './routes/search.js';
 import channelsRouter, { seedDefaultChannels } from './routes/channels.js';
+import dmRouter from './routes/dm.js';
 import prisma from './lib/prisma.js';
 
 dotenv.config();
@@ -57,6 +58,7 @@ app.use('/api/classes', classesRouter);
 app.use('/api/materials', materialsRouter);
 app.use('/api/chat', chatRouter);
 app.use('/api/channels', channelsRouter);
+app.use('/api/dm', dmRouter);
 app.use('/api/search', searchRouter);
 
 // Basic health check
@@ -136,6 +138,30 @@ io.on('connection', (socket) => {
     const { channel, username, isTyping } = typingData;
     // Broadcast typing event to everyone in the room except the sender
     socket.to(channel).emit('user-typing', { username, isTyping });
+  });
+
+  // Handle DM events
+  socket.on('join-dm', (dmRoom) => {
+    socket.join(dmRoom);
+  });
+
+  socket.on('send-dm', async (dmData) => {
+    const { senderId, receiverId, content, senderName, senderRole } = dmData;
+    try {
+      const savedMsg = await prisma.directMessage.create({
+        data: { senderId, receiverId, content },
+      });
+
+      // Emit to both sender and receiver rooms
+      const dmRoom = [senderId, receiverId].sort().join('-');
+      io.to(dmRoom).emit('new-dm', {
+        ...savedMsg,
+        senderName,
+        senderRole,
+      });
+    } catch (err) {
+      console.error('Error saving DM:', err);
+    }
   });
 
   socket.on('disconnect', () => {

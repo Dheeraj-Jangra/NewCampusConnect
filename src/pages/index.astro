@@ -18,6 +18,81 @@ import ProfileSettings from '../components/ProfileSettings.astro';
       <span id="toast-message">Action completed successfully.</span>
     </div>
 
+    <!-- DM Chat Overlay -->
+    <div id="dm-overlay" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4" style="background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);">
+      <div id="dm-panel" class="bg-surface-card border border-hairline rounded-t-xl sm:rounded-xl w-full sm:max-w-md h-[80vh] sm:h-[70vh] flex flex-col shadow-2xl overflow-hidden">
+        <!-- DM Header -->
+        <div class="flex items-center justify-between p-4 border-b border-hairline shrink-0">
+          <div class="flex items-center gap-3">
+            <button id="dm-close-btn" class="w-8 h-8 rounded-full flex items-center justify-center text-muted hover:text-ink hover:bg-canvas-soft transition-all duration-200">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+            </button>
+            <div id="dm-partner-info" class="flex items-center gap-2">
+              <div id="dm-partner-avatar" class="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">?</div>
+              <div>
+                <span id="dm-partner-name" class="text-sm font-semibold text-ink">User</span>
+                <span id="dm-partner-role" class="text-[10px] text-muted uppercase tracking-wider ml-1.5">Student</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DM Messages -->
+        <div id="dm-messages" class="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+          <div class="text-center text-xs text-muted py-8">No messages yet. Say hello!</div>
+        </div>
+
+        <!-- DM Input -->
+        <div class="p-3 border-t border-hairline bg-canvas-soft/30 shrink-0">
+          <form id="dm-form" class="flex items-center gap-2">
+            <input type="text" id="dm-input" placeholder="Type a message..." required autocomplete="off" class="flex-1 px-4 py-2 border border-hairline rounded-md text-sm text-ink bg-surface-card focus:outline-none focus:border-primary input-focus-glow transition-all duration-200" />
+            <button type="submit" class="btn-primary btn-press h-9 w-9 p-0 flex items-center justify-center rounded-md hover:scale-110 hover:rotate-12 transition-all duration-300">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-4 h-4"><line x1="22" x2="11" y1="2" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- DM Inbox Overlay (member list) -->
+    <div id="dm-inbox-overlay" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4" style="background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);">
+      <div id="dm-inbox-panel" class="bg-surface-card border border-hairline rounded-t-xl sm:rounded-xl w-full sm:max-w-md h-[85vh] sm:h-[75vh] flex flex-col shadow-2xl overflow-hidden">
+        <!-- Inbox Header -->
+        <div class="flex items-center justify-between p-4 border-b border-hairline shrink-0">
+          <div class="flex items-center gap-3">
+            <button id="dm-inbox-close-btn" class="w-8 h-8 rounded-full flex items-center justify-center text-muted hover:text-ink hover:bg-canvas-soft transition-all duration-200">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+            </button>
+            <h3 class="text-sm font-semibold text-ink">Messages</h3>
+          </div>
+        </div>
+
+        <!-- Search -->
+        <div class="px-4 py-3 border-b border-hairline shrink-0">
+          <div class="relative">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="dm-inbox-search" placeholder="Search people..." class="w-full pl-9 pr-3 py-2 bg-canvas-soft border border-hairline rounded-md text-sm text-ink focus:outline-none focus:border-primary transition-all duration-200" />
+          </div>
+        </div>
+
+        <!-- Conversations (existing) -->
+        <div id="dm-inbox-conversations" class="border-b border-hairline shrink-0 max-h-48 overflow-y-auto">
+          <!-- Rendered by JS -->
+        </div>
+
+        <!-- All Members -->
+        <div class="flex-1 overflow-y-auto">
+          <div class="px-4 py-2">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-muted">All Members</span>
+          </div>
+          <div id="dm-inbox-members" class="flex flex-col">
+            <!-- Rendered by JS -->
+          </div>
+          <div id="dm-inbox-empty" class="hidden text-center py-8 text-xs text-muted">No members found</div>
+        </div>
+      </div>
+    </div>
+
     <!-- 1. Landing Splash Screen: Role Selector & Auth Gate -->
     <section id="splash-gate" class="flex-1 flex flex-col items-center justify-center px-6 py-12 md:py-24 text-center select-none max-w-5xl mx-auto w-full">
       
@@ -294,10 +369,15 @@ import ProfileSettings from '../components/ProfileSettings.astro';
       </div>
 
       <!-- Bottom Navigation Bar (mobile) -->
-      <div class="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-surface-card border-t border-hairline px-4 py-2.5 flex items-center safe-area-bottom">
+      <div class="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-surface-card border-t border-hairline px-4 py-2.5 flex items-center justify-between safe-area-bottom">
         <button id="bottom-profile-btn" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-muted hover:text-primary transition-colors duration-200">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           <span class="text-xs font-bold uppercase tracking-wider">Profile</span>
+        </button>
+        <button id="bottom-dm-btn" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-muted hover:text-primary transition-colors duration-200 relative">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span class="text-xs font-bold uppercase tracking-wider">Messages</span>
+          <span id="dm-total-badge" class="hidden absolute -top-1 -right-1 px-1.5 py-0.5 text-[8px] font-bold text-canvas bg-primary rounded-full">0</span>
         </button>
       </div>
     </section>
@@ -306,7 +386,14 @@ import ProfileSettings from '../components/ProfileSettings.astro';
 </Layout>
 
 <script>
-  import { API_BASE } from '../lib/api';
+  import { API_BASE, SOCKET_URL } from '../lib/api';
+  import { io } from 'socket.io-client';
+
+  const escapeHtml = (str: string) => {
+    if (!str) return '';
+    const map: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;', '/': '&#x2F;' };
+    return String(str).replace(/[&<>"'/]/g, (c) => map[c] || c);
+  };
   const REGISTER_URL = `${API_BASE}/api/auth/register`;
   const LOGIN_URL = `${API_BASE}/api/auth/login`;
   const FORGOT_URL = `${API_BASE}/api/auth/forgot-password`;
@@ -837,4 +924,334 @@ import ProfileSettings from '../components/ProfileSettings.astro';
     btn.querySelector('.eye-closed')?.classList.toggle('hidden');
     btn.querySelector('.eye-open')?.classList.toggle('hidden');
   });
+
+  // ── Direct Messaging (DM) ──
+  const DM_URL = `${API_BASE}/api/dm`;
+  let dmSocket: any = null;
+  let dmPartnerId = '';
+  let dmMessages: any[] = [];
+
+  const getDmHeaders = (): Record<string, string> => {
+    const token = localStorage.getItem('cc-token');
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    return headers;
+  };
+
+  const getCurrentUser = () => {
+    const userStr = localStorage.getItem('cc-user');
+    if (!userStr) return null;
+    try { return JSON.parse(userStr); } catch { return null; }
+  };
+
+  const openDM = async (userId: string, userName: string, userRole: string) => {
+    const overlay = document.getElementById('dm-overlay');
+    const partnerName = document.getElementById('dm-partner-name');
+    const partnerRole = document.getElementById('dm-partner-role');
+    const partnerAvatar = document.getElementById('dm-partner-avatar');
+    if (!overlay) return;
+
+    dmPartnerId = userId;
+    if (partnerName) partnerName.textContent = userName;
+    if (partnerRole) partnerRole.textContent = userRole.charAt(0).toUpperCase() + userRole.slice(1);
+    if (partnerAvatar) partnerAvatar.textContent = userName.charAt(0).toUpperCase();
+
+    overlay.classList.remove('hidden');
+    await fetchDMMessages();
+    setupDMSocket();
+  };
+
+  const closeDM = () => {
+    const overlay = document.getElementById('dm-overlay');
+    if (overlay) overlay.classList.add('hidden');
+    dmPartnerId = '';
+    dmMessages = [];
+  };
+
+  const fetchDMMessages = async () => {
+    if (!dmPartnerId) return;
+    try {
+      const res = await fetch(`${DM_URL}/${dmPartnerId}`, { headers: getDmHeaders() });
+      if (res.ok) {
+        dmMessages = await res.json();
+        renderDMMessages();
+      }
+    } catch (err) {
+      console.error('Failed to fetch DMs:', err);
+    }
+  };
+
+  const renderDMMessages = () => {
+    const container = document.getElementById('dm-messages');
+    if (!container) return;
+    const user = getCurrentUser();
+    if (!user) return;
+
+    if (dmMessages.length === 0) {
+      container.innerHTML = `<div class="text-center text-xs text-muted py-8">No messages yet. Say hello!</div>`;
+      return;
+    }
+
+    container.innerHTML = dmMessages.map((msg: any) => {
+      const isMine = msg.senderId === user.id;
+      const time = new Date(msg.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+      return `
+        <div class="flex ${isMine ? 'justify-end' : 'justify-start'} animate-fade-in-up">
+          <div class="${isMine ? 'bg-primary text-white' : 'bg-canvas-soft border border-hairline text-ink'} px-4 py-2.5 rounded-lg max-w-[80%]">
+            <p class="text-sm leading-relaxed">${escapeHtml(msg.content)}</p>
+            <span class="text-[10px] ${isMine ? 'text-white/60' : 'text-muted'} mt-1 block">${time}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    container.scrollTop = container.scrollHeight;
+  };
+
+  const setupDMSocket = () => {
+    if (dmSocket) return;
+    try {
+      dmSocket = io(SOCKET_URL, { transports: ['websocket'], reconnectionAttempts: 2, timeout: 3000 });
+      dmSocket.on('connect', () => {
+        const user = getCurrentUser();
+        if (user && dmPartnerId) {
+          const dmRoom = [user.id, dmPartnerId].sort().join('-');
+          dmSocket.emit('join-dm', dmRoom);
+        }
+      });
+      dmSocket.on('new-dm', (msg: any) => {
+        if (msg.senderId === dmPartnerId || msg.receiverId === dmPartnerId) {
+          dmMessages.push(msg);
+          renderDMMessages();
+        }
+        // Refresh conversations list in chat sidebar
+        window.dispatchEvent(new CustomEvent('dm-sent'));
+      });
+    } catch (e) {
+      console.error('DM socket error:', e);
+    }
+  };
+
+  const sendDM = async (content: string) => {
+    if (!dmPartnerId || !content.trim()) return;
+    const user = getCurrentUser();
+    if (!user) return;
+
+    // Optimistic UI
+    const optimisticMsg = {
+      id: 'temp-' + Date.now(),
+      senderId: user.id,
+      receiverId: dmPartnerId,
+      content: content.trim(),
+      timestamp: new Date().toISOString(),
+    };
+    dmMessages.push(optimisticMsg);
+    renderDMMessages();
+
+    // Send via socket for real-time
+    if (dmSocket && dmSocket.connected) {
+      dmSocket.emit('send-dm', {
+        senderId: user.id,
+        receiverId: dmPartnerId,
+        content: content.trim(),
+        senderName: user.name,
+        senderRole: user.role,
+      });
+    } else {
+      // Fallback to REST
+      try {
+        await fetch(`${DM_URL}/${dmPartnerId}`, {
+          method: 'POST',
+          headers: getDmHeaders(),
+          body: JSON.stringify({ content: content.trim() }),
+        });
+      } catch (err) {
+        console.error('Failed to send DM:', err);
+      }
+    }
+
+    // Notify chat sidebar to refresh conversations
+    window.dispatchEvent(new CustomEvent('dm-sent'));
+  };
+
+  // DM overlay event listeners
+  document.getElementById('dm-close-btn')?.addEventListener('click', closeDM);
+  document.getElementById('dm-overlay')?.addEventListener('click', (e) => {
+    if (e.target === document.getElementById('dm-overlay')) closeDM();
+  });
+  document.getElementById('dm-form')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const input = document.getElementById('dm-input') as HTMLInputElement;
+    if (input && input.value.trim()) {
+      sendDM(input.value.trim());
+      input.value = '';
+    }
+  });
+
+  // Listen for open-dm events from other components
+  window.addEventListener('open-dm', ((e: CustomEvent) => {
+    const { userId, userName, userRole } = e.detail;
+    openDM(userId, userName, userRole);
+  }) as EventListener);
+
+  // ── DM Inbox (member list) ──
+  const MEMBERS_URL = `${API_BASE}/api/admin/members`;
+  let allMembers: any[] = [];
+  let dmConversations: any[] = [];
+
+  const openDMInbox = async () => {
+    const overlay = document.getElementById('dm-inbox-overlay');
+    if (!overlay) return;
+    overlay.classList.remove('hidden');
+    await Promise.all([fetchDMInboxConversations(), fetchDMInboxMembers()]);
+  };
+
+  const closeDMInbox = () => {
+    const overlay = document.getElementById('dm-inbox-overlay');
+    if (overlay) overlay.classList.add('hidden');
+  };
+
+  const fetchDMInboxConversations = async () => {
+    try {
+      const res = await fetch(`${DM_URL}/conversations`, { headers: getDmHeaders() });
+      if (res.ok) {
+        dmConversations = await res.json();
+        renderDMInboxConversations();
+      }
+    } catch (err) {
+      console.error('Failed to load conversations:', err);
+    }
+  };
+
+  const fetchDMInboxMembers = async () => {
+    try {
+      const token = localStorage.getItem('cc-token');
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch(MEMBERS_URL, { headers });
+      if (res.ok) {
+        allMembers = await res.json();
+        renderDMInboxMembers(allMembers);
+      }
+    } catch (err) {
+      console.error('Failed to load members:', err);
+    }
+  };
+
+  const renderDMInboxConversations = () => {
+    const container = document.getElementById('dm-inbox-conversations');
+    if (!container) return;
+
+    if (dmConversations.length === 0) {
+      container.innerHTML = '';
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="px-4 py-2"><span class="text-[10px] font-bold uppercase tracking-wider text-muted">Recent</span></div>
+      ${dmConversations.map((conv: any) => {
+        const p = conv.partner;
+        if (!p) return '';
+        const lastMsg = conv.lastMessage;
+        const preview = lastMsg ? (lastMsg.content.length > 35 ? lastMsg.content.substring(0, 35) + '...' : lastMsg.content) : '';
+        const time = lastMsg ? new Date(lastMsg.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
+        const unread = conv.unreadCount || 0;
+
+        return `
+          <button class="dm-inbox-conv w-full px-4 py-3 flex items-center gap-3 hover:bg-canvas-soft/50 transition-all duration-200" data-user-id="${escapeHtml(p.id)}" data-user-name="${escapeHtml(p.name)}" data-user-role="${escapeHtml(p.role)}">
+            <div class="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold flex-shrink-0">${escapeHtml(p.name.charAt(0).toUpperCase())}</div>
+            <div class="flex-1 min-w-0 text-left">
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-semibold text-ink truncate">${escapeHtml(p.name)}</span>
+                <span class="text-[10px] text-muted flex-shrink-0 ml-2">${time}</span>
+              </div>
+              <div class="flex items-center justify-between mt-0.5">
+                <span class="text-xs text-muted truncate">${escapeHtml(preview)}</span>
+                ${unread > 0 ? `<span class="px-1.5 py-0.5 text-[9px] font-bold text-canvas bg-primary rounded-full flex-shrink-0 ml-2">${unread}</span>` : ''}
+              </div>
+            </div>
+          </button>
+        `;
+      }).join('')}
+    `;
+
+    container.querySelectorAll('.dm-inbox-conv').forEach((btn: any) => {
+      btn.addEventListener('click', () => {
+        const userId = btn.getAttribute('data-user-id');
+        const userName = btn.getAttribute('data-user-name');
+        const userRole = btn.getAttribute('data-user-role');
+        closeDMInbox();
+        openDM(userId, userName, userRole);
+      });
+    });
+  };
+
+  const renderDMInboxMembers = (members: any[]) => {
+    const container = document.getElementById('dm-inbox-members');
+    const empty = document.getElementById('dm-inbox-empty');
+    if (!container) return;
+
+    const currentUser = getCurrentUser();
+    const filtered = members.filter((m: any) => m.id !== currentUser?.id);
+
+    if (filtered.length === 0) {
+      container.innerHTML = '';
+      if (empty) empty.classList.remove('hidden');
+      return;
+    }
+    if (empty) empty.classList.add('hidden');
+
+    container.innerHTML = filtered.map((m: any) => {
+      const roleBadge = m.role === 'professor'
+        ? `<span class="text-[9px] font-bold text-timeline-thinking">Prof</span>`
+        : m.role === 'admin'
+          ? `<span class="text-[9px] font-bold text-timeline-done">Admin</span>`
+          : `<span class="text-[9px] font-bold text-muted">Student</span>`;
+
+      return `
+        <button class="dm-inbox-member w-full px-4 py-3 flex items-center gap-3 hover:bg-canvas-soft/50 transition-all duration-200 border-t border-hairline/50" data-user-id="${escapeHtml(m.id)}" data-user-name="${escapeHtml(m.name)}" data-user-role="${escapeHtml(m.role)}">
+          <div class="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold flex-shrink-0">${escapeHtml(m.name.charAt(0).toUpperCase())}</div>
+          <div class="flex-1 min-w-0 text-left">
+            <span class="text-sm font-semibold text-ink block truncate">${escapeHtml(m.name)}</span>
+            <span class="text-[10px] text-muted">${roleBadge}</span>
+          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-muted shrink-0"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+      `;
+    }).join('');
+
+    container.querySelectorAll('.dm-inbox-member').forEach((btn: any) => {
+      btn.addEventListener('click', () => {
+        const userId = btn.getAttribute('data-user-id');
+        const userName = btn.getAttribute('data-user-name');
+        const userRole = btn.getAttribute('data-user-role');
+        closeDMInbox();
+        openDM(userId, userName, userRole);
+      });
+    });
+  };
+
+  // DM inbox search
+  document.getElementById('dm-inbox-search')?.addEventListener('input', ((e: Event) => {
+    const query = (e.target as HTMLInputElement).value.toLowerCase().trim();
+    if (!query) {
+      renderDMInboxMembers(allMembers);
+      return;
+    }
+    const filtered = allMembers.filter((m: any) =>
+      m.name.toLowerCase().includes(query) ||
+      (m.username && m.username.toLowerCase().includes(query)) ||
+      (m.rollNumber && m.rollNumber.toLowerCase().includes(query))
+    );
+    renderDMInboxMembers(filtered);
+  }) as EventListener);
+
+  // DM inbox event listeners
+  document.getElementById('dm-inbox-close-btn')?.addEventListener('click', closeDMInbox);
+  document.getElementById('dm-inbox-overlay')?.addEventListener('click', (e) => {
+    if (e.target === document.getElementById('dm-inbox-overlay')) closeDMInbox();
+  });
+
+  // Bottom bar DM button
+  document.getElementById('bottom-dm-btn')?.addEventListener('click', openDMInbox);
 </script>

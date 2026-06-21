@@ -26,6 +26,8 @@ model User {
   materials      StudyMaterial[]
   chatMessages   ChatMessage[]
   createdChannels ChatChannel[]
+  sentDMs        DirectMessage[] @relation("SentDMs")
+  receivedDMs    DirectMessage[] @relation("ReceivedDMs")
 }
 
 model Notice {
@@ -96,4 +98,19 @@ model ChatChannel {
   createdAt       DateTime @default(now())
 
   createdBy User? @relation(fields: [createdById], references: [id], onDelete: SetNull)
+}
+
+model DirectMessage {
+  id        String   @id @default(uuid())
+  senderId  String
+  receiverId String
+  content   String
+  timestamp DateTime @default(now())
+  read      Boolean  @default(false)
+
+  sender   User @relation("SentDMs", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("ReceivedDMs", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@index([senderId, receiverId])
+  @@index([receiverId, senderId])
 }
