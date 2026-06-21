@@ -40,12 +40,7 @@
         <!-- Subject Course Tag -->
         <div class="flex flex-col gap-1.5">
           <label for="material-course" class="text-xs font-semibold text-body-strong">Course Code</label>
-          <select id="material-course" required class="w-full px-3 py-2 bg-canvas-soft border border-hairline rounded-md text-sm text-ink focus:outline-none focus:border-primary transition-all duration-200">
-            <option value="CS-101">CS-101 (Intro to CS)</option>
-            <option value="CS-402">CS-402 (Advanced UI Design)</option>
-            <option value="MATH-202">MATH-202 (Discrete Algebra)</option>
-            <option value="ELEC-301">ELEC-301 (Embedded Systems)</option>
-          </select>
+          <input type="text" id="material-course" placeholder="e.g. CS-101, MATH-202" required class="w-full px-3 py-2 bg-canvas-soft border border-hairline rounded-md text-sm text-ink focus:outline-none focus:border-primary transition-all duration-200" />
         </div>
 
         <!-- Drag and Drop Box Simulator -->
@@ -230,24 +225,24 @@
       const staggerDelay = Math.min(index * 50, 400);
 
       return `
-        <div class="material-row bg-surface-card border border-hairline rounded-lg p-4 flex items-center justify-between gap-4 hover:border-hairline-strong hover-lift transition-all duration-300 animate-fade-in-up" data-id="${escapeHtml(m.id)}" style="animation-delay: ${staggerDelay}ms; animation-fill-mode: backwards;">
-          <div class="flex items-center gap-3.5 min-w-0">
-            <div class="p-2.5 bg-canvas-soft border border-hairline-soft rounded-md transition-all duration-300 hover:scale-110 hover:rotate-6">
+        <div class="material-row bg-surface-card border border-hairline rounded-lg p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 hover:border-hairline-strong hover-lift transition-all duration-300 animate-fade-in-up" data-id="${escapeHtml(m.id)}" style="animation-delay: ${staggerDelay}ms; animation-fill-mode: backwards;">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="p-2 sm:p-2.5 bg-canvas-soft border border-hairline-soft rounded-md transition-all duration-300 hover:scale-110 hover:rotate-6 shrink-0">
               ${icon}
             </div>
-            <div class="min-w-0">
-              <h4 class="text-sm font-semibold text-ink line-clamp-1">${escapeHtml(m.title)}</h4>
-              <div class="flex items-center gap-2 flex-wrap text-xs text-muted mt-0.5">
-                <span class="px-2 py-0.2 bg-surface-strong/50 border border-hairline text-ink rounded-md text-[10px] font-bold">${escapeHtml(m.course)}</span>
-                <span>&bull;</span>
-                <span>Size: ${escapeHtml(m.size)}</span>
-                <span>&bull;</span>
-                <span>Uploaded by: ${escapeHtml(m.author)}</span>
+            <div class="min-w-0 flex-1">
+              <h4 class="text-[13px] sm:text-sm font-semibold text-ink leading-snug line-clamp-2 sm:line-clamp-1">${escapeHtml(m.title)}</h4>
+              <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] sm:text-xs text-muted mt-1">
+                <span class="px-1.5 sm:px-2 py-0.5 bg-surface-strong/50 border border-hairline text-ink rounded-md text-[10px] font-bold">${escapeHtml(m.course)}</span>
+                <span class="hidden sm:inline">&bull;</span>
+                <span class="sm:inline">${escapeHtml(m.size)}</span>
+                <span class="hidden sm:inline">&bull;</span>
+                <span class="sm:inline text-muted-soft">by ${escapeHtml(m.author)}</span>
               </div>
             </div>
           </div>
           
-          <div class="flex items-center gap-1">
+          <div class="flex items-center gap-2 sm:gap-1 sm:shrink-0 pl-8 sm:pl-0">
             <button data-id="${escapeHtml(m.id)}" data-title="${escapeHtml(m.title)}" data-type="${escapeHtml(m.type || '')}" class="preview-btn btn-secondary btn-press flex items-center gap-1.5 text-xs py-1.5 h-8 hover:scale-105 transition-transform duration-200" title="Preview file">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
               <span class="hidden sm:inline">Preview</span>
@@ -398,7 +393,7 @@
       e.preventDefault();
 
       const titleInput = document.getElementById('material-title') as HTMLInputElement;
-      const courseSelect = document.getElementById('material-course') as HTMLSelectElement;
+      const courseSelect = document.getElementById('material-course') as HTMLInputElement;
 
       if (!titleInput || !courseSelect) return;
 
