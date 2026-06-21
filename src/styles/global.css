@@ -831,3 +831,18 @@
     animation: none;
   }
 }
+
+/* ── Admin subtabs ── */
+#admin-subtabs-container {
+  scrollbar-width: none;
+}
+#admin-subtabs-container::-webkit-scrollbar {
+  display: none;
+}
+#admin-subtabs-container button {
+  outline: none;
+}
+#admin-subtabs-container button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
