@@ -242,7 +242,7 @@ import ProfileSettings from '../components/ProfileSettings.astro';
         <!-- Editorial Navigation Tabs wrapper -->
         <div class="relative flex gap-1 border border-hairline p-1.5 bg-surface-card rounded-lg max-w-2xl w-full mx-auto mb-10" id="dash-tabs-container">
           <!-- Active sliding bubble indicator -->
-          <div id="tab-indicator" class="absolute top-1.5 bottom-1.5 left-0 bg-primary rounded-md transition-all duration-300 ease-out"></div>
+          <div id="tab-indicator" class="absolute top-1.5 bottom-1.5 left-1 bg-primary rounded-md transition-all duration-300 ease-out"></div>
           
           <button data-tab="notices" class="tab-trigger relative z-10 flex-1 text-center py-2.5 text-xs font-bold uppercase tracking-wider text-on-primary focus:outline-none transition-colors duration-200 hover:scale-105">
             Notices
@@ -732,7 +732,7 @@ import ProfileSettings from '../components/ProfileSettings.astro';
     
     // Position indicator using actual button offset
     tabIndicator.style.width = `${activeTrigger.offsetWidth}px`;
-    tabIndicator.style.transform = `translateX(${activeTrigger.offsetLeft}px)`;
+    tabIndicator.style.transform = `translateX(${activeTrigger.offsetLeft - 4}px)`;
 
     // Update button colors
     tabTriggers.forEach((tr: any) => {

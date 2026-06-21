@@ -166,6 +166,7 @@ router.post('/login', async (req, res) => {
         username: user.username,
         name: user.name,
         role: user.role,
+        rollNumber: user.rollNumber,
       },
     });
   } catch (error) {
@@ -185,6 +186,7 @@ router.get('/me', authMiddleware, async (req, res) => {
         username: true,
         name: true,
         role: true,
+        rollNumber: true,
         isApproved: true,
         createdAt: true,
       },
@@ -201,13 +203,13 @@ router.get('/me', authMiddleware, async (req, res) => {
   }
 });
 
-// Update Profile (name, username)
+// Update Profile (name, username, rollNumber)
 router.put('/profile', authMiddleware, async (req, res) => {
   try {
-    const { name, username } = req.body;
+    const { name, username, rollNumber } = req.body;
 
-    if (!name && !username) {
-      return res.status(400).json({ error: 'At least one field (name or username) must be provided' });
+    if (!name && username === undefined && rollNumber === undefined) {
+      return res.status(400).json({ error: 'At least one field must be provided' });
     }
 
     const updateData = {};
@@ -219,11 +221,8 @@ router.put('/profile', authMiddleware, async (req, res) => {
       updateData.name = name.trim();
     }
 
-    if (username !== undefined) {
+    if (username !== undefined && String(username).trim()) {
       const usernameStr = String(username).trim();
-      if (!usernameStr) {
-        return res.status(400).json({ error: 'Username cannot be empty' });
-      }
       if (usernameStr.length < 3 || usernameStr.length > 30) {
         return res.status(400).json({ error: 'Username must be between 3 and 30 characters' });
       }
@@ -239,6 +238,14 @@ router.put('/profile', authMiddleware, async (req, res) => {
       updateData.username = usernameStr;
     }
 
+    if (rollNumber !== undefined) {
+      const rollStr = String(rollNumber).trim();
+      if (rollStr && (rollStr.length < 2 || rollStr.length > 20)) {
+        return res.status(400).json({ error: 'Roll number must be between 2 and 20 characters' });
+      }
+      updateData.rollNumber = rollStr || null;
+    }
+
     const updated = await prisma.user.update({
       where: { id: req.user.id },
       data: updateData,
@@ -248,6 +255,7 @@ router.put('/profile', authMiddleware, async (req, res) => {
         username: true,
         name: true,
         role: true,
+        rollNumber: true,
       },
     });
 
@@ -262,6 +270,43 @@ router.put('/profile', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Error updating profile:', error);
     res.status(500).json({ error: 'Failed to update profile' });
+  }
+});
+
+// Generate unique username
+router.post('/generate-username', authMiddleware, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { name: true, email: true },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const baseName = user.name
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, '')
+      .split(/\s+/)
+      .slice(0, 2)
+      .join('');
+
+    let candidate = baseName;
+    let counter = 1;
+
+    // Try base name, then append numbers until unique
+    while (counter <= 999) {
+      const existing = await prisma.user.findUnique({ where: { username: candidate } });
+      if (!existing || existing.id === user.id) break;
+      candidate = `${baseName}${counter}`;
+      counter++;
+    }
+
+    res.json({ username: candidate });
+  } catch (error) {
+    console.error('Error generating username:', error);
+    res.status(500).json({ error: 'Failed to generate username' });
   }
 });
 

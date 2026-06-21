@@ -18,7 +18,7 @@
 
   <!-- Sub Navigation Tabs -->
   <div class="relative flex gap-1 border border-hairline p-1.5 bg-surface-card rounded-lg max-w-2xl w-full mx-auto" id="admin-subtabs-container">
-    <div id="admin-tab-indicator" class="absolute top-1.5 bottom-1.5 bg-primary rounded-md transition-all duration-300 ease-out pointer-events-none"></div>
+    <div id="admin-tab-indicator" class="absolute top-1.5 bottom-1.5 left-1 bg-primary rounded-md transition-all duration-300 ease-out pointer-events-none"></div>
     <button id="admin-subtab-approvals" class="admin-subtab relative z-10 flex-1 text-center py-2.5 text-xs font-bold uppercase tracking-wider text-on-primary rounded-md transition-colors duration-200">Approvals</button>
     <button id="admin-subtab-members" class="admin-subtab relative z-10 flex-1 text-center py-2.5 text-xs font-bold uppercase tracking-wider text-ink rounded-md transition-colors duration-200">Members</button>
   </div>
@@ -75,14 +75,14 @@
       <div class="flex items-center justify-between p-5 sm:p-6 border-b border-hairline">
         <div class="flex items-center gap-3.5">
           <div class="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center text-base font-bold shrink-0">
-            <span id="profile-avatar-letter">U</span>
+            <span id="admin-profile-avatar-letter">U</span>
           </div>
           <div class="min-w-0">
-            <h3 id="profile-display-name" class="title-sm text-ink truncate">User Name</h3>
-            <span id="profile-display-role" class="text-[11px] text-muted uppercase tracking-wider font-bold">Role</span>
+            <h3 id="admin-profile-display-name" class="title-sm text-ink truncate">User Name</h3>
+            <span id="admin-profile-display-role" class="text-[11px] text-muted uppercase tracking-wider font-bold">Role</span>
           </div>
         </div>
-        <button id="profile-close-btn" class="w-10 h-10 rounded-full flex items-center justify-center text-muted hover:text-ink hover:bg-canvas-soft transition-all duration-200 shrink-0">
+        <button id="admin-profile-close-btn" class="w-10 h-10 rounded-full flex items-center justify-center text-muted hover:text-ink hover:bg-canvas-soft transition-all duration-200 shrink-0">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
@@ -92,33 +92,33 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="flex flex-col gap-1.5">
             <span class="text-[11px] font-bold uppercase tracking-wider text-muted">Email</span>
-            <span id="profile-email" class="text-sm text-ink break-all leading-relaxed">—</span>
+            <span id="admin-profile-email" class="text-sm text-ink break-all leading-relaxed">—</span>
           </div>
           <div class="flex flex-col gap-1.5">
             <span class="text-[11px] font-bold uppercase tracking-wider text-muted">Username</span>
-            <span id="profile-username" class="text-sm text-ink leading-relaxed">—</span>
+            <span id="admin-profile-username" class="text-sm text-ink leading-relaxed">—</span>
           </div>
           <div class="flex flex-col gap-1.5">
             <span class="text-[11px] font-bold uppercase tracking-wider text-muted">Roll Number</span>
-            <span id="profile-rollnumber" class="text-sm text-ink leading-relaxed">—</span>
+            <span id="admin-profile-rollnumber" class="text-sm text-ink leading-relaxed">—</span>
           </div>
           <div class="flex flex-col gap-1.5">
             <span class="text-[11px] font-bold uppercase tracking-wider text-muted">Account Status</span>
-            <span id="profile-status" class="text-sm text-ink leading-relaxed">—</span>
+            <span id="admin-profile-status" class="text-sm text-ink leading-relaxed">—</span>
           </div>
         </div>
         <div class="flex flex-col gap-1.5">
           <span class="text-[11px] font-bold uppercase tracking-wider text-muted">Member Since</span>
-          <span id="profile-joined" class="text-sm text-ink leading-relaxed">—</span>
+          <span id="admin-profile-joined" class="text-sm text-ink leading-relaxed">—</span>
         </div>
       </div>
 
       <!-- Profile Actions -->
       <div class="flex items-center justify-between gap-3 p-5 sm:p-6 border-t border-hairline bg-canvas-soft/30 sm:rounded-b-xl rounded-b-xl">
-        <button id="profile-back-btn" class="btn-secondary btn-press text-xs h-10 px-5 transition-all duration-200 hover:scale-105">
+        <button id="admin-profile-back-btn" class="btn-secondary btn-press text-xs h-10 px-5 transition-all duration-200 hover:scale-105">
           Back
         </button>
-        <button id="profile-revoke-btn" class="btn-primary btn-press text-xs h-10 px-5 bg-semantic-error hover:bg-semantic-error/90 hover:scale-105 transition-all duration-200 flex items-center gap-1.5">
+        <button id="admin-profile-revoke-btn" class="btn-primary btn-press text-xs h-10 px-5 bg-semantic-error hover:bg-semantic-error/90 hover:scale-105 transition-all duration-200 flex items-center gap-1.5">
           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="M18 8V2"/><path d="m15 5 3-3 3 3"/><path d="M18 2v8"/></svg>
           <span>Revoke Account</span>
         </button>
@@ -153,17 +153,17 @@
   // Profile overlay refs
   const profileOverlay = document.getElementById('member-profile-overlay');
   const profileCard = document.getElementById('member-profile-card');
-  const profileAvatarLetter = document.getElementById('profile-avatar-letter');
-  const profileDisplayName = document.getElementById('profile-display-name');
-  const profileDisplayRole = document.getElementById('profile-display-role');
-  const profileEmail = document.getElementById('profile-email');
-  const profileUsername = document.getElementById('profile-username');
-  const profileRollNumber = document.getElementById('profile-rollnumber');
-  const profileStatus = document.getElementById('profile-status');
-  const profileJoined = document.getElementById('profile-joined');
-  const profileCloseBtn = document.getElementById('profile-close-btn');
-  const profileBackBtn = document.getElementById('profile-back-btn');
-  const profileRevokeBtn = document.getElementById('profile-revoke-btn');
+  const profileAvatarLetter = document.getElementById('admin-profile-avatar-letter');
+  const profileDisplayName = document.getElementById('admin-profile-display-name');
+  const profileDisplayRole = document.getElementById('admin-profile-display-role');
+  const profileEmail = document.getElementById('admin-profile-email');
+  const profileUsername = document.getElementById('admin-profile-username');
+  const profileRollNumber = document.getElementById('admin-profile-rollnumber');
+  const profileStatus = document.getElementById('admin-profile-status');
+  const profileJoined = document.getElementById('admin-profile-joined');
+  const profileCloseBtn = document.getElementById('admin-profile-close-btn');
+  const profileBackBtn = document.getElementById('admin-profile-back-btn');
+  const profileRevokeBtn = document.getElementById('admin-profile-revoke-btn');
 
   let searchTimeout: number | null = null;
   let currentProfileMember: any = null;
@@ -172,7 +172,7 @@
   const positionIndicator = (btn: HTMLElement) => {
     if (!adminTabIndicator || !btn) return;
     adminTabIndicator.style.width = `${btn.offsetWidth}px`;
-    adminTabIndicator.style.transform = `translateX(${btn.offsetLeft}px)`;
+    adminTabIndicator.style.transform = `translateX(${btn.offsetLeft - 4}px)`;
   };
 
   const switchSubTab = (tab: 'approvals' | 'members', animate = true) => {
