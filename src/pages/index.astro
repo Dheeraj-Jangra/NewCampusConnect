@@ -13,8 +13,8 @@ import ProfileSettings from '../components/ProfileSettings.astro';
   <main class="w-full flex-1 flex flex-col relative z-10">
     
     <!-- Toast Notification Overlay -->
-    <div id="toast-alert" class="fixed top-6 left-1/2 -translate-x-1/2 z-9999 px-5 py-3.5 bg-ink border border-primary/30 text-canvas text-sm font-semibold rounded-md shadow-lg flex items-center gap-3 w-fit min-w-[320px] hidden">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-primary w-4 h-4"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    <div id="toast-alert" class="fixed top-5 left-1/2 -translate-x-1/2 z-9999 px-5 py-3.5 bg-ink border border-primary/30 text-canvas text-sm font-semibold rounded-md shadow-lg flex items-center gap-3 max-w-[calc(100vw-2rem)] hidden">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-primary w-4 h-4 shrink-0"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
       <span id="toast-message">Action completed successfully.</span>
     </div>
 

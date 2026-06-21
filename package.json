@@ -16,7 +16,7 @@
   "dependencies": {
     "@prisma/client": "^6.19.3",
     "@tailwindcss/vite": "^4.3.1",
-    "astro": "^6.4.7",
+    "astro": "^6.4.8",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
