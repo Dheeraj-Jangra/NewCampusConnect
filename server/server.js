@@ -164,6 +164,18 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('delete-dm', async (data) => {
+    const { messageId, senderId, receiverId, scope } = data;
+    try {
+      if (scope === 'all') {
+        const dmRoom = [senderId, receiverId].sort().join('-');
+        io.to(dmRoom).emit('dm-deleted', { messageId, scope: 'all' });
+      }
+    } catch (err) {
+      console.error('Error in delete-dm:', err);
+    }
+  });
+
   socket.on('disconnect', () => {
     console.log(`Socket disconnected: ${socket.id}`);
   });

@@ -79,9 +79,20 @@ router.get('/:userId', authMiddleware, async (req, res) => {
 
     const messages = await prisma.directMessage.findMany({
       where: {
-        OR: [
-          { senderId: currentUserId, receiverId: userId },
-          { senderId: userId, receiverId: currentUserId },
+        AND: [
+          {
+            OR: [
+              { senderId: currentUserId, receiverId: userId },
+              { senderId: userId, receiverId: currentUserId },
+            ],
+          },
+          // Filter out messages deleted for the current user
+          {
+            OR: [
+              { senderId: currentUserId, deletedForSender: false },
+              { receiverId: currentUserId, deletedForReceiver: false },
+            ],
+          },
         ],
       },
       orderBy: { timestamp: 'asc' },
@@ -147,6 +158,45 @@ router.get('/unread/count', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Error fetching unread count:', error);
     res.status(500).json({ error: 'Failed to fetch unread count' });
+  }
+});
+
+// Delete a DM message — scope: "me" or "all"
+router.delete('/:messageId', authMiddleware, async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const { scope } = req.query; // "me" or "all"
+    const userId = req.user.id;
+
+    const message = await prisma.directMessage.findUnique({ where: { id: messageId } });
+    if (!message) {
+      return res.status(404).json({ error: 'Message not found' });
+    }
+
+    // Only sender or receiver can delete
+    if (message.senderId !== userId && message.receiverId !== userId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    if (scope === 'all') {
+      // Only the sender can delete for everyone
+      if (message.senderId !== userId) {
+        return res.status(403).json({ error: 'Only the sender can delete for everyone' });
+      }
+      await prisma.directMessage.delete({ where: { id: messageId } });
+      res.json({ deleted: true, scope: 'all', messageId });
+    } else {
+      // Delete for me — mark the appropriate flag
+      const isSender = message.senderId === userId;
+      await prisma.directMessage.update({
+        where: { id: messageId },
+        data: isSender ? { deletedForSender: true } : { deletedForReceiver: true },
+      });
+      res.json({ deleted: true, scope: 'me', messageId });
+    }
+  } catch (error) {
+    console.error('Error deleting DM:', error);
+    res.status(500).json({ error: 'Failed to delete message' });
   }
 });
 

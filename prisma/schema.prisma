@@ -107,6 +107,8 @@ model DirectMessage {
   content   String
   timestamp DateTime @default(now())
   read      Boolean  @default(false)
+  deletedForSender   Boolean @default(false)
+  deletedForReceiver Boolean @default(false)
 
   sender   User @relation("SentDMs", fields: [senderId], references: [id], onDelete: Cascade)
   receiver User @relation("ReceivedDMs", fields: [receiverId], references: [id], onDelete: Cascade)

@@ -18,6 +18,18 @@ import ProfileSettings from '../components/ProfileSettings.astro';
       <span id="toast-message">Action completed successfully.</span>
     </div>
 
+    <!-- DM Message Context Menu -->
+    <div id="dm-context-menu" class="hidden fixed z-[60] bg-surface-card border border-hairline rounded-lg shadow-2xl py-1 min-w-[160px] overflow-hidden animate-fade-in-up" style="animation-duration: 0.15s;">
+      <button id="dm-ctx-delete-me" class="w-full px-4 py-2.5 text-left text-sm text-ink hover:bg-canvas-soft flex items-center gap-2.5 transition-colors duration-150">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-muted"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+        Delete for me
+      </button>
+      <button id="dm-ctx-delete-all" class="w-full px-4 py-2.5 text-left text-sm text-semantic-error hover:bg-semantic-error/5 flex items-center gap-2.5 transition-colors duration-150">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-semantic-error"><circle cx="12" cy="12" r="10"/><line x1="15" x2="9" y1="9" y2="15"/><line x1="9" x2="15" y1="9" y2="15"/></svg>
+        Delete for everyone
+      </button>
+    </div>
+
     <!-- DM Chat Overlay -->
     <div id="dm-overlay" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4" style="background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);">
       <div id="dm-panel" class="bg-surface-card border border-hairline rounded-t-xl sm:rounded-xl w-full sm:max-w-md h-[80vh] sm:h-[70vh] flex flex-col shadow-2xl overflow-hidden">
@@ -969,6 +981,7 @@ import ProfileSettings from '../components/ProfileSettings.astro';
     const overlay = document.getElementById('dm-overlay');
     const panel = document.getElementById('dm-panel');
     if (!overlay || !panel) return;
+    hideContextMenu();
     panel.style.animation = 'dm-inbox-exit 0.25s cubic-bezier(0.4, 0, 1, 1) forwards';
     setTimeout(() => {
       overlay.classList.add('hidden');
@@ -1006,10 +1019,15 @@ import ProfileSettings from '../components/ProfileSettings.astro';
       const isMine = msg.senderId === user.id;
       const time = new Date(msg.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
       return `
-        <div class="flex ${isMine ? 'justify-end' : 'justify-start'} animate-fade-in-up">
-          <div class="${isMine ? 'bg-primary text-white' : 'bg-canvas-soft border border-hairline text-ink'} px-4 py-2.5 rounded-lg max-w-[80%]">
+        <div class="flex ${isMine ? 'justify-end' : 'justify-start'} animate-fade-in-up group/msg relative">
+          <div class="${isMine ? 'bg-primary text-white' : 'bg-canvas-soft border border-hairline text-ink'} px-4 py-2.5 rounded-lg max-w-[80%] relative">
             <p class="text-sm leading-relaxed">${escapeHtml(msg.content)}</p>
-            <span class="text-[10px] ${isMine ? 'text-white/60' : 'text-muted'} mt-1 block">${time}</span>
+            <div class="flex items-center gap-2 mt-1 ${isMine ? 'justify-end' : 'justify-start'}">
+              <span class="text-[10px] ${isMine ? 'text-white/60' : 'text-muted'}">${time}</span>
+              <button data-msg-id="${msg.id}" data-sender-id="${msg.senderId}" data-receiver-id="${msg.receiverId || ''}" class="dm-msg-menu-btn sm:opacity-0 sm:group-hover/msg:opacity-100 focus:opacity-100 w-5 h-5 rounded flex items-center justify-center ${isMine ? 'text-white/60 hover:text-white hover:bg-white/10' : 'text-muted hover:text-ink hover:bg-canvas-soft'} transition-all duration-200" title="More options">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+              </button>
+            </div>
           </div>
         </div>
       `;
@@ -1030,12 +1048,31 @@ import ProfileSettings from '../components/ProfileSettings.astro';
         }
       });
       dmSocket.on('new-dm', (msg: any) => {
+        const user = getCurrentUser();
+        // Skip messages from self (already added optimistically)
+        if (user && msg.senderId === user.id) {
+          // Replace the temp optimistic message with the real one
+          const tempIdx = dmMessages.findIndex((m: any) => m.id?.startsWith('temp-') && m.content === msg.content && m.senderId === msg.senderId);
+          if (tempIdx !== -1) {
+            dmMessages[tempIdx] = msg;
+            renderDMMessages();
+          }
+          window.dispatchEvent(new CustomEvent('dm-sent'));
+          return;
+        }
         if (msg.senderId === dmPartnerId || msg.receiverId === dmPartnerId) {
           dmMessages.push(msg);
           renderDMMessages();
         }
         // Refresh conversations list in chat sidebar
         window.dispatchEvent(new CustomEvent('dm-sent'));
+      });
+
+      dmSocket.on('dm-deleted', (data: any) => {
+        if (data.scope === 'all' && data.messageId) {
+          dmMessages = dmMessages.filter((m: any) => m.id !== data.messageId);
+          renderDMMessages();
+        }
       });
     } catch (e) {
       console.error('DM socket error:', e);
@@ -1096,6 +1133,97 @@ import ProfileSettings from '../components/ProfileSettings.astro';
       sendDM(input.value.trim());
       input.value = '';
     }
+  });
+
+  // ── DM Message Context Menu ──
+  let ctxMenuTarget: any = null;
+
+  const showContextMenu = (x: number, y: number, msgData: any) => {
+    const menu = document.getElementById('dm-context-menu');
+    const deleteAllBtn = document.getElementById('dm-ctx-delete-all');
+    if (!menu) return;
+    ctxMenuTarget = msgData;
+
+    // Only show "delete for everyone" if the message is from the current user
+    const user = getCurrentUser();
+    if (user && msgData.senderId === user.id) {
+      deleteAllBtn?.classList.remove('hidden');
+    } else {
+      deleteAllBtn?.classList.add('hidden');
+    }
+
+    // Position menu — keep within viewport
+    menu.style.left = `${Math.min(x, window.innerWidth - 180)}px`;
+    menu.style.top = `${Math.min(y, window.innerHeight - 100)}px`;
+    menu.classList.remove('hidden');
+  };
+
+  const hideContextMenu = () => {
+    const menu = document.getElementById('dm-context-menu');
+    if (menu) menu.classList.add('hidden');
+    ctxMenuTarget = null;
+  };
+
+  const deleteDM = async (scope: 'me' | 'all') => {
+    if (!ctxMenuTarget) return;
+    const msgId = ctxMenuTarget.id;
+    if (!msgId || msgId.startsWith('temp-')) return;
+
+    try {
+      const res = await fetch(`${DM_URL}/${msgId}?scope=${scope}`, {
+        method: 'DELETE',
+        headers: getDmHeaders(),
+      });
+      if (!res.ok) throw new Error('Failed to delete');
+
+      if (scope === 'all') {
+        // Notify the other user via socket
+        const user = getCurrentUser();
+        if (user && dmSocket && dmSocket.connected) {
+          dmSocket.emit('delete-dm', {
+            messageId: msgId,
+            senderId: user.id,
+            receiverId: dmPartnerId,
+            scope: 'all',
+          });
+        }
+        // Remove from local list
+        dmMessages = dmMessages.filter((m: any) => m.id !== msgId);
+        renderDMMessages();
+      } else {
+        // Delete for me — just remove from local list
+        dmMessages = dmMessages.filter((m: any) => m.id !== msgId);
+        renderDMMessages();
+      }
+    } catch (err) {
+      console.error('Failed to delete DM:', err);
+    }
+    hideContextMenu();
+  };
+
+  // Delegate click on triple-dot buttons in DM messages
+  document.getElementById('dm-messages')?.addEventListener('click', (e: any) => {
+    const btn = e.target.closest('.dm-msg-menu-btn');
+    if (btn) {
+      e.stopPropagation();
+      const msgId = btn.getAttribute('data-msg-id');
+      const senderId = btn.getAttribute('data-sender-id');
+      const receiverId = btn.getAttribute('data-receiver-id');
+      showContextMenu(e.clientX, e.clientY, { id: msgId, senderId, receiverId });
+    }
+  });
+
+  document.getElementById('dm-ctx-delete-me')?.addEventListener('click', () => deleteDM('me'));
+  document.getElementById('dm-ctx-delete-all')?.addEventListener('click', () => deleteDM('all'));
+
+  // Close context menu on outside click
+  document.addEventListener('click', (e: any) => {
+    if (!e.target.closest('#dm-context-menu')) hideContextMenu();
+  });
+
+  // Close context menu on Escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') hideContextMenu();
   });
 
   // Listen for open-dm events from other components
