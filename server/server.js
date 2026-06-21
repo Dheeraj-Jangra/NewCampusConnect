@@ -164,85 +164,8 @@ async function seedAdminUser() {
   }
 }
 
-// Seed data function to prepopulate database if completely empty
-async function seedDatabaseIfEmpty() {
-  try {
-    const noticeCount = await prisma.notice.count();
-    if (noticeCount === 0) {
-      console.log('Seeding default notices...');
-      await prisma.notice.createMany({
-        data: [
-          {
-            title: "End-Semester Examinations Schedule - Fall 2026",
-            category: "exam",
-            author: "Prof. Evelyn Vance",
-            content: "The end-semester exam schedule has been updated. Examinations will begin on July 5, 2026. Please check your student portal for your personalized exam seating arrangement and hall tickets. Ensure that you clear all library dues by next Friday."
-          },
-          {
-            title: "Annual Hackathon 'CodeShift 2026' Registrations Open",
-            category: "event",
-            author: "Dept. of Computer Science",
-            content: "Get ready to solve real-world problems! CodeShift 2026 registrations are open until June 25. Prize pools exceed $10,000, and internships are up for grabs. Teams must consist of 3-4 students."
-          },
-          {
-            title: "Mandatory Academic Advisory Meetings",
-            category: "academic",
-            author: "Office of the Dean",
-            content: "All sophomore and junior students must schedule an academic advising session with their respective supervisors before selecting elective modules for the upcoming Spring semester."
-          }
-        ]
-      });
-    }
-
-    const classCount = await prisma.class.count();
-    if (classCount === 0) {
-      console.log('Seeding default classes...');
-      const d = new Date();
-      
-      const getFormattedTime = (offsetMins) => {
-        const date = new Date(d.getTime() + offsetMins * 60 * 1000);
-        return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-      };
-
-      await prisma.class.createMany({
-        data: [
-          {
-            subject: "Interactive UI & Web Aesthetics",
-            professor: "Prof. Evelyn Vance",
-            time: getFormattedTime(12),
-            duration: "90",
-            room: "Aero-Lab 402 / Meet",
-            link: "https://meet.google.com/vui-aest-hub"
-          },
-          {
-            subject: "Discrete Mathematics & Graph Structures",
-            professor: "Dr. Arthur Pendelton",
-            time: getFormattedTime(95),
-            duration: "60",
-            room: "Seminar Block B",
-            link: ""
-          },
-          {
-            subject: "Introductory Machine Learning & NLP",
-            professor: "Prof. Evelyn Vance",
-            time: getFormattedTime(-50),
-            duration: "60",
-            room: "CSE Lab 3",
-            link: "https://meet.google.com/ml-nlp-lecture"
-          }
-        ]
-      });
-    }
-
-    // Chat messages are not seeded — they are created live by users through the chat UI.
-  } catch (err) {
-    console.error('Error seeding database:', err);
-  }
-}
-
 // Start Server
 httpServer.listen(port, async () => {
   console.log(`Server is running on port ${port}`);
   await seedAdminUser();
-  await seedDatabaseIfEmpty();
 });

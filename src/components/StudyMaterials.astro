@@ -102,46 +102,6 @@
 </div>
 
 <script>
-  // Mock Default Materials
-  const defaultMaterials = [
-    {
-      id: "m1",
-      title: "Lecture Notes 06: SVG & Fluid Canvas Motion",
-      course: "CS-402",
-      type: "pdf",
-      size: "2.4 MB",
-      author: "Prof. Evelyn Vance",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString()
-    },
-    {
-      id: "m2",
-      title: "Math Induction & Set Theory Cheatsheet",
-      course: "MATH-202",
-      type: "pdf",
-      size: "820 KB",
-      author: "Dr. Arthur Pendelton",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString()
-    },
-    {
-      id: "m3",
-      title: "Embedded Hardware Schematics & Pin Configurations",
-      course: "ELEC-301",
-      type: "zip",
-      size: "14.2 MB",
-      author: "Office of Elec-Sciences",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 30).toISOString()
-    },
-    {
-      id: "m4",
-      title: "Introductory Python Notebooks & Sandbox Exercises",
-      course: "CS-101",
-      type: "ipynb",
-      size: "4.5 MB",
-      author: "T.A. Marcus Aurel",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString()
-    }
-  ];
-
   // HTML sanitization to prevent XSS
   const escapeHtml = (str: string) => {
     if (!str) return '';
@@ -176,46 +136,20 @@
         return;
       }
     } catch (err) {
-      console.warn('Failed to delete material on backend, removing locally:', err);
+      console.error('Failed to delete material on backend:', err);
+      window.dispatchEvent(new CustomEvent('cc-toast-alert', { detail: { message: 'Failed to delete material', type: 'error' } }));
     }
-    const localMaterials = JSON.parse(localStorage.getItem('cc-materials') || '[]');
-    const filtered = localMaterials.filter((m: any) => m.id !== id);
-    localStorage.setItem('cc-materials', JSON.stringify(filtered));
-    window.dispatchEvent(new CustomEvent('cc-toast-alert', { detail: { message: 'Material removed locally', type: 'warning' } }));
-    await renderMaterials();
-    window.dispatchEvent(new CustomEvent('cc-materials-changed'));
   };
 
   const getMaterials = async () => {
-    try {
-      const token = localStorage.getItem('cc-token');
-      const headers: Record<string, string> = {};
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-      const res = await fetch(API_URL, { headers });
-      if (!res.ok) throw new Error('Failed to fetch materials from API');
-      const data = await res.json();
-      localStorage.setItem('cc-materials', JSON.stringify(data));
-      return data;
-    } catch (err) {
-      console.warn('Backend materials offline, falling back to cache:', err);
-      const data = localStorage.getItem('cc-materials');
-      if (!data) {
-        localStorage.setItem('cc-materials', JSON.stringify(defaultMaterials));
-        return defaultMaterials;
-      }
-      try {
-        const parsed = JSON.parse(data);
-        if (parsed.length > 0 && (parsed[0].course === undefined || parsed[0].size === undefined)) {
-          localStorage.setItem('cc-materials', JSON.stringify(defaultMaterials));
-          return defaultMaterials;
-        }
-        return parsed;
-      } catch {
-        return defaultMaterials;
-      }
+    const token = localStorage.getItem('cc-token');
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
+    const res = await fetch(API_URL, { headers });
+    if (!res.ok) throw new Error('Failed to fetch materials from API');
+    return res.json();
   };
 
   // Render materials list
@@ -297,77 +231,36 @@
         const icon = btn.querySelector('svg');
         if (!span || !icon || !id) return;
 
-        btn.disabled = true;
-        span.textContent = 'Preparing...';
-
-        // Check if mock file
-        const isMock = id.startsWith('m') && id.length <= 3;
-
-        if (isMock) {
-          // Simulated mock download
-          let progress = 0;
-          const interval = setInterval(() => {
-            progress += 25;
-            span.textContent = `Downloading ${progress}%`;
-            
-            if (progress >= 100) {
-              clearInterval(interval);
-              span.textContent = 'Downloaded';
-              btn.style.backgroundColor = 'var(--color-semantic-success)';
-              btn.style.color = 'var(--color-on-primary)';
-              btn.style.borderColor = 'var(--color-semantic-success)';
-              btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5 text-white"><path d="M20 6 9 17l-5-5"/></svg> <span>Downloaded</span>`;
-              
-              window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
-                detail: { message: 'Download finished successfully!', type: 'success' } 
-              }));
-
-              setTimeout(() => {
-                btn.disabled = false;
-                btn.style.backgroundColor = '';
-                btn.style.color = '';
-                btn.style.borderColor = '';
-                btn.innerHTML = `
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                  <span>Download</span>
-                `;
-              }, 2000);
-            }
-          }, 300);
-        } else {
-          // Real download from backend
-          span.textContent = 'Downloading...';
+        span.textContent = 'Downloading...';
+        
+        const downloadUrl = `${API_URL}/download/${id}`;
+        const anchor = document.createElement('a');
+        anchor.href = downloadUrl;
+        anchor.target = '_blank';
+        anchor.click();
+        
+        setTimeout(() => {
+          span.textContent = 'Downloaded';
+          btn.style.backgroundColor = 'var(--color-semantic-success)';
+          btn.style.color = 'var(--color-on-primary)';
+          btn.style.borderColor = 'var(--color-semantic-success)';
+          btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5 text-white"><path d="M20 6 9 17l-5-5"/></svg> <span>Downloaded</span>`;
           
-          // Triggers anchor download natively
-          const downloadUrl = `${API_URL}/download/${id}`;
-          const anchor = document.createElement('a');
-          anchor.href = downloadUrl;
-          anchor.target = '_blank';
-          anchor.click();
-          
+          window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
+            detail: { message: 'Resource downloaded from server!', type: 'success' } 
+          }));
+
           setTimeout(() => {
-            span.textContent = 'Downloaded';
-            btn.style.backgroundColor = 'var(--color-semantic-success)';
-            btn.style.color = 'var(--color-on-primary)';
-            btn.style.borderColor = 'var(--color-semantic-success)';
-            btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5 text-white"><path d="M20 6 9 17l-5-5"/></svg> <span>Downloaded</span>`;
-            
-            window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
-              detail: { message: 'Resource downloaded from server!', type: 'success' } 
-            }));
-
-            setTimeout(() => {
-              btn.disabled = false;
-              btn.style.backgroundColor = '';
-              btn.style.color = '';
-              btn.style.borderColor = '';
-              btn.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                <span>Download</span>
-              `;
-            }, 2000);
-          }, 1000);
-        }
+            btn.disabled = false;
+            btn.style.backgroundColor = '';
+            btn.style.color = '';
+            btn.style.borderColor = '';
+            btn.innerHTML = `
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+              <span>Download</span>
+            `;
+          }, 2000);
+        }, 1000);
       });
     });
 
@@ -444,7 +337,6 @@
       }
     });
 
-    // Form submit upload simulation or real
     form.addEventListener('submit', (e) => {
       e.preventDefault();
 
@@ -457,13 +349,18 @@
       const course = courseSelect.value;
 
       if (!title) return;
+      if (!selectedFile) {
+        window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
+          detail: { message: 'Please select a file to upload', type: 'warning' } 
+        }));
+        return;
+      }
 
       submitBtn.disabled = true;
       progressContainer.classList.remove('hidden');
       progressBar.style.width = '0%';
       progressPercent.textContent = '0%';
 
-      const activeRole = localStorage.getItem('cc-active-role') || 'student';
       const userStr = localStorage.getItem('cc-user');
       let author = 'Faculty Member';
       if (userStr) {
@@ -473,111 +370,60 @@
         } catch {}
       }
 
-      if (selectedFile) {
-        // Real file upload via XMLHttpRequest
-        const formData = new FormData();
-        formData.append('title', title);
-        formData.append('course', course);
-        formData.append('author', author);
-        formData.append('file', selectedFile);
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('course', course);
+      formData.append('author', author);
+      formData.append('file', selectedFile);
 
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', `${API_URL}/upload`, true);
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `${API_URL}/upload`, true);
 
-        // Attach Authorization header
-        const token = localStorage.getItem('cc-token');
-        if (token) {
-          xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-        }
-
-        // Upload progress listener
-        xhr.upload.onprogress = (event) => {
-          if (event.lengthComputable) {
-            const percent = Math.round((event.loaded / event.total) * 100);
-            progressBar.style.width = `${percent}%`;
-            progressPercent.textContent = `${percent}%`;
-          }
-        };
-
-        xhr.onload = async () => {
-          if (xhr.status === 200 || xhr.status === 201) {
-            window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
-              detail: { message: 'Document uploaded to server successfully!', type: 'success' } 
-            }));
-            finishUpload();
-          } else {
-            console.error('File upload failed, falling back to simulated offline upload');
-            handleOfflineUpload(title, course, author);
-          }
-        };
-
-        xhr.onerror = () => {
-          console.error('File upload connection error, falling back to simulated offline upload');
-          handleOfflineUpload(title, course, author);
-        };
-
-        xhr.send(formData);
-      } else {
-        // No file selected, simulation upload
-        let progress = 0;
-        const interval = setInterval(() => {
-          progress += Math.floor(Math.random() * 15) + 5;
-          if (progress > 100) progress = 100;
-          progressBar.style.width = `${progress}%`;
-          progressPercent.textContent = `${progress}%`;
-
-          if (progress >= 100) {
-            clearInterval(interval);
-            handleOfflineUpload(title, course, author);
-          }
-        }, 150);
+      const token = localStorage.getItem('cc-token');
+      if (token) {
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
       }
 
-      const handleOfflineUpload = (t: string, c: string, auth: string) => {
-        const mockSize = selectedFile 
-          ? `${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB`
-          : `${(Math.random() * 4 + 1).toFixed(1)} MB`;
-
-        const mockType = selectedFile 
-          ? selectedFile.name.split('.').pop() || 'pdf'
-          : 'pdf';
-
-        const localMaterials = JSON.parse(localStorage.getItem('cc-materials') || '[]');
-        const newLocalMaterial = {
-          id: Math.random().toString(36).substr(2, 9),
-          title: t,
-          course: c,
-          type: mockType,
-          size: mockSize,
-          author: auth,
-          timestamp: new Date().toISOString()
-        };
-
-        localMaterials.push(newLocalMaterial);
-        localStorage.setItem('cc-materials', JSON.stringify(localMaterials));
-
-        window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
-          detail: { message: 'Document published locally (offline mode)', type: 'warning' } 
-        }));
-
-        finishUpload();
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const percent = Math.round((event.loaded / event.total) * 100);
+          progressBar.style.width = `${percent}%`;
+          progressPercent.textContent = `${percent}%`;
+        }
       };
 
-      const finishUpload = () => {
-        form.reset();
-        selectedFile = null;
-        fileInput.value = '';
-        overlay.classList.add('hidden');
-        
-        setTimeout(async () => {
-          progressContainer.classList.add('hidden');
-          progressBar.style.width = '0%';
+      xhr.onload = () => {
+        if (xhr.status === 200 || xhr.status === 201) {
+          window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
+            detail: { message: 'Document uploaded successfully!', type: 'success' } 
+          }));
+          form.reset();
+          selectedFile = null;
+          fileInput.value = '';
+          overlay.classList.add('hidden');
+          setTimeout(async () => {
+            progressContainer.classList.add('hidden');
+            progressBar.style.width = '0%';
+            submitBtn.disabled = false;
+            await renderMaterials();
+            window.dispatchEvent(new CustomEvent('cc-materials-changed'));
+          }, 400);
+        } else {
+          window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
+            detail: { message: 'Upload failed', type: 'error' } 
+          }));
           submitBtn.disabled = false;
-          
-          await renderMaterials();
-          window.dispatchEvent(new CustomEvent('cc-materials-changed'));
-        }, 400);
+        }
       };
+
+      xhr.onerror = () => {
+        window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
+          detail: { message: 'Upload failed due to connection error', type: 'error' } 
+        }));
+        submitBtn.disabled = false;
+      };
+
+      xhr.send(formData);
     });
   };
 

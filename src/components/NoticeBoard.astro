@@ -80,42 +80,6 @@
 </div>
 
 <script>
-  // Mock Default Notices
-  const defaultNotices = [
-    {
-      id: "1",
-      title: "End-Semester Examinations Schedule - Fall 2026",
-      category: "exam",
-      author: "Prof. Evelyn Vance",
-      content: "The end-semester exam schedule has been updated. Examinations will begin on July 5, 2026. Please check your student portal for your personalized exam seating arrangement and hall tickets. Ensure that you clear all library dues by next Friday.",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString()
-    },
-    {
-      id: "2",
-      title: "Annual Hackathon 'CodeShift 2026' Registrations Open",
-      category: "event",
-      author: "Dept. of Computer Science",
-      content: "Get ready to solve real-world problems! CodeShift 2026 registrations are open until June 25. Prize pools exceed $10,000, and internships are up for grabs. Teams must consist of 3-4 students. The opening ceremony takes place in the Seminar Hall.",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString()
-    },
-    {
-      id: "3",
-      title: "Mandatory Academic Advisory Meetings",
-      category: "academic",
-      author: "Office of the Dean",
-      content: "All sophomore and junior students must schedule an academic advising session with their respective supervisors before selecting elective modules for the upcoming Spring semester. Slots can be booked on the department notice board.",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString()
-    },
-    {
-      id: "4",
-      title: "Campus Library Timing Extensions",
-      category: "announcement",
-      author: "Chief Librarian",
-      content: "To support students preparing for upcoming examinations, the Central Library will remain open 24/7 starting Monday, June 22. Silent zones will be strictly enforced, and coffee stations will be operational between 10 PM and 6 AM.",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString()
-    }
-  ];
-
   // HTML sanitization to prevent XSS
   const escapeHtml = (str: string) => {
     if (!str) return '';
@@ -161,43 +125,21 @@
       console.warn('Failed to delete notice on backend, removing locally:', err);
     }
 
-    // Offline fallback: remove from localStorage
-    const localNotices = JSON.parse(localStorage.getItem('cc-notices') || '[]');
-    const filtered = localNotices.filter((n: any) => n.id !== id);
-    localStorage.setItem('cc-notices', JSON.stringify(filtered));
+    console.error('Failed to delete notice on backend:', err);
     window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
-      detail: { message: 'Notice removed locally', type: 'warning' } 
+      detail: { message: 'Failed to delete notice', type: 'error' } 
     }));
-    await renderNotices();
-    window.dispatchEvent(new CustomEvent('cc-notices-changed'));
   };
 
-  // Load from server with local storage fallback
   const getNotices = async () => {
-    try {
-      const token = localStorage.getItem('cc-token');
-      const headers: Record<string, string> = {};
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-      const res = await fetch(API_URL, { headers });
-      if (!res.ok) throw new Error('Failed to fetch from API');
-      const data = await res.json();
-      localStorage.setItem('cc-notices', JSON.stringify(data));
-      return data;
-    } catch (err) {
-      console.warn('Backend notices offline, falling back to cache:', err);
-      const data = localStorage.getItem('cc-notices');
-      if (!data) {
-        localStorage.setItem('cc-notices', JSON.stringify(defaultNotices));
-        return defaultNotices;
-      }
-      try {
-        return JSON.parse(data);
-      } catch {
-        return defaultNotices;
-      }
+    const token = localStorage.getItem('cc-token');
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
+    const res = await fetch(API_URL, { headers });
+    if (!res.ok) throw new Error('Failed to fetch notices from API');
+    return res.json();
   };
 
   // Render Notices List
@@ -348,9 +290,8 @@
         author
       };
 
-      let saveSuccess = false;
-      const token = localStorage.getItem('cc-token');
       try {
+        const token = localStorage.getItem('cc-token');
         const headers: Record<string, string> = {
           'Content-Type': 'application/json'
         };
@@ -362,38 +303,16 @@
           headers,
           body: JSON.stringify(payload)
         });
-        if (res.ok) {
-          saveSuccess = true;
-          window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
-            detail: { message: 'Notice published successfully!', type: 'success' } 
-          }));
-        }
-      } catch (err) {
-        console.warn('Error saving notice to backend, falling back to local storage:', err);
-      }
-
-      if (!saveSuccess) {
-        // Fallback local storage
-        const localNotices = JSON.parse(localStorage.getItem('cc-notices') || '[]');
-        const dateOptions: Intl.DateTimeFormatOptions = { month: 'long', day: 'numeric', year: 'numeric' };
-        const formattedDate = new Date().toLocaleDateString('en-US', dateOptions);
-        
-        const offlineNotice = {
-          id: Math.random().toString(36).substr(2, 9),
-          title,
-          category,
-          author,
-          date: formattedDate,
-          content,
-          timestamp: new Date().toISOString()
-        };
-
-        localNotices.push(offlineNotice);
-        localStorage.setItem('cc-notices', JSON.stringify(localNotices));
-        
+        if (!res.ok) throw new Error('Failed to publish notice');
         window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
-          detail: { message: 'Notice published locally (offline mode)', type: 'warning' } 
+          detail: { message: 'Notice published successfully!', type: 'success' } 
         }));
+      } catch (err) {
+        console.error('Failed to publish notice:', err);
+        window.dispatchEvent(new CustomEvent('cc-toast-alert', { 
+          detail: { message: 'Failed to publish notice', type: 'error' } 
+        }));
+        return;
       }
 
       // Reset form
