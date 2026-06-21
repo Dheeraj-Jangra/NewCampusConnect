@@ -946,10 +946,11 @@ import ProfileSettings from '../components/ProfileSettings.astro';
 
   const openDM = async (userId: string, userName: string, userRole: string) => {
     const overlay = document.getElementById('dm-overlay');
+    const panel = document.getElementById('dm-panel');
     const partnerName = document.getElementById('dm-partner-name');
     const partnerRole = document.getElementById('dm-partner-role');
     const partnerAvatar = document.getElementById('dm-partner-avatar');
-    if (!overlay) return;
+    if (!overlay || !panel) return;
 
     dmPartnerId = userId;
     if (partnerName) partnerName.textContent = userName;
@@ -957,15 +958,24 @@ import ProfileSettings from '../components/ProfileSettings.astro';
     if (partnerAvatar) partnerAvatar.textContent = userName.charAt(0).toUpperCase();
 
     overlay.classList.remove('hidden');
+    panel.style.animation = 'none';
+    panel.offsetHeight;
+    panel.style.animation = 'dm-inbox-enter 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards';
     await fetchDMMessages();
     setupDMSocket();
   };
 
   const closeDM = () => {
     const overlay = document.getElementById('dm-overlay');
-    if (overlay) overlay.classList.add('hidden');
-    dmPartnerId = '';
-    dmMessages = [];
+    const panel = document.getElementById('dm-panel');
+    if (!overlay || !panel) return;
+    panel.style.animation = 'dm-inbox-exit 0.25s cubic-bezier(0.4, 0, 1, 1) forwards';
+    setTimeout(() => {
+      overlay.classList.add('hidden');
+      panel.style.animation = '';
+      dmPartnerId = '';
+      dmMessages = [];
+    }, 250);
   };
 
   const fetchDMMessages = async () => {
@@ -1101,14 +1111,24 @@ import ProfileSettings from '../components/ProfileSettings.astro';
 
   const openDMInbox = async () => {
     const overlay = document.getElementById('dm-inbox-overlay');
-    if (!overlay) return;
+    const panel = document.getElementById('dm-inbox-panel');
+    if (!overlay || !panel) return;
     overlay.classList.remove('hidden');
+    panel.style.animation = 'none';
+    panel.offsetHeight;
+    panel.style.animation = 'dm-inbox-enter 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards';
     await Promise.all([fetchDMInboxConversations(), fetchDMInboxMembers()]);
   };
 
   const closeDMInbox = () => {
     const overlay = document.getElementById('dm-inbox-overlay');
-    if (overlay) overlay.classList.add('hidden');
+    const panel = document.getElementById('dm-inbox-panel');
+    if (!overlay || !panel) return;
+    panel.style.animation = 'dm-inbox-exit 0.25s cubic-bezier(0.4, 0, 1, 1) forwards';
+    setTimeout(() => {
+      overlay.classList.add('hidden');
+      panel.style.animation = '';
+    }, 250);
   };
 
   const fetchDMInboxConversations = async () => {

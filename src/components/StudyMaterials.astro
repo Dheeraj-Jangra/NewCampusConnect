@@ -101,6 +101,30 @@
   </div>
 </div>
 
+<!-- File Preview Overlay -->
+<div id="material-preview-overlay" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4" style="background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);">
+  <div id="material-preview-panel" class="bg-surface-card border border-hairline rounded-t-xl sm:rounded-xl w-full sm:max-w-3xl h-[80vh] sm:h-[75vh] flex flex-col shadow-2xl overflow-hidden">
+    <div class="flex items-center justify-between p-4 border-b border-hairline shrink-0">
+      <div class="flex items-center gap-3 min-w-0">
+        <button id="preview-close-btn" class="w-8 h-8 rounded-full flex items-center justify-center text-muted hover:text-ink hover:bg-canvas-soft transition-all duration-200 shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+        </button>
+        <div class="min-w-0">
+          <h4 id="preview-title" class="text-sm font-semibold text-ink truncate">File Preview</h4>
+          <span id="preview-meta" class="text-[10px] text-muted">—</span>
+        </div>
+      </div>
+      <a id="preview-download-btn" href="#" target="_blank" class="btn-secondary btn-press text-xs h-8 px-3 flex items-center gap-1.5 shrink-0 hover:scale-105 transition-all duration-200">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+        <span>Download</span>
+      </a>
+    </div>
+    <div id="preview-content" class="flex-1 overflow-auto bg-canvas-soft/30 flex items-center justify-center">
+      <!-- Rendered by JS -->
+    </div>
+  </div>
+</div>
+
 <script>
   // HTML sanitization to prevent XSS
   const escapeHtml = (str: string) => {
@@ -224,6 +248,10 @@
           </div>
           
           <div class="flex items-center gap-1">
+            <button data-id="${escapeHtml(m.id)}" data-title="${escapeHtml(m.title)}" data-type="${escapeHtml(m.type || '')}" class="preview-btn btn-secondary btn-press flex items-center gap-1.5 text-xs py-1.5 h-8 hover:scale-105 transition-transform duration-200" title="Preview file">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <span class="hidden sm:inline">Preview</span>
+            </button>
             <button data-id="${escapeHtml(m.id)}" class="download-btn btn-secondary btn-press flex items-center gap-1.5 text-xs py-1.5 h-8 hover:scale-105 transition-transform duration-200">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
               <span>Download</span>
@@ -275,6 +303,19 @@
             `;
           }, 2000);
         }, 1000);
+      });
+    });
+
+    // Attach preview triggers
+    const previewBtns = listContainer.querySelectorAll('.preview-btn');
+    previewBtns.forEach((btn: any) => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const title = btn.getAttribute('data-title');
+        const type = (btn.getAttribute('data-type') || '').toLowerCase();
+        if (!id || !title) return;
+        const url = `${API_URL}/preview/${id}`;
+        openPreview(url, title, type);
       });
     });
 
@@ -512,4 +553,78 @@
   
   // Custom SPA mount trigger
   window.addEventListener('cc-tab-active-materials', initMaterials);
+
+  // Preview overlay logic
+  function openPreview(url: string, title: string, type: string) {
+    const overlay = document.getElementById('material-preview-overlay');
+    const panel = document.getElementById('material-preview-panel');
+    const content = document.getElementById('preview-content');
+    const titleEl = document.getElementById('preview-title');
+    const metaEl = document.getElementById('preview-meta');
+    const downloadBtn = document.getElementById('preview-download-btn');
+    if (!overlay || !panel || !content || !titleEl || !metaEl || !downloadBtn) return;
+
+    titleEl.textContent = title;
+    metaEl.textContent = type.toUpperCase() || 'File';
+    // Convert preview URL to download URL for the download button
+    const downloadUrl = url.replace('/preview/', '/download/');
+    downloadBtn.href = downloadUrl;
+
+    // Determine preview renderer
+    const imageTypes = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'];
+    const pdfTypes = ['pdf'];
+    const videoTypes = ['mp4', 'webm', 'ogg', 'mov'];
+    const audioTypes = ['mp3', 'wav', 'ogg', 'aac', 'flac'];
+
+    let html = '';
+    if (imageTypes.includes(type)) {
+      html = `<img src="${escapeHtml(url)}" alt="${escapeHtml(title)}" class="max-w-full max-h-full object-contain p-4 animate-fade-in-up" loading="lazy" />`;
+    } else if (pdfTypes.includes(type)) {
+      html = `<iframe src="${escapeHtml(url)}" class="w-full h-full border-0" title="${escapeHtml(title)}"></iframe>`;
+    } else if (videoTypes.includes(type)) {
+      html = `<video controls class="max-w-full max-h-full p-4 animate-fade-in-up" preload="metadata"><source src="${escapeHtml(url)}" type="video/${type}">Your browser does not support video preview.</video>`;
+    } else if (audioTypes.includes(type)) {
+      html = `
+        <div class="flex flex-col items-center gap-4 p-8 animate-fade-in-up">
+          <div class="w-20 h-20 rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-primary"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+          </div>
+          <audio controls class="w-full max-w-md" preload="metadata"><source src="${escapeHtml(url)}" type="audio/${type}">Your browser does not support audio preview.</audio>
+        </div>`;
+    } else {
+      html = `
+        <div class="flex flex-col items-center gap-4 p-8 text-center animate-fade-in-up">
+          <div class="w-16 h-16 rounded-full bg-canvas-soft border border-hairline flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-muted"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
+          <p class="text-sm text-muted font-medium">Preview not available for this file type</p>
+          <a href="${escapeHtml(url)}" target="_blank" download class="btn-primary btn-press h-8 px-4 text-xs font-semibold rounded-full inline-flex items-center gap-1.5 hover:scale-105 transition-all duration-200">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+            Download Instead
+          </a>
+        </div>`;
+    }
+    content.innerHTML = html;
+
+    overlay.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closePreview() {
+    const overlay = document.getElementById('material-preview-overlay');
+    const content = document.getElementById('preview-content');
+    if (!overlay) return;
+    overlay.classList.add('hidden');
+    document.body.style.overflow = '';
+    if (content) content.innerHTML = '';
+  }
+
+  // Bind preview close
+  document.getElementById('preview-close-btn')?.addEventListener('click', closePreview);
+  document.getElementById('material-preview-overlay')?.addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) closePreview();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closePreview();
+  });
 </script>

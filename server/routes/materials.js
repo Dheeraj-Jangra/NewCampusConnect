@@ -192,6 +192,57 @@ router.get('/download/:id', async (req, res) => {
   }
 });
 
+// Preview a material file inline (no download)
+router.get('/preview/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(id)) {
+      return res.status(400).json({ error: 'Invalid material ID format' });
+    }
+
+    const material = await prisma.studyMaterial.findUnique({ where: { id } });
+    if (!material) {
+      return res.status(404).json({ error: 'Material resource not found' });
+    }
+
+    const filePath = path.join(uploadsDir, material.fileName);
+
+    const resolvedPath = path.resolve(filePath);
+    const resolvedUploadsDir = path.resolve(uploadsDir);
+    if (!resolvedPath.startsWith(resolvedUploadsDir)) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'Physical file not found on disk' });
+    }
+
+    // Set Content-Disposition to inline so browser displays instead of downloading
+    const mimeTypes = {
+      pdf: 'application/pdf',
+      jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif',
+      webp: 'image/webp', svg: 'image/svg+xml', bmp: 'image/bmp',
+      mp4: 'video/mp4', webm: 'video/webm', ogg: 'video/ogg', mov: 'video/quicktime',
+      mp3: 'audio/mpeg', wav: 'audio/wav', aac: 'audio/aac', flac: 'audio/flac',
+      txt: 'text/plain', md: 'text/markdown',
+    };
+    const ext = material.type.toLowerCase();
+    const contentType = mimeTypes[ext] || 'application/octet-stream';
+
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Disposition', `inline; filename="${material.title.replace(/[^a-zA-Z0-9._-]/g, '_')}.${ext}"`);
+    res.setHeader('Cache-Control', 'private, max-age=3600');
+
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
+  } catch (error) {
+    console.error('Error previewing file:', error);
+    res.status(500).json({ error: 'Failed to preview file' });
+  }
+});
+
 // Delete material — admin: any, professor: own only, student: denied
 router.delete('/:id', authMiddleware, async (req, res) => {
   if (req.user.role !== 'professor' && req.user.role !== 'admin') {
