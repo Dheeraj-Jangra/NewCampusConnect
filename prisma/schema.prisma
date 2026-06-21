@@ -24,6 +24,7 @@ model User {
   classes        Class[]
   materials      StudyMaterial[]
   chatMessages   ChatMessage[]
+  createdChannels ChatChannel[]
 }
 
 model Notice {
@@ -90,5 +91,8 @@ model ChatChannel {
   description     String
   isDefault       Boolean  @default(false)
   postRestriction String   @default("all") // "all" | "faculty" | "admin"
+  createdById     String?
   createdAt       DateTime @default(now())
+
+  createdBy User? @relation(fields: [createdById], references: [id], onDelete: SetNull)
 }

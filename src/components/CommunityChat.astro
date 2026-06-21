@@ -130,6 +130,7 @@
     description: string;
     isDefault?: boolean;
     postRestriction?: string;
+    createdById?: string;
   }
 
   const escapeHtml = (str: string) => {
@@ -155,9 +156,23 @@
     try { return JSON.parse(userStr).role || 'student'; } catch { return 'student'; }
   };
 
+  const getUserId = (): string => {
+    const userStr = localStorage.getItem('cc-user');
+    if (!userStr) return '';
+    try { return JSON.parse(userStr).id || ''; } catch { return ''; }
+  };
+
   const canManageChannels = () => {
     const role = getUserRole();
     return role === 'professor' || role === 'admin';
+  };
+
+  const canDeleteChannel = (ch: Channel): boolean => {
+    if (ch.isDefault) return false;
+    const role = getUserRole();
+    if (role === 'admin') return true;
+    if (role === 'professor') return ch.createdById === getUserId();
+    return false;
   };
 
   const canDeleteMessage = (msg: any) => {
@@ -245,7 +260,7 @@
 
     list.innerHTML = channels.map((ch, i) => {
       const isActive = ch.id === activeChannel;
-      const deleteBtn = canManageChannels() && !ch.isDefault
+      const deleteBtn = canDeleteChannel(ch)
         ? `<button data-channel-id="${escapeHtml(ch.id)}" data-channel-label="${escapeHtml(ch.label)}" class="channel-delete-btn ml-auto p-0.5 rounded text-muted hover:text-semantic-error opacity-0 group-hover:opacity-100 transition-all duration-200 flex-shrink-0" title="Delete channel">
             <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
            </button>`
@@ -333,10 +348,9 @@
     if (desc) desc.textContent = ch.description || '';
     if (input) input.placeholder = `Message #${ch.label}...`;
 
-    // Show delete button only for non-default channels when prof/admin
+    // Show delete button only for channels the user can delete
     if (deleteBtn) {
-      const show = canManageChannels() && !ch.isDefault;
-      deleteBtn.classList.toggle('hidden', !show);
+      deleteBtn.classList.toggle('hidden', !canDeleteChannel(ch));
       deleteBtn.setAttribute('data-channel-id', ch.id);
     }
 
@@ -602,6 +616,13 @@
       labelInput.value = '';
       descInput.value = '';
       restrictionSelect.value = 'all';
+
+      // Professors cannot create admin-only channels
+      const adminOption = restrictionSelect.querySelector('option[value="admin"]') as HTMLOptionElement;
+      if (adminOption) {
+        adminOption.disabled = getUserRole() !== 'admin';
+      }
+
       labelInput.focus();
     });
 

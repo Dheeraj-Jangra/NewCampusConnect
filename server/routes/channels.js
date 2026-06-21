@@ -14,7 +14,6 @@ const DEFAULT_CHANNELS = [
   { label: 'exam-prep-group', description: 'Student-run study groups and shared study tips.', isDefault: true, postRestriction: 'all' },
 ];
 
-// Seed default channels if none exist
 async function seedDefaultChannels() {
   try {
     const count = await prisma.chatChannel.count();
@@ -32,6 +31,14 @@ router.get('/', async (req, res) => {
   try {
     const channels = await prisma.chatChannel.findMany({
       orderBy: { createdAt: 'asc' },
+      select: {
+        id: true,
+        label: true,
+        description: true,
+        isDefault: true,
+        postRestriction: true,
+        createdById: true,
+      },
     });
     res.json(channels);
   } catch (error) {
@@ -58,7 +65,11 @@ router.post('/', authMiddleware, professorMiddleware, async (req, res) => {
       return res.status(409).json({ error: 'A channel with this label already exists' });
     }
 
-    const restriction = VALID_RESTRICTIONS.includes(postRestriction) ? postRestriction : 'all';
+    // Professors can only set "all" or "faculty" — not "admin"
+    let restriction = VALID_RESTRICTIONS.includes(postRestriction) ? postRestriction : 'all';
+    if (req.user.role === 'professor' && restriction === 'admin') {
+      restriction = 'faculty'; // downgrade
+    }
 
     const channel = await prisma.chatChannel.create({
       data: {
@@ -66,6 +77,7 @@ router.post('/', authMiddleware, professorMiddleware, async (req, res) => {
         description: (description || '').trim(),
         isDefault: false,
         postRestriction: restriction,
+        createdById: req.user.id,
       },
     });
 
@@ -76,9 +88,14 @@ router.post('/', authMiddleware, professorMiddleware, async (req, res) => {
   }
 });
 
-// Update channel post restriction (professors and admins only)
-router.patch('/:id', authMiddleware, professorMiddleware, async (req, res) => {
+// Update channel post restriction (admins only)
+router.patch('/:id', authMiddleware, async (req, res) => {
   try {
+    // Only admins can change restrictions
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Only admins can change channel restrictions' });
+    }
+
     const { id } = req.params;
     const { postRestriction } = req.body;
 
@@ -103,16 +120,23 @@ router.patch('/:id', authMiddleware, professorMiddleware, async (req, res) => {
   }
 });
 
-// Delete a channel (professors and admins only)
-router.delete('/:id', authMiddleware, professorMiddleware, async (req, res) => {
+// Delete a channel
+router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     const channel = await prisma.chatChannel.findUnique({ where: { id } });
     if (!channel) {
       return res.status(404).json({ error: 'Channel not found' });
     }
+
+    // Default channels cannot be deleted by anyone
     if (channel.isDefault) {
       return res.status(403).json({ error: 'Cannot delete a default channel' });
+    }
+
+    // Professors can only delete channels they created
+    if (req.user.role === 'professor' && channel.createdById !== req.user.id) {
+      return res.status(403).json({ error: 'Professors can only delete channels they created' });
     }
 
     await prisma.chatMessage.deleteMany({ where: { channel: channel.label } });
