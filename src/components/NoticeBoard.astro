@@ -100,6 +100,8 @@
 
   let activeFilter = 'all';
   let currentRole: string = 'student';
+  let formSetupDone = false;
+  let filtersSetupDone = false;
 
   const deleteNotice = async (id: string) => {
     const token = localStorage.getItem('cc-token');
@@ -253,8 +255,10 @@
 
   // Setup Form Handler for publishing
   const setupForm = () => {
+    if (formSetupDone) return;
     const form = document.getElementById('notice-form') as HTMLFormElement;
     if (!form) return;
+    formSetupDone = true;
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -343,8 +347,10 @@
 
   // Setup filters click triggers
   const setupFilters = () => {
+    if (filtersSetupDone) return;
     const filtersContainer = document.getElementById('notice-filters');
     if (!filtersContainer) return;
+    filtersSetupDone = true;
 
     const filterBtns = filtersContainer.querySelectorAll('button');
     filterBtns.forEach((btn: any) => {

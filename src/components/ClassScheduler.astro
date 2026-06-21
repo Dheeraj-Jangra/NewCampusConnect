@@ -99,6 +99,7 @@
   import { API_BASE } from '../lib/api';
   const API_URL = `${API_BASE}/api/classes`;
   let currentRole: string = 'student';
+  let schedulerFormSetupDone = false;
 
   // Delete a class
   const deleteClass = async (id: string) => {
@@ -296,8 +297,10 @@
 
   // Schedule New Class Action
   const setupSchedulerForm = () => {
+    if (schedulerFormSetupDone) return;
     const form = document.getElementById('scheduler-form') as HTMLFormElement;
     if (!form) return;
+    schedulerFormSetupDone = true;
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();

@@ -121,6 +121,8 @@
   const API_URL = `${API_BASE}/api/materials`;
   let searchQuery = '';
   let currentRole: string = 'student';
+  let uploadFormSetupDone = false;
+  let searchSetupDone = false;
 
   // Delete a material resource
   const deleteMaterial = async (id: string) => {
@@ -296,6 +298,8 @@
     const progressPercent = document.getElementById('upload-progress-percent');
     
     if (!form || !dropZone || !fileInput || !overlay || !overlayName || !removeBtn || !submitBtn || !progressContainer || !progressBar || !progressPercent) return;
+    if (uploadFormSetupDone) return;
+    uploadFormSetupDone = true;
 
     let selectedFile: File | null = null;
 
@@ -430,8 +434,10 @@
 
   // Search logic bindings
   const setupSearch = () => {
+    if (searchSetupDone) return;
     const searchInput = document.getElementById('materials-search') as HTMLInputElement;
     if (!searchInput) return;
+    searchSetupDone = true;
 
     ['input', 'keyup', 'change'].forEach((evt) => {
       searchInput.addEventListener(evt, () => {

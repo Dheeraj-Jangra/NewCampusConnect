@@ -33,11 +33,10 @@ export const adminMiddleware = (req, res, next) => {
   next();
 };
 
-// Approved Professor Middleware
+// Approved Professor or Admin Middleware
 export const professorMiddleware = (req, res, next) => {
-  if (!req.user || req.user.role !== 'professor') {
-    return res.status(403).json({ error: 'Access denied: Professor privileges required' });
+  if (!req.user || (req.user.role !== 'professor' && req.user.role !== 'admin')) {
+    return res.status(403).json({ error: 'Access denied: Professor or admin privileges required' });
   }
-  // isApproved status should be fetched or validated
   next();
 };
