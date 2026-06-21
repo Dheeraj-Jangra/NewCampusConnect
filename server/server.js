@@ -29,14 +29,15 @@ const __dirname = path.dirname(__filename);
 // Middleware
 const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:4321')
   .split(',')
-  .map(s => s.trim());
+  .map(s => s.trim().replace(/\/+$/, '')); // strip trailing slashes
 
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (server-to-server, curl, etc.)
-    if (!origin || allowedOrigins.some(o => origin.startsWith(o))) {
+    if (!origin || allowedOrigins.some(o => origin === o)) {
       callback(null, true);
     } else {
+      console.error(`CORS blocked: origin=${origin}, allowed=${JSON.stringify(allowedOrigins)}`);
       callback(new Error(`Origin ${origin} not allowed by CORS`));
     }
   },
@@ -65,7 +66,13 @@ app.get('/api/health', (req, res) => {
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.some(o => origin === o)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`Socket.IO CORS blocked: ${origin}`));
+      }
+    },
     methods: ['GET', 'POST'],
   },
 });
