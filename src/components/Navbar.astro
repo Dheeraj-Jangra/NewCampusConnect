@@ -14,27 +14,27 @@
   </div>
 
   <!-- Global Search Bar -->
-  <div class="relative flex-1 max-w-lg mx-2 md:mx-6" id="search-container">
+  <div class="relative flex-1 min-w-0 mx-2 sm:mx-4 md:mx-6" id="search-container">
     <div class="relative">
       <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
       <input
         type="text"
         id="global-search-input"
-        placeholder="Search notices, classes, resources..."
+        placeholder="Search notices, classes..."
         autocomplete="off"
-        class="w-full h-9 pl-9 pr-20 bg-canvas-soft border border-hairline rounded-md text-sm text-ink placeholder:text-muted/60 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 input-focus-glow transition-all duration-200"
+        class="w-full h-9 pl-9 pr-3 sm:pr-20 bg-canvas-soft border border-hairline rounded-md text-sm text-ink placeholder:text-muted/60 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 input-focus-glow transition-all duration-200"
       />
-      <kbd id="search-kbd" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-muted bg-surface-card border border-hairline rounded px-1.5 py-0.5 pointer-events-none">ctrl+k</kbd>
+      <kbd id="search-kbd" class="hidden sm:block absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-muted bg-surface-card border border-hairline rounded px-1.5 py-0.5 pointer-events-none">ctrl+k</kbd>
     </div>
 
     <!-- Search Results Dropdown -->
-    <div id="search-results" class="absolute top-full left-0 right-0 mt-2 bg-surface-card border border-hairline rounded-lg shadow-lg hidden overflow-hidden z-50 animate-fade-in-up origin-top">
-      <div id="search-results-inner" class="max-h-96 overflow-y-auto p-2">
+    <div id="search-results" class="absolute top-full inset-x-0 sm:left-auto sm:right-auto sm:translate-x-0 mt-2 sm:w-full sm:max-w-lg bg-surface-card border border-hairline rounded-lg shadow-lg hidden overflow-hidden z-50 animate-fade-in-up origin-top">
+      <div id="search-results-inner" class="max-h-96 overflow-y-auto p-3">
         <!-- Populated dynamically -->
       </div>
-      <div id="search-footer" class="hidden border-t border-hairline px-3 py-1.5 text-[10px] text-muted flex items-center justify-between">
-        <span><kbd class="px-1 py-0.5 border border-hairline rounded text-[9px] font-mono">↑↓</kbd> navigate</span>
-        <span><kbd class="px-1 py-0.5 border border-hairline rounded text-[9px] font-mono">esc</kbd> close</span>
+      <div id="search-footer" class="hidden border-t border-hairline px-4 py-2 text-xs text-muted flex items-center justify-between">
+        <span><kbd class="px-1.5 py-0.5 border border-hairline rounded text-[10px] font-mono">↑↓</kbd> navigate</span>
+        <span><kbd class="px-1.5 py-0.5 border border-hairline rounded text-[10px] font-mono">esc</kbd> close</span>
       </div>
     </div>
   </div>
@@ -178,11 +178,23 @@
     }
   };
 
-  const navigateToResult = (type: string) => {
+  const navigateToResult = (type: string, id?: string) => {
     switch (type) {
-      case 'notice': switchTab('notices'); break;
-      case 'class': switchTab('classes'); break;
-      case 'material': switchTab('materials'); break;
+      case 'notice':
+        switchTab('notices');
+        if (id) setTimeout(() => window.dispatchEvent(new CustomEvent('cc-highlight-item', { detail: { type: 'notice', id } })), 100);
+        break;
+      case 'class':
+        switchTab('classes');
+        if (id) setTimeout(() => window.dispatchEvent(new CustomEvent('cc-highlight-item', { detail: { type: 'class', id } })), 100);
+        break;
+      case 'material':
+        switchTab('materials');
+        if (id) setTimeout(() => window.dispatchEvent(new CustomEvent('cc-highlight-item', { detail: { type: 'material', id } })), 100);
+        break;
+      case 'user':
+        window.dispatchEvent(new CustomEvent('cc-tab-active-profile'));
+        break;
     }
   };
 
@@ -211,42 +223,42 @@
       if (!items.length) return '';
       let section = `
         <div class="py-1">
-          <div class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-1.5">
+          <div class="px-3 py-2 text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-2">
             ${icon} ${label}
           </div>
       `;
       items.forEach((item: any, idx: number) => {
         if (type === 'notice') {
           section += `
-            <button class="search-result-item w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-canvas-soft text-left transition-all duration-150 group" data-type="notice" data-index="${idx}">
+            <button class="search-result-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-canvas-soft text-left transition-all duration-150 group" data-type="notice" data-id="${escapeHtml(item.id)}" data-index="${idx}">
               <svg class="w-4 h-4 ${colorClass} shrink-0" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/></svg>
               <div class="min-w-0 flex-1">
-                <div class="text-xs font-medium text-ink truncate group-hover:text-primary transition-colors">${escapeHtml(item.title)}</div>
-                <div class="text-[10px] text-muted truncate">${escapeHtml(item.content?.slice(0, 80))}${item.content?.length > 80 ? '...' : ''}</div>
+                <div class="text-sm font-medium text-ink truncate group-hover:text-primary transition-colors">${escapeHtml(item.title)}</div>
+                <div class="text-xs text-muted truncate">${escapeHtml(item.content?.slice(0, 100))}${item.content?.length > 100 ? '...' : ''}</div>
               </div>
-              <span class="text-[9px] font-semibold text-muted bg-canvas-soft border border-hairline px-1.5 py-0.5 rounded shrink-0">${escapeHtml(item.category)}</span>
+              <span class="text-[10px] font-semibold text-muted bg-canvas-soft border border-hairline px-2 py-0.5 rounded-md shrink-0">${escapeHtml(item.category)}</span>
             </button>
           `;
         } else if (type === 'class') {
           section += `
-            <button class="search-result-item w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-canvas-soft text-left transition-all duration-150 group" data-type="class" data-index="${idx}">
+            <button class="search-result-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-canvas-soft text-left transition-all duration-150 group" data-type="class" data-index="${idx}">
               <svg class="w-4 h-4 ${colorClass} shrink-0" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
               <div class="min-w-0 flex-1">
-                <div class="text-xs font-medium text-ink truncate group-hover:text-primary transition-colors">${escapeHtml(item.subject)}</div>
-                <div class="text-[10px] text-muted truncate">${escapeHtml(item.professor)} · ${escapeHtml(item.room)}</div>
+                <div class="text-sm font-medium text-ink truncate group-hover:text-primary transition-colors">${escapeHtml(item.subject)}</div>
+                <div class="text-xs text-muted truncate">${escapeHtml(item.professor)} · ${escapeHtml(item.room)}</div>
               </div>
-              <span class="text-[9px] font-semibold text-muted bg-canvas-soft border border-hairline px-1.5 py-0.5 rounded shrink-0">${escapeHtml(item.time)}</span>
+              <span class="text-[10px] font-semibold text-muted bg-canvas-soft border border-hairline px-2 py-0.5 rounded-md shrink-0">${escapeHtml(item.time)}</span>
             </button>
           `;
         } else if (type === 'material') {
           section += `
-            <button class="search-result-item w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-canvas-soft text-left transition-all duration-150 group" data-type="material" data-index="${idx}">
+            <button class="search-result-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-canvas-soft text-left transition-all duration-150 group" data-type="material" data-index="${idx}">
               <svg class="w-4 h-4 ${colorClass} shrink-0" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
               <div class="min-w-0 flex-1">
-                <div class="text-xs font-medium text-ink truncate group-hover:text-primary transition-colors">${escapeHtml(item.title)}</div>
-                <div class="text-[10px] text-muted truncate">${escapeHtml(item.course)} · ${escapeHtml(item.author)}</div>
+                <div class="text-sm font-medium text-ink truncate group-hover:text-primary transition-colors">${escapeHtml(item.title)}</div>
+                <div class="text-xs text-muted truncate">${escapeHtml(item.course)} · ${escapeHtml(item.author)}</div>
               </div>
-              <span class="text-[9px] font-semibold text-muted bg-canvas-soft border border-hairline px-1.5 py-0.5 rounded shrink-0">${escapeHtml(item.type)}</span>
+              <span class="text-[10px] font-semibold text-muted bg-canvas-soft border border-hairline px-2 py-0.5 rounded-md shrink-0">${escapeHtml(item.type)}</span>
             </button>
           `;
         } else if (type === 'user') {
@@ -256,13 +268,13 @@
               ? '<span class="text-timeline-thinking">Professor</span>'
               : '<span class="text-timeline-read">Student</span>';
           section += `
-            <div class="search-result-item w-full flex items-center gap-3 px-3 py-2 rounded-md text-left cursor-default" data-type="user" data-index="${idx}">
+            <div class="search-result-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left cursor-default" data-type="user" data-index="${idx}">
               <svg class="w-4 h-4 ${colorClass} shrink-0" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               <div class="min-w-0 flex-1">
-                <div class="text-xs font-medium text-ink truncate">${escapeHtml(item.name)}</div>
-                <div class="text-[10px] text-muted truncate">${escapeHtml(item.email)}${item.username ? ` · @${escapeHtml(item.username)}` : ''}</div>
+                <div class="text-sm font-medium text-ink truncate">${escapeHtml(item.name)}</div>
+                <div class="text-xs text-muted truncate">${escapeHtml(item.email)}${item.username ? ` · @${escapeHtml(item.username)}` : ''}</div>
               </div>
-              <span class="text-[9px] font-semibold">${roleBadge}</span>
+              <span class="text-[10px] font-semibold">${roleBadge}</span>
             </div>
           `;
         }
@@ -283,7 +295,8 @@
     searchResultsInner.querySelectorAll('.search-result-item[data-type]').forEach((el: any) => {
       el.addEventListener('click', () => {
         const type = el.getAttribute('data-type');
-        navigateToResult(type);
+        const id = el.getAttribute('data-id');
+        navigateToResult(type, id);
         closeSearch();
       });
     });

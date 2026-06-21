@@ -258,7 +258,7 @@
       const staggerDelay = Math.min(index * 50, 400);
 
       return `
-        <div class="material-row bg-surface-card border border-hairline rounded-lg p-4 flex items-center justify-between gap-4 hover:border-hairline-strong hover-lift transition-all duration-300 animate-fade-in-up" style="animation-delay: ${staggerDelay}ms; animation-fill-mode: backwards;">
+        <div class="material-row bg-surface-card border border-hairline rounded-lg p-4 flex items-center justify-between gap-4 hover:border-hairline-strong hover-lift transition-all duration-300 animate-fade-in-up" data-id="${escapeHtml(m.id)}" style="animation-delay: ${staggerDelay}ms; animation-fill-mode: backwards;">
           <div class="flex items-center gap-3.5 min-w-0">
             <div class="p-2.5 bg-canvas-soft border border-hairline-soft rounded-md transition-all duration-300 hover:scale-110 hover:rotate-6">
               ${icon}

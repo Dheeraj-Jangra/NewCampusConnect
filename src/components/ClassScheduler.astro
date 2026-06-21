@@ -316,7 +316,7 @@
         : '';
 
       return `
-        <div class="class-card bg-surface-card border ${cardBorder} rounded-lg p-5 flex flex-col gap-4 transition-all duration-300 ${isLive ? 'animate-pulse-glow' : 'hover:border-hairline-strong hover-lift'} animate-fade-in-up" style="animation-delay: ${staggerDelay}ms; animation-fill-mode: backwards; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s;">
+        <div class="class-card bg-surface-card border ${cardBorder} rounded-lg p-5 flex flex-col gap-4 transition-all duration-300 ${isLive ? 'animate-pulse-glow' : 'hover:border-hairline-strong hover-lift'} animate-fade-in-up" data-id="${escapeHtml(c.id)}" style="animation-delay: ${staggerDelay}ms; animation-fill-mode: backwards; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s;">
           <div class="flex items-center justify-between border-b border-hairline pb-2.5">
             <span class="font-mono text-sm font-semibold text-ink">${escapeHtml(c.time)} <span class="text-xs text-muted font-normal">(${escapeHtml(c.duration)} mins)</span></span>
             <div class="flex items-center gap-2">
