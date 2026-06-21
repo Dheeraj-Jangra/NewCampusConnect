@@ -118,9 +118,8 @@ import { channels } from '../config/channels';
     return String(str).replace(/[&<>"'/]/g, (c) => map[c] || c);
   };
 
-  const API_BASE = window.location.origin;
+  import { API_BASE, SOCKET_URL } from '../lib/api';
   const API_URL = `${API_BASE}/api/chat`;
-  const SOCKET_URL = API_BASE;
 
   let activeChannel = channels[0]?.id || '';
   let socket: any = null;

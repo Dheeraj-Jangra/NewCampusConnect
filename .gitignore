@@ -17,6 +17,9 @@ pnpm-debug.log*
 .env
 .env.production
 
+# local database
+prisma/dev.db
+
 # macOS-specific files
 .DS_Store
 

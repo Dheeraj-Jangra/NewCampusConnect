@@ -27,8 +27,19 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Middleware
+const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:4321')
+  .split(',')
+  .map(s => s.trim());
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:4321',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (server-to-server, curl, etc.)
+    if (!origin || allowedOrigins.some(o => origin.startsWith(o))) {
+      callback(null, true);
+    } else {
+      callback(new Error(`Origin ${origin} not allowed by CORS`));
+    }
+  },
   credentials: true,
 }));
 app.use(express.json({ limit: '1mb' }));
@@ -54,7 +65,7 @@ app.get('/api/health', (req, res) => {
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.CORS_ORIGIN || 'http://localhost:4321',
+    origin: allowedOrigins,
     methods: ['GET', 'POST'],
   },
 });

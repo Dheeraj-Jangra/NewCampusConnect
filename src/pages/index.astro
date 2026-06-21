@@ -303,8 +303,7 @@ import ProfileSettings from '../components/ProfileSettings.astro';
 </Layout>
 
 <script>
-  // Auth API configuration - use relative URLs for portability
-  const API_BASE = window.location.origin;
+  import { API_BASE } from '../lib/api';
   const REGISTER_URL = `${API_BASE}/api/auth/register`;
   const LOGIN_URL = `${API_BASE}/api/auth/login`;
   const FORGOT_URL = `${API_BASE}/api/auth/forgot-password`;
