@@ -100,8 +100,15 @@
 
   let activeFilter = 'all';
   let currentRole: string = 'student';
+  let currentUserId: string = '';
   let formSetupDone = false;
   let filtersSetupDone = false;
+
+  const canDeleteNotice = (notice: any): boolean => {
+    if (currentRole === 'admin') return true;
+    if (currentRole === 'professor' && notice.authorId === currentUserId) return true;
+    return false;
+  };
 
   const deleteNotice = async (id: string) => {
     const token = localStorage.getItem('cc-token');
@@ -150,6 +157,8 @@
     if (!listContainer || !noNoticesAlert) return;
 
     currentRole = localStorage.getItem('cc-active-role') || 'student';
+    const userStr = localStorage.getItem('cc-user');
+    if (userStr) { try { currentUserId = JSON.parse(userStr).id || ''; } catch { currentUserId = ''; } }
     const notices = await getNotices();
     notices.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     const filtered = notices.filter((n: any) => activeFilter === 'all' || n.category === activeFilter);
@@ -184,8 +193,8 @@
             </div>
             <!-- Author -->
             <span class="text-xs font-semibold text-body-strong">${escapeHtml(notice.author)}</span>
-            <!-- Delete button (professors/admins only) -->
-            <button data-id="${escapeHtml(notice.id)}" class="notice-delete-btn pointer-events-auto ml-2 p-1 rounded-md text-muted hover:text-semantic-error hover:bg-semantic-error/10 transition-all duration-200 ${currentRole === 'professor' || currentRole === 'admin' ? '' : 'hidden'}" title="Delete notice">
+            <!-- Delete button (ownership-based) -->
+            <button data-id="${escapeHtml(notice.id)}" class="notice-delete-btn pointer-events-auto ml-2 p-1 rounded-md text-muted hover:text-semantic-error hover:bg-semantic-error/10 transition-all duration-200 ${canDeleteNotice(notice) ? '' : 'hidden'}" title="Delete notice">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
             </button>
           </div>

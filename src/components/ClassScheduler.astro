@@ -99,7 +99,14 @@
   import { API_BASE } from '../lib/api';
   const API_URL = `${API_BASE}/api/classes`;
   let currentRole: string = 'student';
+  let currentUserId: string = '';
   let schedulerFormSetupDone = false;
+
+  const canDeleteClass = (cls: any): boolean => {
+    if (currentRole === 'admin') return true;
+    if (currentRole === 'professor' && cls.professorId === currentUserId) return true;
+    return false;
+  };
 
   // Delete a class
   const deleteClass = async (id: string) => {
@@ -196,6 +203,8 @@
     if (!listContainer || !noClassesAlert) return;
 
     currentRole = localStorage.getItem('cc-active-role') || 'student';
+    const userStr = localStorage.getItem('cc-user');
+    if (userStr) { try { currentUserId = JSON.parse(userStr).id || ''; } catch { currentUserId = ''; } }
     const classesList = await getClasses();
     const sortedClasses = classesList.sort((a: any, b: any) => {
       const aTime = a.time.split(':').map(Number);
@@ -257,7 +266,7 @@
             <span class="font-mono text-sm font-semibold text-ink">${escapeHtml(c.time)} <span class="text-xs text-muted font-normal">(${escapeHtml(c.duration)} mins)</span></span>
             <div class="flex items-center gap-2">
               ${statusBadge}
-              <button data-id="${escapeHtml(c.id)}" class="class-delete-btn p-1 rounded-md text-muted hover:text-semantic-error hover:bg-semantic-error/10 transition-all duration-200 ${currentRole === 'professor' || currentRole === 'admin' ? '' : 'hidden'}" title="Delete class">
+              <button data-id="${escapeHtml(c.id)}" class="class-delete-btn p-1 rounded-md text-muted hover:text-semantic-error hover:bg-semantic-error/10 transition-all duration-200 ${canDeleteClass(c) ? '' : 'hidden'}" title="Delete class">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
               </button>
             </div>

@@ -59,7 +59,7 @@ router.post('/', authMiddleware, professorMiddleware, async (req, res) => {
   }
 });
 
-// Delete notice (professors and admins only)
+// Delete notice — admin: any, professor: own only, student: denied
 router.delete('/:id', authMiddleware, async (req, res) => {
   if (req.user.role !== 'professor' && req.user.role !== 'admin') {
     return res.status(403).json({ error: 'Access denied: Professor or admin privileges required' });
@@ -69,6 +69,10 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     const existing = await prisma.notice.findUnique({ where: { id } });
     if (!existing) {
       return res.status(404).json({ error: 'Notice not found' });
+    }
+    // Professors can only delete their own notices; admins can delete any
+    if (req.user.role === 'professor' && existing.authorId !== req.user.id) {
+      return res.status(403).json({ error: 'Professors can only delete notices they created' });
     }
     await prisma.notice.delete({ where: { id } });
     res.json({ message: 'Notice deleted successfully', id });

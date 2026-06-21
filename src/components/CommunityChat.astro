@@ -180,7 +180,13 @@
     if (!userStr) return false;
     try {
       const user = JSON.parse(userStr);
-      if (user.role === 'admin' || user.role === 'professor') return true;
+      // Admin can delete anything
+      if (user.role === 'admin') return true;
+      // Faculty can delete non-admin messages
+      if (user.role === 'professor' || user.role === 'faculty') {
+        return msg.role !== 'admin';
+      }
+      // Students can only delete their own messages
       return msg.senderId && msg.senderId === user.id;
     } catch { return false; }
   };

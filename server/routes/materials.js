@@ -192,7 +192,7 @@ router.get('/download/:id', async (req, res) => {
   }
 });
 
-// Delete material (professors and admins only)
+// Delete material — admin: any, professor: own only, student: denied
 router.delete('/:id', authMiddleware, async (req, res) => {
   if (req.user.role !== 'professor' && req.user.role !== 'admin') {
     return res.status(403).json({ error: 'Access denied: Professor or admin privileges required' });
@@ -202,6 +202,10 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     const existing = await prisma.studyMaterial.findUnique({ where: { id } });
     if (!existing) {
       return res.status(404).json({ error: 'Material not found' });
+    }
+    // Professors can only delete their own materials; admins can delete any
+    if (req.user.role === 'professor' && existing.authorId !== req.user.id) {
+      return res.status(403).json({ error: 'Professors can only delete materials they uploaded' });
     }
     // Delete physical file from disk
     const filePath = path.join(uploadsDir, existing.fileName);

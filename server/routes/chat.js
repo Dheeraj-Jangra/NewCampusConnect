@@ -24,7 +24,7 @@ router.get('/:channel', async (req, res) => {
   }
 });
 
-// Delete a chat message (sender, faculty, or admin only)
+// Delete a chat message — admin: any, faculty: non-admin messages, student: own only
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
@@ -33,17 +33,33 @@ router.delete('/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Message not found' });
     }
 
-    // Allow if: sender themselves, faculty/professor, or admin
-    const isSender = existing.senderId === req.user.id;
-    const isFaculty = req.user.role === 'professor';
     const isAdmin = req.user.role === 'admin';
+    const isFaculty = req.user.role === 'professor';
+    const isSender = existing.senderId === req.user.id;
+    const msgIsAdmin = existing.role === 'admin';
 
-    if (!isSender && !isFaculty && !isAdmin) {
-      return res.status(403).json({ error: 'Access denied: You can only delete your own messages' });
+    // Admin can delete anything
+    if (isAdmin) {
+      await prisma.chatMessage.delete({ where: { id } });
+      return res.json({ message: 'Message deleted successfully', id });
     }
 
-    await prisma.chatMessage.delete({ where: { id } });
-    res.json({ message: 'Message deleted successfully', id });
+    // Faculty can delete their own messages and student messages, but NOT admin messages
+    if (isFaculty) {
+      if (msgIsAdmin) {
+        return res.status(403).json({ error: 'Professors cannot delete admin messages' });
+      }
+      await prisma.chatMessage.delete({ where: { id } });
+      return res.json({ message: 'Message deleted successfully', id });
+    }
+
+    // Students can only delete their own messages
+    if (isSender) {
+      await prisma.chatMessage.delete({ where: { id } });
+      return res.json({ message: 'Message deleted successfully', id });
+    }
+
+    return res.status(403).json({ error: 'Access denied: You can only delete your own messages' });
   } catch (error) {
     console.error('Error deleting chat message:', error);
     res.status(500).json({ error: 'Failed to delete message' });
