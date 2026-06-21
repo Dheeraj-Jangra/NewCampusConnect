@@ -58,8 +58,8 @@ import ProfileSettings from '../components/ProfileSettings.astro';
         <div class="p-3 border-t border-hairline bg-canvas-soft/30 shrink-0">
           <form id="dm-form" class="flex items-center gap-2">
             <input type="text" id="dm-input" placeholder="Type a message..." required autocomplete="off" class="flex-1 px-4 py-2 border border-hairline rounded-md text-sm text-ink bg-surface-card focus:outline-none focus:border-primary input-focus-glow transition-all duration-200" />
-            <button type="submit" class="btn-primary btn-press h-9 w-9 p-0 flex items-center justify-center rounded-md hover:scale-110 hover:rotate-12 transition-all duration-300">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-4 h-4"><line x1="22" x2="11" y1="2" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            <button type="submit" class="btn-primary btn-press h-9 w-9 p-0 flex items-center justify-center rounded-md hover:scale-110 hover:rotate-12 transition-all duration-300" aria-label="Send message">
+              <span style="font-size:18px;line-height:1;color:white">&#10148;</span>
             </button>
           </form>
         </div>
